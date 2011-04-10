@@ -6,12 +6,10 @@
  */
 
 #include "POVRayParser.h"
-#include <stdexcept>
 #include <sstream>
-#include <cassert>
-#include <cstdio>
 #include <cctype>
 #include <glm/gtc/matrix_transform.hpp>
+#include <boost/assert.hpp>
 #include <boost/lexical_cast.hpp>
 
 namespace RDST
@@ -22,6 +20,10 @@ namespace RDST
       std::vector<SceneObjectPtr> objList;
       std::string line;
       std::ifstream file(fileToParse.c_str());
+      if (file.fail()) {
+         std::cerr << "***Error: failed to open file: " << fileToParse << std::endl;
+         exit(EXIT_FAILURE);
+      }
       while (std::getline(file, line)) {
          RemoveComment(line);
          std::string::size_type pos = line.find("camera");
@@ -88,7 +90,7 @@ namespace RDST
          if (*it == '{') ++nonMatchedBrackets;
          else if (*it == '}') --nonMatchedBrackets;
       }
-      assert(nonMatchedBrackets >= 0);
+      BOOST_ASSERT(nonMatchedBrackets >= 0);
       //grab file text and store it in inputText until we get fully matched brackets
       std::string line;
       while (nonMatchedBrackets > 0 && std::getline(file, line)) {
@@ -98,7 +100,7 @@ namespace RDST
             inputText += *it;
             if (*it == '{') ++nonMatchedBrackets;
             else if (*it == '}') --nonMatchedBrackets;
-            assert(nonMatchedBrackets >= 0);
+            BOOST_ASSERT(nonMatchedBrackets >= 0);
          }
       }
       return inputText;
@@ -304,7 +306,7 @@ namespace RDST
 
       //Type check
       std::getline(tokens, token, ' ');
-      assert(token.find("box") != std::string::npos);
+      BOOST_ASSERT(token.find("box") != std::string::npos);
 
       //Parse both corners, and other object params
       corner1 = ParseVec3FromStream(tokens);
@@ -331,7 +333,7 @@ namespace RDST
 
       //Type check
       std::getline(tokens, token, ' ');
-      assert(token.find("cone") != std::string::npos); //type check
+      BOOST_ASSERT(token.find("cone") != std::string::npos); //type check
 
       //Parse end1, radius1, end2, radius2, and other object params
       end1 = ParseVec3FromStream(tokens);
@@ -363,7 +365,7 @@ namespace RDST
 
       //Type check
       std::getline(tokens, token, ' ');
-      assert(token.find("plane") != std::string::npos);
+      BOOST_ASSERT(token.find("plane") != std::string::npos);
 
       //Parse normal, distance, and other object params
       normal = ParseVec3FromStream(tokens);
@@ -391,7 +393,7 @@ namespace RDST
 
       //Type check
       std::getline(tokens, token, ' ');
-      assert(token.find("sphere") != std::string::npos);
+      BOOST_ASSERT(token.find("sphere") != std::string::npos);
 
       //Parse normal, distance, and other object params
       center = ParseVec3FromStream(tokens);
@@ -418,7 +420,7 @@ namespace RDST
 
       //Type check
       std::getline(tokens, token, ' ');
-      assert(token.find("triangle") != std::string::npos);
+      BOOST_ASSERT(token.find("triangle") != std::string::npos);
 
       //Parse normal, distance, and other object params
       vert1 = ParseVec3FromStream(tokens);

@@ -1,20 +1,68 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string>
+#include <boost/lexical_cast.hpp>
 #include "POVRayParser.h"
 #include "RDSScene.h"
+#include "RDSImage.h"
 
-std::string parseParameters(int argc, char** argv)
+std::string filename, imgname;
+short w, h; //img width and height
+
+
+void printUsageAndExit(char* name)
 {
-   if (argc != 2) {
-      fprintf(stderr,"Usage: %s <input_file>\n", argv[0]);
-      exit(EXIT_FAILURE);
+   std::cerr << "Usage: " << name << " +W<width> +H<height> +I<pov_input>" << std::endl;
+   exit(EXIT_FAILURE);
+}
+
+void parseParameters(int argc, char** argv)
+{
+   //Check for proper number of parameters
+   if (argc != 4)
+      printUsageAndExit(argv[0]);
+
+   //Parse Parameters
+   for (int i=1; i < argc; i++) {
+      if (argv[i][0] != '+')
+         printUsageAndExit(argv[0]);
+      switch (argv[i][1]) {
+         case 'W':
+            w = boost::lexical_cast<short>(&argv[i][2]);
+            if (w <= 0) {
+               std::cerr << "***Error: width not a positive integer: " << w << std::endl;
+               exit(EXIT_FAILURE);
+            }
+            break;
+         case 'H':
+            h = boost::lexical_cast<short>(&argv[i][2]);
+            if (h <= 0) {
+               std::cerr << "***Error: height not a positive integer: " << h << std::endl;
+               exit(EXIT_FAILURE);
+            }
+            break;
+         case 'I':
+            //POVRay file
+            filename = std::string(&argv[i][2]);
+            //Image file
+            imgname = filename.substr(0,filename.find(".pov"));//erase .pov extension if it exists
+            if (imgname.empty()) {
+               std::cerr << "***Error: empty file name." << std::endl;
+               exit(EXIT_FAILURE);
+            }
+            imgname += ".tga";
+            break;
+         default:
+            printUsageAndExit(argv[0]);
+            break;
+      }
    }
-   return std::string(argv[1]);
 }
 
 int main(int argc, char** argv)
 {
-   std::string file(parseParameters(argc, argv));
-   RDST::POVRayParser::ParseFile(file);
+   parseParameters(argc, argv);
+   RDST::Image img(w, h, imgname);
+   std::vector<RDST::SceneObjectPtr> sceneObjects(RDST::POVRayParser::ParseFile(filename));
+   //img.writeToDisk();
 }

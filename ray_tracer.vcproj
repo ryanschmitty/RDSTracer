@@ -193,11 +193,11 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\Image.h"
+				RelativePath=".\POVRayParser.h"
 				>
 			</File>
 			<File
-				RelativePath=".\POVRayParser.h"
+				RelativePath=".\RDSImage.h"
 				>
 			</File>
 			<File
