@@ -5,6 +5,7 @@
 #include "POVRayParser.h"
 #include "RDSScene.h"
 #include "RDSImage.h"
+#include "RDSTracer.h"
 
 std::string filename, imgname;
 short w, h; //img width and height
@@ -63,6 +64,7 @@ int main(int argc, char** argv)
 {
    parseParameters(argc, argv);
    RDST::Image img(w, h, imgname);
-   std::vector<RDST::SceneObjectPtr> sceneObjects(RDST::POVRayParser::ParseFile(filename));
-   //img.writeToDisk();
+   RDST::SceneDescription desc(RDST::POVRayParser::ParseFile(filename));
+   RDST::Tracer::RayTrace(desc, img);
+   img.writeToDisk();
 }

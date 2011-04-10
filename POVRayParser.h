@@ -11,10 +11,32 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <boost/shared_ptr.hpp>
 #include "RDSScene.h"
 
 namespace RDST
 {
+   /**
+    * Package class for all data required for a scene.
+    */
+   class SceneDescription
+   {
+   public:
+      explicit SceneDescription()
+      : pCam(boost::shared_ptr<Camera>()),
+      lights(std::vector<PointLightPtr>()),
+      objs(std::vector<GeomObjectPtr>())
+      {}
+      explicit SceneDescription(CameraPtr pCamera, std::vector<PointLightPtr> lights, std::vector<GeomObjectPtr> geometryObjects)
+      : pCam(pCamera),
+        lights(lights),
+        objs(geometryObjects)
+      {}
+      CameraPtr pCam;
+      std::vector<PointLightPtr> lights;
+      std::vector<GeomObjectPtr> objs;
+   };
+
    class POVRayParser
    {
    //Static Class to hide helper functions, should never be instantiated.
@@ -27,7 +49,7 @@ namespace RDST
       {}
 
    public:
-      static std::vector<SceneObjectPtr> ParseFile(const std::string& fileToParse);
+      static SceneDescription ParseFile(const std::string& fileToParse);
 
    private:
       //Utils

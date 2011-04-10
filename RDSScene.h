@@ -15,7 +15,7 @@
 namespace RDST
 {
    /**
-    * Abstract Base Object class for EVERYTHING (all objects that need to be in a list)
+    * Abstract Base Object class for EVERYTHING
     */
    class SceneObject
    {

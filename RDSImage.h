@@ -6,8 +6,8 @@
  * Author: Ryan Schmitt
  */
 
-#ifndef _IMAGE_SCHMITT_
-#define _IMAGE_SCHMITT_
+#ifndef _RDS_IMAGE_H_
+#define _RDS_IMAGE_H_
 
 #include <fstream>
 #include <vector>
@@ -18,21 +18,22 @@ namespace RDST
    /**
     * Represents the RGBA values of a pixel
     */
-   class Pixel {
+   class Pixel
+   {
    public:
-      Pixel()
+      explicit Pixel()
          : r(0),
            g(0),
            b(0),
            a(0)
       {}
-      Pixel(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha)
+      explicit Pixel(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha)
       : r(red),
         g(green),
         b(blue),
         a(alpha)
       {}
-      Pixel(float red, float green, float blue, float alpha)
+      explicit Pixel(float red, float green, float blue, float alpha)
       { setf(red, green, blue, alpha); }
 
       /* unsinged char [0,255] operations */
@@ -87,9 +88,10 @@ namespace RDST
     * Represents a 2D collection of Pixels (i.e. an Image).
     * Note that 0,0 is bottom left
     */
-   class Image {
+   class Image
+   {
    public:
-      Image(short width, short height, const std::string& filename)
+      explicit Image(short width, short height, const std::string& filename)
       : w(width),
         h(height),
         fname(filename)

@@ -14,10 +14,10 @@
 
 namespace RDST
 {
-   std::vector<SceneObjectPtr>
+   SceneDescription
    POVRayParser::ParseFile(const std::string& fileToParse)
    {
-      std::vector<SceneObjectPtr> objList;
+      SceneDescription desc;
       std::string line;
       std::ifstream file(fileToParse.c_str());
       if (file.fail()) {
@@ -30,46 +30,46 @@ namespace RDST
          if (pos != std::string::npos) {
             line = line.substr(pos);
             GetWholeObject(line, file);
-            objList.push_back(ParseCamera(line));
+            desc.pCam = ParseCamera(line);
          }
          pos = line.find("light_source");
          if (pos != std::string::npos) {
             line = line.substr(pos);
             GetWholeObject(line, file);
-            objList.push_back(ParseLight(line));
+            desc.lights.push_back(ParseLight(line));
          }
          pos = line.find("box");
          if (pos != std::string::npos) {
             line = line.substr(pos);
             GetWholeObject(line, file);
-            objList.push_back(ParseBox(line));
+            desc.objs.push_back(ParseBox(line));
          }
          pos = line.find("cone");
          if (pos != std::string::npos) {
             line = line.substr(pos);
             GetWholeObject(line, file);
-            objList.push_back(ParseCone(line));
+            desc.objs.push_back(ParseCone(line));
          }
          pos = line.find("plane");
          if (pos != std::string::npos) {
             line = line.substr(pos);
             GetWholeObject(line, file);
-            objList.push_back(ParsePlane(line));
+            desc.objs.push_back(ParsePlane(line));
          }
          pos = line.find("sphere");
          if (pos != std::string::npos) {
             line = line.substr(pos);
             GetWholeObject(line, file);
-            objList.push_back(ParseSphere(line));
+            desc.objs.push_back(ParseSphere(line));
          }
          pos = line.find("triangle");
          if (pos != std::string::npos) {
             line = line.substr(pos);
             GetWholeObject(line, file);
-            objList.push_back(ParseTriangle(line));
+            desc.objs.push_back(ParseTriangle(line));
          }
       }
-      return objList;
+      return desc;
    }
 
    std::string&

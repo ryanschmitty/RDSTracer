@@ -186,6 +186,10 @@
 				RelativePath=".\RDSScene.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\RDSTracer.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -202,6 +206,10 @@
 			</File>
 			<File
 				RelativePath=".\RDSScene.h"
+				>
+			</File>
+			<File
+				RelativePath=".\RDSTracer.h"
 				>
 			</File>
 		</Filter>
