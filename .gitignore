@@ -1,0 +1,7 @@
+# Ignored files
+*.ncb
+*.suo
+*.user
+glm/*
+Debug/*
+Release/*
