@@ -6,6 +6,7 @@
  */
 
 #include "POVRayParser.h"
+#include <iostream>
 #include <sstream>
 #include <cctype>
 #include <glm/gtc/matrix_transform.hpp>
@@ -188,7 +189,7 @@ namespace RDST
          else if (token.find("look_at") != std::string::npos)
             lookAtVec = ParseVec3FromStream(tokens);
       }
-      return CameraPtr(new Camera(posVec, upVec, rightVec, lookAtVec));
+      return CameraPtr(new Camera(posVec, upVec, rightVec, lookAtVec-posVec));
    }
 
    PointLightPtr

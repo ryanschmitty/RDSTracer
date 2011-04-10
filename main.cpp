@@ -1,5 +1,6 @@
-#include <cstdio>
+#include <iostream>
 #include <cstdlib>
+#include <ctime>
 #include <string>
 #include <boost/lexical_cast.hpp>
 #include "POVRayParser.h"
@@ -62,9 +63,17 @@ void parseParameters(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
+   time_t start, end;
+   double dif;
+   time(&start);
+
    parseParameters(argc, argv);
    RDST::Image img(w, h, imgname);
    RDST::SceneDescription desc(RDST::POVRayParser::ParseFile(filename));
    RDST::Tracer::RayTrace(desc, img);
    img.writeToDisk();
+
+   time(&end);
+   dif = difftime(end, start);
+   std::cout << "run time: " << dif << " seconds.\n";
 }

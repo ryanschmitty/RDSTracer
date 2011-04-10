@@ -9,6 +9,7 @@
 #ifndef __RDS_SCENE_H__
 #define __RDS_SCENE_H__
 
+#include <vector>
 #include <glm/glm.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -17,15 +18,14 @@ namespace RDST
    /**
     * Abstract Base Object class for EVERYTHING
     */
+   //Type enum
+   enum OBJ_TYPE {CAMERA, LIGHT, BOX, CONE, PLANE, SPHERE, TRIANGLE};
    class SceneObject
    {
    public:
       explicit SceneObject()
       {}
       virtual ~SceneObject() = 0;
-      
-      //Type enum
-      enum OBJ_TYPE {CAMERA, LIGHT, BOX, CONE, PLANE, SPHERE, TRIANGLE};
 
       //Abstract type identifier function
       virtual OBJ_TYPE getType() const = 0;
@@ -55,7 +55,8 @@ namespace RDST
    typedef boost::shared_ptr<Colored> ColoredPtr;
 
    /**
-    * Camera Storage Class
+    * Camera Storage Class.
+    * Note: Normalizes on set for Up and LookAt vectors.
     */
    class Camera: public SceneObject
    {
@@ -63,12 +64,12 @@ namespace RDST
       explicit Camera(const glm::vec3& position = glm::vec3(0.f, 0.f, 0.f),
                       const glm::vec3& up = glm::vec3(0.f, 1.f, 0.f),
                       const glm::vec3& right = glm::vec3(1.333f, 0.f, 0.f),
-                      const glm::vec3& lookAt = glm::vec3(0.f, 0.f, -1.f))
+                      const glm::vec3& dir = glm::vec3(0.f, 0.f, -1.f))
       : SceneObject(),
         _position(position),
-        _up(up),
+        _up(glm::normalize(up)),
         _right(right),
-        _lookAt(lookAt)
+        _dir(glm::normalize(dir))
       {}
 
       //Position
@@ -81,7 +82,7 @@ namespace RDST
       const glm::vec3& getUp() const
       { return _up; }
       void setUp(const glm::vec3& up)
-      { _up = up; }
+      { _up = glm::normalize(up); }
 
       //Right Vector
       const glm::vec3& getRight() const
@@ -89,11 +90,11 @@ namespace RDST
       void setRight(const glm::vec3& right)
       { _right = right; }
 
-      //Look At Vector
-      const glm::vec3& getLookAt() const
-      { return _lookAt; }
-      void setLookAt(const glm::vec3& lookAt)
-      { _lookAt = lookAt; }
+      //Direction Vector
+      const glm::vec3& getDir() const
+      { return _dir; }
+      void setLookAt(const glm::vec3& dir)
+      { _dir = glm::normalize(dir); }
 
       OBJ_TYPE getType() const
       { return CAMERA; }
@@ -102,7 +103,7 @@ namespace RDST
       glm::vec3 _position;
       glm::vec3 _up;
       glm::vec3 _right;
-      glm::vec3 _lookAt;
+      glm::vec3 _dir;
    };
    typedef boost::shared_ptr<Camera> CameraPtr;
 
@@ -215,8 +216,8 @@ namespace RDST
    {
    public:
       explicit GeomObject(const glm::vec4& color = glm::vec4(1.f, 1.f, 1.f, 1.f),
-                           const glm::mat4& modelXform = glm::mat4(1.f),
-                           const Finish& finish = Finish())
+                          const glm::mat4& modelXform = glm::mat4(1.f),
+                          const Finish& finish = Finish())
       : Colored(color),
         _modelXform(modelXform),
         _finish(finish)
@@ -369,7 +370,8 @@ namespace RDST
                       const Finish& finish = Finish())
       : GeomObject(color, modelXform, finish),
         _center(center),
-        _radius(radius)
+        _radius(radius),
+        _radiusSquared(radius*radius)
       {}
 
       //Center and radius define a sphere
@@ -377,16 +379,18 @@ namespace RDST
       { return _center; }
       float getRadius() const
       { return _radius; }
+      float getRadiusSquared() const
+      { return _radiusSquared; }
 
       void setDimensions(const glm::vec3& center, float radius)
-      { _center = center; _radius = radius; }
+      { _center = center; _radius = radius; _radiusSquared = radius*radius; }
 
       OBJ_TYPE getType() const
       { return SPHERE; }
 
    private:
       glm::vec3 _center;
-      float     _radius;
+      float     _radius, _radiusSquared;
    };
    typedef boost::shared_ptr<Sphere> SpherePtr;
 
@@ -428,6 +432,27 @@ namespace RDST
       glm::vec3 _vert3;
    };
    typedef boost::shared_ptr<Triangle> TrianglePtr;
+
+   /**
+    * Package class for all data required for a scene.
+    */
+   class SceneDescription
+   {
+   public:
+      explicit SceneDescription()
+      : pCam(boost::shared_ptr<Camera>()),
+      lights(std::vector<PointLightPtr>()),
+      objs(std::vector<GeomObjectPtr>())
+      {}
+      explicit SceneDescription(CameraPtr pCamera, std::vector<PointLightPtr> lights, std::vector<GeomObjectPtr> geometryObjects)
+      : pCam(pCamera),
+        lights(lights),
+        objs(geometryObjects)
+      {}
+      CameraPtr pCam;
+      std::vector<PointLightPtr> lights;
+      std::vector<GeomObjectPtr> objs;
+   };
 } // end namespace RDST
 
 #endif
