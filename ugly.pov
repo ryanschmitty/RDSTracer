@@ -8,7 +8,7 @@ camera {
 }
 
 
-light_source {<-100, 100, 100> color rgb <1.5, 1.5, 1.5>}
+light_source {<-100, 100, 100> color rgb <1.0, 1.0, 1.0>}
 
 sphere { <0, 0, 0>, 2
   pigment { color rgb <1.0, 0.0, 1.0>}
@@ -32,7 +32,7 @@ sphere { <0, 0, 0>, 2
 box { <-0.5, -0.5, -0.5>, <0.5, 0.5, 0.5>
   pigment { color rgb <0.2, 0.8, 0.3>}
   finish {ambient 0.6 diffuse 0.4}
-  scale 2
+  scale <10, 3.5, 3.5>
   rotate <45, 0, 0>
   rotate <0, 0, 10.5>
   translate <3, 2, -3>

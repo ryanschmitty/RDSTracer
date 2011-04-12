@@ -52,7 +52,7 @@ void parseParameters(int argc, char** argv)
                std::cerr << "***Error: empty file name." << std::endl;
                exit(EXIT_FAILURE);
             }
-            imgname += ".tga";
+            imgname += ".ppm";
             break;
          default:
             printUsageAndExit(argv[0]);

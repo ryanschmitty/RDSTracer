@@ -27,16 +27,19 @@ namespace RDST
       explicit Intersection()
       : hit(false),
         t(FLT_MAX),
-        p(glm::vec3(0.f))
+        p(glm::vec3(0.f)),
+        n(glm::vec3(0.f, 1.f, 0.f))
       {}
-      explicit Intersection(bool hit, float hitT, const glm::vec3& hitPoint)
+      explicit Intersection(bool hit, float hitT, const glm::vec3& hitPoint, const glm::vec3& normal)
       : hit(hit),
         t(hitT),
-        p(hitPoint)
+        p(hitPoint),
+        n(normal)
       {}
       bool hit;
       float t;
       glm::vec3 p;
+      glm::vec3 n;
    };
 
    /**

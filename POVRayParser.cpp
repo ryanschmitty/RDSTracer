@@ -12,6 +12,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <boost/assert.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/tokenizer.hpp>
 
 namespace RDST
 {
@@ -270,6 +271,11 @@ namespace RDST
    void
    POVRayParser::ParseGeomObject(std::istringstream& tokens, glm::vec4& color, glm::mat4& xforms, Finish& finish)
    {
+      /*boost::char_separator<char> sep(" \n");
+      boost::tokenizer<boost::char_separator<char>> tok(inputText, sep);
+      for (boost::tokenizer<boost::char_separator<char>>::iterator beg=tok.begin(); beg!=tok.end();++beg) {
+         std::cout << *beg << "\n";
+      }*/
       std::string token;
       while (std::getline(tokens, token, ' '))
       {
@@ -345,7 +351,7 @@ namespace RDST
       std::getline(tokens, token, ','); //eat the comma between
       tokens >> token;
       radius2 = ParseFloat(token);
-      ParseGeomObject(tokens, color, xforms, finish);
+     ParseGeomObject(tokens, color, xforms, finish);
 
       return ConePtr(new Cone(end1, radius1, end2, radius2, color, xforms, finish));
    }
@@ -369,11 +375,11 @@ namespace RDST
       BOOST_ASSERT(token.find("plane") != std::string::npos);
 
       //Parse normal, distance, and other object params
-      normal = ParseVec3FromStream(tokens);
+      normal = glm::normalize(ParseVec3FromStream(tokens));
       std::getline(tokens, token, ','); //eat the comma between
       tokens >> token;
       distance = ParseFloat(token);
-      ParseGeomObject(tokens, color, xforms, finish);
+     ParseGeomObject(tokens, color, xforms, finish);
 
       return PlanePtr(new Plane(normal, distance, color, xforms, finish));
    }
@@ -401,7 +407,7 @@ namespace RDST
       std::getline(tokens, token, ','); //eat the comma between
       tokens >> token;
       radius = ParseFloat(token);
-      ParseGeomObject(tokens, color, xforms, finish);
+      ParseGeomObject(tokens.rdbuf()->str(), color, xforms, finish);
 
       return SpherePtr(new Sphere(center, radius, color, xforms, finish));
    }
@@ -429,7 +435,7 @@ namespace RDST
       vert2 = ParseVec3FromStream(tokens);
       std::getline(tokens, token, ','); //eat the comma between
       vert3 = ParseVec3FromStream(tokens);
-      ParseGeomObject(tokens, color, xforms, finish);
+     ParseGeomObject(tokens, color, xforms, finish);
 
       return TrianglePtr(new Triangle(vert1, vert2, vert3, color, xforms, finish));
    }

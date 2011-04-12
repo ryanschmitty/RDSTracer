@@ -7,6 +7,8 @@
  */
 
 #include "RDSTracer.h"
+#include <iostream>
+#include <iomanip>
 
 namespace RDST
 {
@@ -44,12 +46,6 @@ namespace RDST
       }
    }
 
-   void Tracer::ShadePixel(Pixel& p, const Camera& cam, const std::vector<PointLightPtr>& lights, const GeomObject& obj, const Intersection& intrs)
-   {
-      glm::vec4 color(obj.getColor());
-      p.setf(color.r, color.g, color.b, color.a);
-   }
-
    std::vector<RayPtr> Tracer::GenerateRays(const Camera& cam, const Image& image)
    {
       std::vector<RayPtr> rays;
@@ -72,11 +68,24 @@ namespace RDST
       return rays;
    }
 
+   void Tracer::ShadePixel(Pixel& p, const Camera& cam, const std::vector<PointLightPtr>& lights, const GeomObject& obj, const Intersection& intrs)
+   {
+      PointLight& light(*lights.at(0));
+      glm::vec3 ambient(obj.getFinish().getAmbient() * obj.getColor() * light.getColor());
+      glm::vec3 l(glm::normalize(light.getPos()-intrs.p));
+      float dif = glm::max(0.f, glm::dot(intrs.n, l));
+      glm::vec3 diffuse(dif * obj.getFinish().getDiffuse() * obj.getColor() * light.getColor());
+      glm::vec4 src(ambient + diffuse,1.f);
+      //glm::vec4 dst(p.get());
+      //dst = (src*src.a) + (dst*(1-src.a)); //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+      p.set(src);
+   }
+
    Ray Tracer::TransformRay(const Ray& ray, const glm::mat4& worldToObj)
    {
       glm::vec3 o = glm::vec3(worldToObj*glm::vec4(ray.o,1.f));
       glm::vec3 dir = glm::vec3(worldToObj*glm::vec4(ray.d,0.f)); //TODO: should I normalize?
-      return Ray(dir, o);
+      return Ray(glm::normalize(dir), o);
    }
 
    Intersection Tracer::RaySphereIntersect(const Ray& ray, const Sphere& sphere)
@@ -84,7 +93,7 @@ namespace RDST
       //Setup transformed ray
       Ray xr = TransformRay(ray, glm::inverse(sphere.getModelXform()));
       //Intersection Code
-      glm::vec3 l(sphere.getCenter() - xr.o);
+      glm::vec3 l = sphere.getCenter() - xr.o;
       float s = glm::dot(l, xr.d);
       float ll = glm::dot(l, l);
       float rr = sphere.getRadiusSquared();
@@ -95,7 +104,8 @@ namespace RDST
       float t = 0.f;
       if (ll > rr) t = s-q; //we're outside the sphere so return first point
       else t = s+q;
-      return Intersection(true, t, ray.o + (ray.d*t));
+      glm::vec3 n(sphere.getModelXform() * glm::vec4((xr.o+(xr.d*t))-sphere.getCenter(), 0.f));
+      return Intersection(true, t, ray.o + (ray.d*t), glm::normalize(n));
    }
 
    Intersection Tracer::RayPlaneIntersect(const Ray& ray, const Plane& plane)
@@ -106,6 +116,6 @@ namespace RDST
       glm::vec3 n = plane.getNormal();
       if (glm::dot(xr.d, n) >= 0.f) return Intersection(); //ray either will hit on -t or be parallel
       float t = -1*fabs(glm::dot(n,xr.o)+plane.getDistance()) / glm::dot(n,xr.d);
-      return Intersection(true, t, ray.o + (ray.d*t));
+      return Intersection(true, t, ray.o + (ray.d*t), plane.getNormal());
    }
 }

@@ -21,67 +21,42 @@ namespace RDST
    class Pixel
    {
    public:
-      explicit Pixel()
-         : r(0),
-           g(0),
-           b(0),
-           a(0)
-      {}
-      explicit Pixel(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha)
+      explicit Pixel(float red = 0.f,
+                     float green = 0.f,
+                     float blue = 0.f,
+                     float alpha = 1.f)
       : r(red),
         g(green),
         b(blue),
         a(alpha)
       {}
-      explicit Pixel(float red, float green, float blue, float alpha)
-      { setf(red, green, blue, alpha); }
 
-      /* unsinged char [0,255] operations */
-
-      unsigned char getR() const
+      float getR() const
       { return r; }
-      unsigned char getG() const
+      float getG() const
       { return g; }
-      unsigned char getB() const
+      float getB() const
       { return b; }
-      unsigned char getA() const
+      float getA() const
       { return a; }
+      glm::vec4 get() const
+      { return glm::vec4(r,g,b,a); }
 
-      void setR(unsigned char red)
+      void setR(float red)
       { r = red; }
-      void setG(unsigned char green)
+      void setG(float green)
       { g = green; }
-      void setB(unsigned char blue)
+      void setB(float blue)
       { b = blue; }
-      void setA(unsigned char alpha)
+      void setA(float alpha)
       { a = alpha; }
-      void set(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha)
+      void set(float red, float green, float blue, float alpha)
       { setR(red); setG(green); setB(blue); setA(alpha); }
-
-      /* float [0,1] operations */
-
-      float getRf() const
-      { return (float)r/255.f; }
-      float getGf() const
-      { return (float)g/255.f; }
-      float getBf() const
-      { return (float)b/255.f; }
-      float getAf() const
-      { return (float)a/255.f; }
-
-      void setRf(float red)
-      { BOOST_ASSERT_MSG(red>=0.f && red<=1.f, "value not [0,1].\n"); r = (unsigned char)(red*255); }
-      void setGf(float green)
-      { BOOST_ASSERT_MSG(green>=0.f && green<=1.f, "value not [0,1].\n"); g = (unsigned char)(green*255); }
-      void setBf(float blue)
-      { BOOST_ASSERT_MSG(blue>=0.f && blue<=1.f, "value not [0,1].\n"); b = (unsigned char)(blue*255); }
-      void setAf(float alpha)
-      { BOOST_ASSERT_MSG(alpha>=0.f && alpha<=1.f, "value not [0,1].\n"); a = (unsigned char)(alpha*255); }
-      void setf(float red, float green, float blue, float alpha)
-      { setRf(red); setGf(green); setBf(blue); setAf(alpha); }
+      void set(const glm::vec4& color)
+      { set(color.r, color.g, color.b, color.a); }
 
    private:
-      unsigned char r, g, b, a;
+      float r, g, b, a;
    };
 
    /**
@@ -107,9 +82,9 @@ namespace RDST
       { fname = filename; }
 
       /* Dimension inquiries */
-      int getWidth() const
+      short getWidth() const
       { return w; }
-      int getHeight() const
+      short getHeight() const
       { return h; }
 
       /* 2D functions */
@@ -128,38 +103,58 @@ namespace RDST
       void set(int i, const Pixel& pixel)
       { image.at(i) = pixel; }
 
-      void writeToDisk() //FIXME: should this be const?
+      void writeToDisk()
       {
-         /* Write an uncompressed TGA, ADAPTED FROM: http://paulbourke.net/dataformats/tga/tgatest.c */
-         //open file
-         std::ofstream file(fname.c_str());
+         /* Write an uncompressed PPM, ADAPTED FROM: http://rosettacode.org/wiki/Bitmap/Write_a_PPM_file#C */
+         std::ofstream file(fname.c_str(), std::ofstream::binary); //binary open
          if (file.fail()) {
             fprintf(stderr,"Failed to open output file: %s\n", fname.c_str());
             exit(-1);
          }
-         //header
-         file.put(0);
-         file.put(0);
-         file.put(2);                     /* uncompressed RGB */
-         file.put(0); file.put(0);
-         file.put(0); file.put(0);
-         file.put(0);
-         file.put(0); file.put(0);        /* X origin */
-         file.put(0); file.put(0);        /* y origin */
-         file.put((w & 0x00FF));
-         file.put((w & 0xFF00) / 256);
-         file.put((h & 0x00FF));
-         file.put((h & 0xFF00) / 256);
-         file.put(32);                    /* 32 bit bitmap (24 rgb 8 a) */
-         file.put(0);
-         //data
-         for (std::vector<Pixel>::const_iterator it = image.begin(); it != image.end(); ++it) {
-            file.put(it->getB());
-            file.put(it->getG());
-            file.put(it->getR());
-            file.put(it->getA());
+         // PPM Header (P6\n<width> <height>\n<max color>\n)
+         file << "P6\n" << w << " " << h << "\n255\n";
+         // data, 0,0 is top left...
+         for (int y = 0; y < h; ++y) {
+            for (int x = 0; x < w; ++x) {
+               unsigned char red = (int)(get(x,h-1-y).getR()*255); //reverse because my Ray Tracer (and most other peoples') assumes 0,0 is bottom left not top left!;
+               unsigned char green = (int)(get(x,h-1-y).getG()*255);
+               unsigned char blue = (int)(get(x,h-1-y).getB()*255);
+               file.put(red);
+               file.put(green);
+               file.put(blue);
+            }
          }
          file.close();
+
+         /* Write an uncompressed TGA, ADAPTED FROM: http://paulbourke.net/dataformats/tga/tgatest.c */
+         //std::ofstream file(fname.c_str());
+         //if (file.fail()) {
+         //   fprintf(stderr,"Failed to open output file: %s\n", fname.c_str());
+         //   exit(-1);
+         //}
+         ////header
+         //file.put(0);
+         //file.put(0);
+         //file.put(2);                     /* uncompressed RGB */
+         //file.put(0); file.put(0);
+         //file.put(0); file.put(0);
+         //file.put(0);
+         //file.put(0); file.put(0);        /* X origin */
+         //file.put(0); file.put(0);        /* y origin */
+         //file.put((w & 0x00FF));
+         //file.put((w & 0xFF00) / 256);
+         //file.put((h & 0x00FF));
+         //file.put((h & 0xFF00) / 256);
+         //file.put(24);                    /* 32 bit bitmap (24 rgb 8 a) */
+         //file.put(0);
+         ////data
+         //for (std::vector<Pixel>::const_iterator it = image.begin(); it != image.end(); ++it) {
+         //   file.put(it->getB());
+         //   file.put(it->getG());
+         //   file.put(it->getR());
+         //   //file.put(it->getA());
+         //}
+         //file.close();
       }
 
    private:
