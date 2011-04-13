@@ -12,6 +12,7 @@
 #include <fstream>
 #include <vector>
 #include <boost/assert.hpp>
+#include <glm/glm.hpp>
 
 namespace RDST
 {
@@ -116,12 +117,12 @@ namespace RDST
          // data, 0,0 is top left...
          for (int y = 0; y < h; ++y) {
             for (int x = 0; x < w; ++x) {
-               unsigned char red = (int)(get(x,h-1-y).getR()*255); //reverse because my Ray Tracer (and most other peoples') assumes 0,0 is bottom left not top left!;
-               unsigned char green = (int)(get(x,h-1-y).getG()*255);
-               unsigned char blue = (int)(get(x,h-1-y).getB()*255);
-               file.put(red);
-               file.put(green);
-               file.put(blue);
+               float red = glm::clamp(get(x,h-1-y).getR(), 0.f, 1.f); //reverse because my Ray Tracer (and most other peoples') assumes 0,0 is bottom left not top left!
+               float green = glm::clamp(get(x,h-1-y).getG(), 0.f, 1.f);
+               float blue = glm::clamp(get(x,h-1-y).getB(), 0.f, 1.f);
+               file.put((int)(red*255));
+               file.put((int)(green*255));
+               file.put((int)(blue*255));
             }
          }
          file.close();

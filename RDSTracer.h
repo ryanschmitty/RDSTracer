@@ -19,6 +19,21 @@
 namespace RDST
 {
    /**
+    * Surface storage helper class
+    */
+   class Surface
+   {
+   public:
+      explicit Surface(const glm::vec4& _color = glm::vec4(1.f), const Finish& _finish = Finish())
+      : color(_color),
+        finish(_finish)
+      {}
+
+      glm::vec4 color;
+      Finish finish;
+   };
+
+   /**
     * Intersection information.
     */
    class Intersection
@@ -28,18 +43,21 @@ namespace RDST
       : hit(false),
         t(FLT_MAX),
         p(glm::vec3(0.f)),
-        n(glm::vec3(0.f, 1.f, 0.f))
+        n(glm::vec3(0.f, 1.f, 0.f)),
+        surf(Surface())
       {}
-      explicit Intersection(bool hit, float hitT, const glm::vec3& hitPoint, const glm::vec3& normal)
+      explicit Intersection(bool hit, float hitT, const glm::vec3& hitPoint, const glm::vec3& normal, const Surface& surface)
       : hit(hit),
         t(hitT),
         p(hitPoint),
-        n(normal)
+        n(normal),
+        surf(surface)
       {}
       bool hit;
       float t;
       glm::vec3 p;
       glm::vec3 n;
+      Surface surf;
    };
 
    /**
@@ -79,11 +97,12 @@ namespace RDST
       static void RayTrace(const SceneDescription& scene, Image& image);
    private:
       /* Helper Functions */
-      static void ShadePixel(Pixel& p, const Camera& cam, const std::vector<PointLightPtr>& lights, const GeomObject& obj, const Intersection& intrs);
       static std::vector<RayPtr> GenerateRays(const Camera& cam, const Image& image);
-      static Ray TransformRay(const Ray& ray, const glm::mat4& worldToObj);
-      static Intersection RaySphereIntersect(const Ray& ray, const Sphere& sphere);
-      static Intersection RayPlaneIntersect(const Ray& ray, const Plane& plane);
+      static void                ShadePixel(Pixel& p, const Camera& cam, const std::vector<PointLightPtr>& lights, const Intersection& intrs);
+      static Intersection        RayObjectsIntersect(Ray& ray, const std::vector<GeomObjectPtr>& objs);
+      static Ray                 TransformRay(const Ray& ray, const glm::mat4& worldToObj);
+      static Intersection        RaySphereIntersect(const Ray& ray, const Sphere& sphere);
+      static Intersection        RayPlaneIntersect(const Ray& ray, const Plane& plane);
    };
 }
 

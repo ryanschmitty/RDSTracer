@@ -9,6 +9,7 @@
 #include "RDSTracer.h"
 #include <iostream>
 #include <iomanip>
+#include <boost/foreach.hpp>
 
 namespace RDST
 {
@@ -22,26 +23,12 @@ namespace RDST
    {
       //Create rays
       std::vector<RayPtr> rays(GenerateRays(*scene.pCam, image));
-      //For each ray, for each object
-      for (unsigned int rayi=0; rayi<rays.size(); ++rayi) {
-         for (unsigned int objsi=0; objsi<scene.objs.size(); ++objsi) {
-            //Run intersection code
-            OBJ_TYPE type = scene.objs[objsi]->getType();
-            Intersection intrs;
-            if (type == RDST::SPHERE) {
-               intrs = RaySphereIntersect(*rays[rayi], *boost::dynamic_pointer_cast<Sphere, GeomObject>(scene.objs[objsi]));
-            }
-            else if(type == RDST::PLANE) {
-               intrs = RayPlaneIntersect(*rays[rayi], *boost::dynamic_pointer_cast<Plane, GeomObject>(scene.objs[objsi]));
-            }
-            //Shade on hit
-            if (intrs.hit &&
-                intrs.t < rays[rayi]->tCur &&
-                intrs.t < Ray::tMax &&
-                intrs.t > Ray::tMin) {
-                  rays[rayi]->tCur = intrs.t; //set new current t
-                  ShadePixel(image.get(rayi), *scene.pCam, scene.lights, *scene.objs[objsi], intrs);
-            }
+      //For each ray
+      for (unsigned int rayi=0; rayi < rays.size(); ++rayi) { //note to self: using int for-loop here so I can use it to reference a pixel as well as a ray.
+         Intersection intrs = RayObjectsIntersect(*rays[rayi], scene.objs);
+         //Shade on hit
+         if (intrs.hit) {
+            ShadePixel(image.get(rayi), *scene.pCam, scene.lights, intrs);
          }
       }
    }
@@ -68,17 +55,42 @@ namespace RDST
       return rays;
    }
 
-   void Tracer::ShadePixel(Pixel& p, const Camera& cam, const std::vector<PointLightPtr>& lights, const GeomObject& obj, const Intersection& intrs)
+   void Tracer::ShadePixel(Pixel& p, const Camera& cam, const std::vector<PointLightPtr>& lights, const Intersection& intrs)
    {
       PointLight& light(*lights.at(0));
-      glm::vec3 ambient(obj.getFinish().getAmbient() * obj.getColor() * light.getColor());
+      glm::vec3 ambient(intrs.surf.finish.getAmbient() * intrs.surf.color * light.getColor());
       glm::vec3 l(glm::normalize(light.getPos()-intrs.p));
       float dif = glm::max(0.f, glm::dot(intrs.n, l));
-      glm::vec3 diffuse(dif * obj.getFinish().getDiffuse() * obj.getColor() * light.getColor());
+      glm::vec3 diffuse(dif * intrs.surf.finish.getDiffuse() * intrs.surf.color * light.getColor());
       glm::vec4 src(ambient + diffuse,1.f);
       //glm::vec4 dst(p.get());
       //dst = (src*src.a) + (dst*(1-src.a)); //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
       p.set(src);
+   }
+   
+   Intersection Tracer::RayObjectsIntersect(Ray& ray, const std::vector<GeomObjectPtr>& objs)
+   {
+      Intersection retIntrs; //defaults to hit=false
+      //Intersect loop over all objects to find the closest hit
+      BOOST_FOREACH (GeomObjectPtr pGO, objs) {
+         Intersection intrs;
+         OBJ_TYPE type = pGO->getType();
+         if (type == RDST::SPHERE) {
+            intrs = RaySphereIntersect(ray, *boost::dynamic_pointer_cast<Sphere, GeomObject>(pGO));
+         }
+         else if(type == RDST::PLANE) {
+            intrs = RayPlaneIntersect(ray, *boost::dynamic_pointer_cast<Plane, GeomObject>(pGO));
+         }
+         //Check for closer, valid, hit
+         if (intrs.hit &&
+             intrs.t < ray.tCur &&
+             intrs.t < Ray::tMax &&
+             intrs.t > Ray::tMin) {
+               ray.tCur = intrs.t; //set new current t
+               retIntrs = intrs; //it's closer; grab it!
+         }
+      }
+      return retIntrs;
    }
 
    Ray Tracer::TransformRay(const Ray& ray, const glm::mat4& worldToObj)
@@ -105,7 +117,7 @@ namespace RDST
       if (ll > rr) t = s-q; //we're outside the sphere so return first point
       else t = s+q;
       glm::vec3 n(sphere.getModelXform() * glm::vec4((xr.o+(xr.d*t))-sphere.getCenter(), 0.f));
-      return Intersection(true, t, ray.o + (ray.d*t), glm::normalize(n));
+      return Intersection(true, t, ray.o + (ray.d*t), glm::normalize(n), Surface(sphere.getColor(), sphere.getFinish()));
    }
 
    Intersection Tracer::RayPlaneIntersect(const Ray& ray, const Plane& plane)
@@ -116,6 +128,6 @@ namespace RDST
       glm::vec3 n = plane.getNormal();
       if (glm::dot(xr.d, n) >= 0.f) return Intersection(); //ray either will hit on -t or be parallel
       float t = -1*fabs(glm::dot(n,xr.o)+plane.getDistance()) / glm::dot(n,xr.d);
-      return Intersection(true, t, ray.o + (ray.d*t), plane.getNormal());
+      return Intersection(true, t, ray.o + (ray.d*t), plane.getNormal(), Surface(plane.getColor(), plane.getFinish()));
    }
 }

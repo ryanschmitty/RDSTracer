@@ -113,8 +113,8 @@ namespace RDST
    class PointLight: public Colored, public SceneObject
    {
    public:
-      explicit PointLight(const glm::vec3& position = glm::vec3(0.f, 0.f, 0.f),
-                          const glm::vec4& color = glm::vec4(1.f, 1.f, 1.f, 1.f))
+      explicit PointLight(const glm::vec3& position = glm::vec3(0.f),
+                          const glm::vec4& color = glm::vec4(1.f))
       : Colored(color),
         SceneObject(),
         _position(position)
@@ -207,7 +207,6 @@ namespace RDST
       float _refraction;
       float _ior; //index of refraction
    };
-   typedef boost::shared_ptr<Finish> FinishPtr;
 
    /**
     * Abstract Base Geometric Object Storage Class

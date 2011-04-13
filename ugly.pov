@@ -8,7 +8,7 @@ camera {
 }
 
 
-light_source {<-100, 100, 100> color rgb <1.0, 1.0, 1.0>}
+light_source {<-100, 100, 100> color rgb <1.5, 1.5, 1.5>}
 
 sphere { <0, 0, 0>, 2
   pigment { color rgb <1.0, 0.0, 1.0>}
