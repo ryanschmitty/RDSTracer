@@ -95,8 +95,10 @@ namespace RDST
       BOOST_ASSERT(nonMatchedBrackets >= 0);
       //grab file text and store it in inputText until we get fully matched brackets
       std::string line;
+      inputText += " "; //just to make sure we've got plenty white space
       while (nonMatchedBrackets > 0 && std::getline(file, line)) {
          RemoveComment(line);
+         line += " "; //add white space where the \n was.
          it = line.begin();
          for (; it != line.end() && nonMatchedBrackets > 0; ++it) {
             inputText += *it;
@@ -282,15 +284,15 @@ namespace RDST
          if (token.find("finish") != std::string::npos)
             finish = ParseFinish(tokens);
          else if (token.find("translate") != std::string::npos)
-            xforms = glm::translate(xforms, ParseVec3FromStream(tokens));
+            xforms = glm::translate(glm::mat4(1.f), ParseVec3FromStream(tokens)) * xforms;
          else if (token.find("rotate") != std::string::npos) {
             glm::vec3 axisRotsVec(ParseVec3FromStream(tokens));
-            xforms = glm::rotate(xforms, axisRotsVec.x, glm::vec3(1.f, 0.f, 0.f)); //rotation about x
-            xforms = glm::rotate(xforms, axisRotsVec.y, glm::vec3(0.f, 1.f, 0.f)); //rotation about y
-            xforms = glm::rotate(xforms, axisRotsVec.z, glm::vec3(0.f, 0.f, 1.f)); //rotation about z
+            xforms = glm::rotate(glm::mat4(1.f), axisRotsVec.x, glm::vec3(1.f, 0.f, 0.f)) * xforms; //rotation about x
+            xforms = glm::rotate(glm::mat4(1.f), axisRotsVec.y, glm::vec3(0.f, 1.f, 0.f)) * xforms; //rotation about y
+            xforms = glm::rotate(glm::mat4(1.f), axisRotsVec.z, glm::vec3(0.f, 0.f, 1.f)) * xforms; //rotation about z
          }
          else if (token.find("scale") != std::string::npos)
-            xforms = glm::scale(xforms, ParseScale(tokens));
+            xforms = glm::scale(glm::mat4(), ParseScale(tokens)) * xforms;
          else if (token.find("rgb") != std::string::npos)
             color = glm::vec4(ParseVec3FromStream(tokens), 1.f);
          else if (token.find("rgbf") != std::string::npos)
@@ -407,7 +409,7 @@ namespace RDST
       std::getline(tokens, token, ','); //eat the comma between
       tokens >> token;
       radius = ParseFloat(token);
-      ParseGeomObject(tokens.rdbuf()->str(), color, xforms, finish);
+      ParseGeomObject(tokens, color, xforms, finish);
 
       return SpherePtr(new Sphere(center, radius, color, xforms, finish));
    }
