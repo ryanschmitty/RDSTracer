@@ -19,13 +19,13 @@ namespace RDST
    void Tracer::RayTrace(const SceneDescription& scene, Image& image)
    {
       //Create rays
-      std::vector<RayPtr> rays(GenerateRays(*scene.pCam, image));
+      std::vector<RayPtr> rays(GenerateRays(scene.cam(), image));
       //For each ray
       for (unsigned int rayi=0; rayi < rays.size(); ++rayi) { //note to self: using int for-loop here so I can use it to reference a pixel as well as a ray.
-         Intersection intrs = RayObjectsIntersect(*rays[rayi], scene.objs);
+         Intersection intrs = RayObjectsIntersect(*rays[rayi], scene.objs());
          //Shade on hit
          if (intrs.hit) {
-            ShadePixel(image.get(rayi), *scene.pCam, scene.lights, intrs);
+            ShadePixel(image.get(rayi), scene, intrs);
          }
       }
    }
@@ -52,24 +52,31 @@ namespace RDST
       return rays;
    }
 
-   void Tracer::ShadePixel(Pixel& p, const Camera& cam, const std::vector<PointLightPtr>& lights, const Intersection& intrs)
+   void Tracer::ShadePixel(Pixel& p, const SceneDescription& scene, const Intersection& intrs)
    {
-      PointLight& light = *lights.at(0);
+      //Required Vars
+      PointLight& light = *scene.lights().at(0);
       //Ambient
       glm::vec3 ambient(intrs.surf.finish.getAmbient() * intrs.surf.color * light.getColor());
-      //Diffuse
-      glm::vec3 l = glm::normalize(light.getPos()-intrs.p);
-      float diff = glm::max(0.f, glm::dot(intrs.n, l));
-      glm::vec3 diffuse(diff * intrs.surf.finish.getDiffuse() * intrs.surf.color * light.getColor());
-      //Specular Blinn-Phong
-      glm::vec3 v = glm::normalize(cam.getPos()-intrs.p);
-      glm::vec3 h = glm::normalize(l+v);
-      float spec = glm::max(0.f, glm::dot(intrs.n, h));
-      //glm::vec3 r = glm::reflect(-l, intrs.n);
-      //float spec = glm::max(0.f, glm::dot(r, v));
-      glm::vec3 specular(powf(spec,128) * glm::vec4(1.f) * intrs.surf.finish.getSpecular() * light.getColor());
-      //float m = 1.f-intrs.surf.finish.getRoughness();
-      //glm::vec3 specular( (((m+8)/(8*3.14159265f)) * powf(spec,m) * intrs.surf.color) * (diff*intrs.surf.finish.getSpecular()*light.getColor())  );
+      //Diffuse and Specular
+      Ray shadowRay = Ray(glm::normalize(light.getPos()-intrs.p), intrs.p+(0.01f*intrs.n)); //Note to self: needed to move the shadow ray off the origin object a bit
+      glm::vec3 diffuse(0.f);
+      glm::vec3 specular(0.f);
+      if (!RayObjectsIntersect(shadowRay, scene.objs()).hit) {
+         //diffuse calcs
+         glm::vec3 l = glm::normalize(light.getPos()-intrs.p);
+         float diff = glm::max(0.f, glm::dot(intrs.n, l));
+         diffuse = glm::vec3(diff * intrs.surf.finish.getDiffuse() * intrs.surf.color * light.getColor());
+         //specular calcs
+         glm::vec3 v = glm::normalize(scene.cam().getPos()-intrs.p);
+         glm::vec3 h = glm::normalize(l+v);
+         float spec = glm::max(0.f, glm::dot(intrs.n, h));
+         //glm::vec3 r = glm::reflect(-l, intrs.n);
+         //float spec = glm::max(0.f, glm::dot(r, v));
+         specular = glm::vec3(powf(spec,128) * glm::vec4(1.f) * intrs.surf.finish.getSpecular() * light.getColor());
+         //float m = 1.f-intrs.surf.finish.getRoughness();
+         //specular = glm::vec3( (((m+8)/(8*3.14159265f)) * powf(spec,m) * intrs.surf.color) * (diff*intrs.surf.finish.getSpecular()*light.getColor()) );
+      }
       //Put it all together and blend
       glm::vec4 src(ambient + diffuse + specular,1.f);
       glm::vec4 dst = p.get();

@@ -461,18 +461,36 @@ namespace RDST
    {
    public:
       explicit SceneDescription()
-      : pCam(boost::shared_ptr<Camera>()),
-      lights(std::vector<PointLightPtr>()),
-      objs(std::vector<GeomObjectPtr>())
+      : _pCam(boost::shared_ptr<Camera>()),
+        _lights(std::vector<PointLightPtr>()),
+        _objs(std::vector<GeomObjectPtr>())
       {}
       explicit SceneDescription(CameraPtr pCamera, std::vector<PointLightPtr> lights, std::vector<GeomObjectPtr> geometryObjects)
-      : pCam(pCamera),
-        lights(lights),
-        objs(geometryObjects)
+      : _pCam(pCamera),
+        _lights(lights),
+        _objs(geometryObjects)
       {}
-      CameraPtr pCam;
-      std::vector<PointLightPtr> lights;
-      std::vector<GeomObjectPtr> objs;
+
+      //Mutable
+      void setCam(CameraPtr pCamera)
+      { _pCam = pCamera; }
+      void setLights(std::vector<PointLightPtr> lights)
+      { _lights = lights; }
+      void setObjs(std::vector<GeomObjectPtr> objs)
+      { _objs = objs; }
+
+      //Non-mutable
+      const Camera& cam() const
+      { return *_pCam; }
+      const std::vector<PointLightPtr>& lights() const
+      { return _lights; }
+      const std::vector<GeomObjectPtr>& objs() const
+      { return _objs; }
+
+   private:
+      CameraPtr _pCam;
+      std::vector<PointLightPtr> _lights;
+      std::vector<GeomObjectPtr> _objs;
    };
 } // end namespace RDST
 
