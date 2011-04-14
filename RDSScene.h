@@ -223,11 +223,18 @@ namespace RDST
       {}
       virtual ~GeomObject() = 0;
 
-      //Model Transformation
+      //Model Transformations
       const glm::mat4& getModelXform() const
       { return _modelXform; }
-      void setModelXform(const glm::mat4& modelXform)
-      { _modelXform = modelXform; }
+      const glm::mat3& getTransposedInverse() const
+      { return _transposedInverse; }
+      const glm::mat3& getTransposedAdjoint() const
+      { return _transposedAdjoint; }
+      void setModelXform(const glm::mat4& modelXform) {
+         _modelXform = modelXform;
+         _transposedInverse = glm::transpose(glm::inverse(glm::mat3(modelXform)));
+         _transposedAdjoint = glm::transpose(Adjoint(glm::mat3(modelXform)));
+      }
 
       //Finish
       const Finish& getFinish() const
@@ -236,7 +243,22 @@ namespace RDST
       { _finish = finish; }
 
    private:
+      static glm::mat3 Adjoint(const glm::mat3& m) {
+         float d00 = (m[1][1]*m[2][2]) - (m[2][1]*m[1][2]);
+         float d01 = (m[0][1]*m[2][2]) - (m[2][1]*m[0][2]);
+         float d02 = (m[0][1]*m[1][2]) - (m[1][1]*m[0][2]);
+         float d10 = (m[1][0]*m[2][2]) - (m[2][0]*m[1][2]);
+         float d11 = (m[0][0]*m[2][2]) - (m[2][0]*m[0][2]);
+         float d12 = (m[0][0]*m[1][2]) - (m[1][0]*m[0][2]);
+         float d20 = (m[1][0]*m[2][1]) - (m[2][0]*m[1][1]);
+         float d21 = (m[0][0]*m[2][1]) - (m[2][0]*m[0][1]);
+         float d22 = (m[0][0]*m[1][1]) - (m[1][0]*m[0][1]);
+         return glm::mat3 (d00, -d01, d02, -d10, d11, -d12, d20, -d21, d22);
+      }
+
       glm::mat4 _modelXform;
+      glm::mat3 _transposedInverse;
+      glm::mat3 _transposedAdjoint;
       Finish    _finish;
    };
    typedef boost::shared_ptr<GeomObject> GeomObjectPtr;

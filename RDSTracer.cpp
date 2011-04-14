@@ -7,9 +7,6 @@
  */
 
 #include "RDSTracer.h"
-#include <iostream>
-#include <iomanip>
-#include <boost/foreach.hpp>
 
 namespace RDST
 {
@@ -57,29 +54,42 @@ namespace RDST
 
    void Tracer::ShadePixel(Pixel& p, const Camera& cam, const std::vector<PointLightPtr>& lights, const Intersection& intrs)
    {
-      PointLight& light(*lights.at(0));
+      PointLight& light = *lights.at(0);
+      //Ambient
       glm::vec3 ambient(intrs.surf.finish.getAmbient() * intrs.surf.color * light.getColor());
-      glm::vec3 l(glm::normalize(light.getPos()-intrs.p));
-      float dif = glm::max(0.f, glm::dot(intrs.n, l));
-      glm::vec3 diffuse(dif * intrs.surf.finish.getDiffuse() * intrs.surf.color * light.getColor());
-      glm::vec4 src(ambient + diffuse,1.f);
-      //glm::vec4 dst(p.get());
-      //dst = (src*src.a) + (dst*(1-src.a)); //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-      p.set(src);
+      //Diffuse
+      glm::vec3 l = glm::normalize(light.getPos()-intrs.p);
+      float diff = glm::max(0.f, glm::dot(intrs.n, l));
+      glm::vec3 diffuse(diff * intrs.surf.finish.getDiffuse() * intrs.surf.color * light.getColor());
+      //Specular Blinn-Phong
+      glm::vec3 v = glm::normalize(cam.getPos()-intrs.p);
+      glm::vec3 h = glm::normalize(l+v);
+      float spec = glm::max(0.f, glm::dot(intrs.n, h));
+      //glm::vec3 r = glm::reflect(-l, intrs.n);
+      //float spec = glm::max(0.f, glm::dot(r, v));
+      glm::vec3 specular(powf(spec,128) * glm::vec4(1.f) * intrs.surf.finish.getSpecular() * light.getColor());
+      //float m = 1.f-intrs.surf.finish.getRoughness();
+      //glm::vec3 specular( (((m+8)/(8*3.14159265f)) * powf(spec,m) * intrs.surf.color) * (diff*intrs.surf.finish.getSpecular()*light.getColor())  );
+      //Put it all together and blend
+      glm::vec4 src(ambient + diffuse + specular,1.f);
+      glm::vec4 dst = p.get();
+      dst = (src*src.a) + (dst*(1-src.a)); //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+      p.set(dst);
    }
    
    Intersection Tracer::RayObjectsIntersect(Ray& ray, const std::vector<GeomObjectPtr>& objs)
    {
       Intersection retIntrs; //defaults to hit=false
       //Intersect loop over all objects to find the closest hit
-      BOOST_FOREACH (GeomObjectPtr pGO, objs) {
+      std::vector<GeomObjectPtr>::const_iterator cit = objs.begin();
+      for (; cit != objs.end(); ++cit) {
          Intersection intrs;
-         OBJ_TYPE type = pGO->getType();
+         OBJ_TYPE type = (*cit)->getType();
          if (type == RDST::SPHERE) {
-            intrs = RaySphereIntersect(ray, *boost::dynamic_pointer_cast<Sphere, GeomObject>(pGO));
+            intrs = RaySphereIntersect(ray, *boost::dynamic_pointer_cast<Sphere, GeomObject>(*cit));
          }
          else if(type == RDST::PLANE) {
-            intrs = RayPlaneIntersect(ray, *boost::dynamic_pointer_cast<Plane, GeomObject>(pGO));
+            intrs = RayPlaneIntersect(ray, *boost::dynamic_pointer_cast<Plane, GeomObject>(*cit));
          }
          //Check for closer, valid, hit
          if (intrs.hit &&
@@ -116,7 +126,10 @@ namespace RDST
       float t = 0.f;
       if (ll > rr) t = s-q; //we're outside the sphere so return first point
       else t = s+q;
-      glm::vec3 n(sphere.getModelXform() * glm::vec4((xr.o+(xr.d*t))-sphere.getCenter(), 0.f));
+      glm::mat3 normalXform = sphere.getTransposedAdjoint();
+      //glm::mat3 normalXform = sphere.getTransposedInverse();
+      //glm::mat3 normalXform(sphere.getModelXform());
+      glm::vec3 n = normalXform * glm::normalize((xr.o+(xr.d*t))-sphere.getCenter()); //make sure to normalize n after this.
       return Intersection(true, t, ray.o + (ray.d*t), glm::normalize(n), Surface(sphere.getColor(), sphere.getFinish()));
    }
 
