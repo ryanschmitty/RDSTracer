@@ -35,10 +35,10 @@ namespace RDST
       std::vector<RayPtr> rays;
       float h = image.getHeight();
       float w = image.getWidth();
-      float l = -glm::length(cam.getRight())/2.f;
-      float r = -l;
-      float b = -glm::length(cam.getUp())/2.f;
-      float t = -b;
+      float r = glm::length(cam.getRight())*0.5f;
+      float l = -r;
+      float t = glm::length(cam.getUp())*0.5f;
+      float b = -t;
       for (int y=0; y<h; y++) {
          for (int x=0; x<w; x++) {
             //Get view coords

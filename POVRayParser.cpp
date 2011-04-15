@@ -171,7 +171,7 @@ namespace RDST
    float
    POVRayParser::ParseFloat(std::string& token)
    {
-      std::string startChars("-0123456789");
+      std::string startChars("-.0123456789");
       std::string endChars("0123456789");
       std::string::size_type startPos(token.find_first_of(startChars));
       std::string::size_type stopPos(token.find_last_of(endChars)+1);
