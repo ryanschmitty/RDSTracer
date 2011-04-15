@@ -1,10 +1,10 @@
 
 /**
- * File: RDSTracer.cpp
- * --------------------
- * The actual Ray Tracer Implementation!
- * Author: Ryan Schmitt
- */
+* File: RDSTracer.cpp
+* --------------------
+* The actual Ray Tracer Implementation!
+* Author: Ryan Schmitt
+*/
 
 #include "RDSTracer.h"
 
@@ -33,17 +33,21 @@ namespace RDST
    std::vector<RayPtr> Tracer::GenerateRays(const Camera& cam, const Image& image)
    {
       std::vector<RayPtr> rays;
-      int h = image.getHeight();
-      int w = image.getWidth();
+      float h = image.getHeight();
+      float w = image.getWidth();
+      float l = -glm::length(cam.getRight())/2.f;
+      float r = -l;
+      float b = -glm::length(cam.getUp())/2.f;
+      float t = -b;
       for (int y=0; y<h; y++) {
          for (int x=0; x<w; x++) {
-            //Normalize screen coordinates: [-1, 1]
-            float u = (((x+0.5f)/w)-0.5f) * 2.f;
-            float v = (((y+0.5f)/h)-0.5f) * 2.f;
+            //Get view coords
+            float u = l+((r-l)*(x+0.5f)/w);
+            float v = b+((t-b)*(y+0.5f)/h);
             //Create Ray
             glm::vec3 rayOrigin(0.f,0.f,0.f); //view space
             glm::vec3 rayDir(u,v,1.f);
-            glm::mat4 matViewWorld(glm::vec4(cam.getRight(),0.f), glm::vec4(cam.getUp(),0.f), 1.f*glm::vec4(cam.getDir(),0.f), glm::vec4(cam.getPos(),1.f));
+            glm::mat4 matViewWorld(glm::vec4(glm::normalize(cam.getRight()),0.f), glm::vec4(cam.getUp(),0.f), glm::vec4(cam.getDir(),0.f), glm::vec4(cam.getPos(),1.f));
             rayOrigin = glm::vec3(matViewWorld * glm::vec4(rayOrigin, 1.f)); //convert to world space
             rayDir = glm::normalize(glm::vec3(matViewWorld * glm::vec4(rayDir, 0.f)));
             rays.push_back(RayPtr(new Ray(rayDir, rayOrigin)));
@@ -73,7 +77,7 @@ namespace RDST
          float spec = glm::max(0.f, glm::dot(intrs.n, h));
          //glm::vec3 r = glm::reflect(-l, intrs.n);
          //float spec = glm::max(0.f, glm::dot(r, v));
-         specular = glm::vec3(powf(spec,128) * glm::vec4(1.f) * intrs.surf.finish.getSpecular() * light.getColor());
+         specular = glm::vec3(powf(spec,1.f/intrs.surf.finish.getRoughness()) * intrs.surf.color * intrs.surf.finish.getSpecular() * light.getColor());
          //float m = 1.f-intrs.surf.finish.getRoughness();
          //specular = glm::vec3( (((m+8)/(8*3.14159265f)) * powf(spec,m) * intrs.surf.color) * (diff*intrs.surf.finish.getSpecular()*light.getColor()) );
       }
@@ -83,7 +87,7 @@ namespace RDST
       dst = (src*src.a) + (dst*(1-src.a)); //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
       p.set(dst);
    }
-   
+
    Intersection Tracer::RayObjectsIntersect(Ray& ray, const std::vector<GeomObjectPtr>& objs)
    {
       Intersection retIntrs; //defaults to hit=false
@@ -100,9 +104,9 @@ namespace RDST
          }
          //Check for closer, valid, hit
          if (intrs.hit &&
-             intrs.t < ray.tCur &&
-             intrs.t < Ray::tMax &&
-             intrs.t > Ray::tMin) {
+            intrs.t < ray.tCur &&
+            intrs.t < Ray::tMax &&
+            intrs.t > Ray::tMin) {
                ray.tCur = intrs.t; //set new current t
                retIntrs = intrs; //it's closer; grab it!
          }
