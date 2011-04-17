@@ -26,38 +26,38 @@ namespace RDST
                      float green = 0.f,
                      float blue = 0.f,
                      float alpha = 1.f)
-      : r(red),
-        g(green),
-        b(blue),
-        a(alpha)
+      : _r(red),
+        _g(green),
+        _b(blue),
+        _a(alpha)
       {}
 
-      float getR() const
-      { return r; }
-      float getG() const
-      { return g; }
-      float getB() const
-      { return b; }
-      float getA() const
-      { return a; }
-      glm::vec4 get() const
-      { return glm::vec4(r,g,b,a); }
+      float r() const
+      { return _r; }
+      float g() const
+      { return _g; }
+      float b() const
+      { return _b; }
+      float a() const
+      { return _a; }
+      glm::vec4 rgba() const
+      { return glm::vec4(_r,_g,_b,_a); }
 
       void setR(float red)
-      { r = red; }
+      { _r = red; }
       void setG(float green)
-      { g = green; }
+      { _g = green; }
       void setB(float blue)
-      { b = blue; }
+      { _b = blue; }
       void setA(float alpha)
-      { a = alpha; }
+      { _a = alpha; }
       void set(float red, float green, float blue, float alpha)
       { setR(red); setG(green); setB(blue); setA(alpha); }
       void set(const glm::vec4& color)
       { set(color.r, color.g, color.b, color.a); }
 
    private:
-      float r, g, b, a;
+      float _r, _g, _b, _a;
    };
 
    /**
@@ -119,9 +119,9 @@ namespace RDST
          // data, 0,0 is top left...
          for (int y = 0; y < h; ++y) {
             for (int x = 0; x < w; ++x) {
-               float red = glm::clamp(get(x,h-1-y).getR(), 0.f, 1.f); //reverse because my Ray Tracer (and most other peoples') assumes 0,0 is bottom left not top left!
-               float green = glm::clamp(get(x,h-1-y).getG(), 0.f, 1.f);
-               float blue = glm::clamp(get(x,h-1-y).getB(), 0.f, 1.f);
+               float red = glm::clamp(get(x,h-1-y).r(), 0.f, 1.f); //reverse because my Ray Tracer (and most other peoples') assumes 0,0 is bottom left not top left!
+               float green = glm::clamp(get(x,h-1-y).g(), 0.f, 1.f);
+               float blue = glm::clamp(get(x,h-1-y).b(), 0.f, 1.f);
                file.put((int)(red*255));
                file.put((int)(green*255));
                file.put((int)(blue*255));

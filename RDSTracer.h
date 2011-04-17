@@ -28,7 +28,6 @@ namespace RDST
       : color(_color),
         finish(_finish)
       {}
-
       glm::vec4 color;
       Finish finish;
    };
@@ -70,12 +69,14 @@ namespace RDST
                    const glm::vec3& origin = glm::vec3(0.f))
       : d(direction),
         o(origin),
-        tCur(tMax)
+        tCur(FLT_MAX),
+        tMin(0.f),
+        tMax(FLT_MAX)
       {}
       glm::vec3 d, o;
       float tCur;
-      static float tMin; // = 0.f;
-      static float tMax; // = FLT_MAX;
+      float tMin;
+      float tMax;
    };
    typedef boost::shared_ptr<Ray> RayPtr;
 
@@ -103,6 +104,7 @@ namespace RDST
       static Ray                 TransformRay(const Ray& ray, const glm::mat4& worldToObj);
       static Intersection        RaySphereIntersect(const Ray& ray, const Sphere& sphere);
       static Intersection        RayPlaneIntersect(const Ray& ray, const Plane& plane);
+      static Intersection        RayTriangleIntersect(const Ray& ray, const Triangle& tri);
    };
 }
 

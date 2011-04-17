@@ -421,36 +421,41 @@ namespace RDST
    class Triangle: public GeomObject
    {
    public:
-      explicit Triangle(const glm::vec3& vertex1 = glm::vec3(0.f, 0.f, 1.f),
-                        const glm::vec3& vertex2 = glm::vec3(0.f, 1.f, 0.f),
-                        const glm::vec3& vertex3 = glm::vec3(1.f, 0.f, 0.f),
+      explicit Triangle(const glm::vec3& vertex0 = glm::vec3(0.f, 0.f, 1.f),
+                        const glm::vec3& vertex1 = glm::vec3(0.f, 1.f, 0.f),
+                        const glm::vec3& vertex2 = glm::vec3(1.f, 0.f, 0.f),
                         const glm::vec4& color = glm::vec4(1.f, 1.f, 1.f, 1.f),
                         const glm::mat4& modelXform = glm::mat4(1.f),
                         const Finish& finish = Finish())
       : GeomObject(color, modelXform, finish),
+        _vert0(vertex0),
         _vert1(vertex1),
         _vert2(vertex2),
-        _vert3(vertex3)
+        _normal(glm::normalize(glm::cross(vertex1-vertex0, vertex2-vertex0)))
       {}
 
       //Vertices
+      const glm::vec3& getVertex0() const
+      { return _vert0; }
       const glm::vec3& getVertex1() const
       { return _vert1; }
       const glm::vec3& getVertex2() const
       { return _vert2; }
-      const glm::vec3& getVertex3() const
-      { return _vert3; }
 
-      void setDimensions(const glm::vec3& vertex1, const glm::vec3& vertex2, const glm::vec3& vertex3)
-      { _vert1 = vertex1; _vert2 = vertex2; _vert3 = vertex3; }
+      const glm::vec3& getNormal() const
+      { return _normal; }
+
+      void setDimensions(const glm::vec3& vertex0, const glm::vec3& vertex1, const glm::vec3& vertex2)
+      { _vert0 = vertex0; _vert1 = vertex1; _vert2 = vertex2; _normal = glm::normalize(glm::cross(_vert1-_vert0, _vert2-_vert0)); }
 
       OBJ_TYPE getType() const
       { return TRIANGLE; }
 
    private:
+      glm::vec3 _vert0;
       glm::vec3 _vert1;
       glm::vec3 _vert2;
-      glm::vec3 _vert3;
+      glm::vec3 _normal;
    };
    typedef boost::shared_ptr<Triangle> TrianglePtr;
 

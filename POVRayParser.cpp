@@ -1,9 +1,9 @@
 /**
- * POVRayParser.cpp
- * --------------------
- * Implementation for Parser for POV Ray files (.pov)
- * Author: Ryan Schmitt
- */
+* POVRayParser.cpp
+* --------------------
+* Implementation for Parser for POV Ray files (.pov)
+* Author: Ryan Schmitt
+*/
 
 #include "POVRayParser.h"
 #include <iostream>
@@ -167,7 +167,7 @@ namespace RDST
       }
       return scale;
    }
-   
+
    float
    POVRayParser::ParseFloat(std::string& token)
    {
@@ -180,13 +180,12 @@ namespace RDST
    }
 
    CameraPtr
-   POVRayParser::ParseCamera(const std::string& inputText)
+      POVRayParser::ParseCamera(const std::string& inputText)
    {
       glm::vec3 posVec, upVec, rightVec, lookAtVec;
       std::string token;
       std::istringstream tokens(inputText);
-      while (std::getline(tokens, token, ' '))
-      {
+      while (std::getline(tokens, token, ' ')) {
          if (token.find("location") != std::string::npos)
             posVec = ParseVec3FromStream(tokens);
          else if (token.find("up") != std::string::npos)
@@ -206,8 +205,7 @@ namespace RDST
       glm::vec4 color;
       std::string token;
       std::istringstream tokens(inputText);
-      while (std::getline(tokens, token, ' '))
-      {
+      while (std::getline(tokens, token, ' ')) {
          if (token.find("light_source") != std::string::npos) //since lights have no "location" identifier, we just have to assume it comes first... lame
             posVec = ParseVec3FromStream(tokens);
          else if (token.find("rgb") != std::string::npos)
@@ -225,8 +223,7 @@ namespace RDST
       ambient = diffuse = specular = roughness = reflection = refraction = ior = 0.f;
       std::string token;
       bool running(true);
-      while (running && std::getline(tokens, token, ' '))
-      {
+      while (running && std::getline(tokens, token, ' ')) {
          //Parse different types of Finish floats
          if (token.find("ambient") != std::string::npos) {
             tokens >> token;
@@ -280,11 +277,10 @@ namespace RDST
       /*boost::char_separator<char> sep(" \n");
       boost::tokenizer<boost::char_separator<char>> tok(inputText, sep);
       for (boost::tokenizer<boost::char_separator<char>>::iterator beg=tok.begin(); beg!=tok.end();++beg) {
-         std::cout << *beg << "\n";
+      std::cout << *beg << "\n";
       }*/
       std::string token;
-      while (std::getline(tokens, token, ' '))
-      {
+      while (std::getline(tokens, token, ' ')) {
          if (token.find("finish") != std::string::npos)
             finish = ParseFinish(tokens);
          else if (token.find("translate") != std::string::npos)
@@ -357,7 +353,7 @@ namespace RDST
       std::getline(tokens, token, ','); //eat the comma between
       tokens >> token;
       radius2 = ParseFloat(token);
-     ParseGeomObject(tokens, color, xforms, finish);
+      ParseGeomObject(tokens, color, xforms, finish);
 
       return ConePtr(new Cone(end1, radius1, end2, radius2, color, xforms, finish));
    }
@@ -371,7 +367,7 @@ namespace RDST
       Finish finish;
       glm::mat4 xforms(1.f); //identity
       glm::vec4 color;
-      
+
       //Token vars
       std::string token;
       std::istringstream tokens(inputText);
@@ -385,7 +381,7 @@ namespace RDST
       std::getline(tokens, token, ','); //eat the comma between
       tokens >> token;
       distance = ParseFloat(token);
-     ParseGeomObject(tokens, color, xforms, finish);
+      ParseGeomObject(tokens, color, xforms, finish);
 
       return PlanePtr(new Plane(normal, distance, color, xforms, finish));
    }
@@ -393,13 +389,13 @@ namespace RDST
    SpherePtr
    POVRayParser::ParseSphere(const std::string& inputText)
    {
-     //Sphere vars
+      //Sphere vars
       glm::vec3 center;
       float radius;
       Finish finish;
       glm::mat4 xforms(1.f); //identity
       glm::vec4 color;
-      
+
       //Token vars
       std::string token;
       std::istringstream tokens(inputText);
@@ -426,7 +422,7 @@ namespace RDST
       Finish finish;
       glm::mat4 xforms(1.f); //identity
       glm::vec4 color;
-      
+
       //Token vars
       std::string token;
       std::istringstream tokens(inputText);
@@ -441,7 +437,7 @@ namespace RDST
       vert2 = ParseVec3FromStream(tokens);
       std::getline(tokens, token, ','); //eat the comma between
       vert3 = ParseVec3FromStream(tokens);
-     ParseGeomObject(tokens, color, xforms, finish);
+      ParseGeomObject(tokens, color, xforms, finish);
 
       return TrianglePtr(new Triangle(vert1, vert2, vert3, color, xforms, finish));
    }
