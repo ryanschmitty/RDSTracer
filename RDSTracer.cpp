@@ -112,14 +112,14 @@ namespace RDST
    Ray Tracer::TransformRay(const Ray& ray, const glm::mat4& worldToObj)
    {
       glm::vec3 o = glm::vec3(worldToObj*glm::vec4(ray.o,1.f));
-      glm::vec3 dir = glm::vec3(worldToObj*glm::vec4(ray.d,0.f)); //TODO: should I normalize?
+      glm::vec3 dir = glm::vec3(worldToObj*glm::vec4(ray.d,0.f));
       return Ray(glm::normalize(dir), o);
    }
 
    Intersection Tracer::RaySphereIntersect(const Ray& ray, const Sphere& sphere)
    {
       //Setup transformed ray
-      Ray xr = TransformRay(ray, glm::inverse(sphere.getModelXform()));
+      Ray xr = TransformRay(ray, sphere.getModelInverse());
       //Intersection Code
       glm::vec3 l = sphere.getCenter() - xr.o;
       float s = glm::dot(l, xr.d);
@@ -132,10 +132,7 @@ namespace RDST
       float t = 0.f;
       if (ll > rr) t = s-q; //we're outside the sphere so return first point
       else t = s+q;
-      glm::mat3 normalXform = sphere.getTransposedAdjoint();
-      //glm::mat3 normalXform = sphere.getTransposedInverse();
-      //glm::mat3 normalXform(sphere.getModelXform());
-      glm::vec3 n = normalXform * glm::normalize((xr.o+(xr.d*t))-sphere.getCenter()); //make sure to normalize n after this.
+      glm::vec3 n = sphere.getNormalXform() * glm::normalize((xr.o+(xr.d*t))-sphere.getCenter()); //make sure to normalize n after this.
       return Intersection(true, t, ray.o + (ray.d*t), glm::normalize(n), Surface(sphere.getColor(), sphere.getFinish()));
    }
 

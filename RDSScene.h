@@ -219,6 +219,8 @@ namespace RDST
                           const Finish& finish = Finish())
       : Colored(color),
         _modelXform(modelXform),
+        _inverse(glm::inverse(modelXform)),
+        _transposedAdjoint(glm::transpose(Adjoint(glm::mat3(modelXform)))),
         _finish(finish)
       {}
       virtual ~GeomObject() = 0;
@@ -226,13 +228,13 @@ namespace RDST
       //Model Transformations
       const glm::mat4& getModelXform() const
       { return _modelXform; }
-      const glm::mat3& getTransposedInverse() const
-      { return _transposedInverse; }
-      const glm::mat3& getTransposedAdjoint() const
+      const glm::mat4& getModelInverse() const
+      { return _inverse; }
+      const glm::mat3& getNormalXform() const
       { return _transposedAdjoint; }
       void setModelXform(const glm::mat4& modelXform) {
          _modelXform = modelXform;
-         _transposedInverse = glm::transpose(glm::inverse(glm::mat3(modelXform)));
+         _inverse = glm::inverse(modelXform);
          _transposedAdjoint = glm::transpose(Adjoint(glm::mat3(modelXform)));
       }
 
@@ -257,7 +259,7 @@ namespace RDST
       }
 
       glm::mat4 _modelXform;
-      glm::mat3 _transposedInverse;
+      glm::mat4 _inverse;
       glm::mat3 _transposedAdjoint;
       Finish    _finish;
    };
