@@ -139,7 +139,7 @@ namespace RDST
    Intersection Tracer::RayPlaneIntersect(const Ray& ray, const Plane& plane)
    {
       //Setup transformed Ray
-      Ray xr = TransformRay(ray, glm::inverse(plane.getModelXform()));
+      Ray xr = TransformRay(ray, plane.getModelInverse());
       //Intersection code
       glm::vec3 n = plane.getNormal();
       if (glm::dot(xr.d, n) >= 0.f) return Intersection(); //ray either will hit on -t or be parallel
@@ -150,7 +150,7 @@ namespace RDST
    Intersection Tracer::RayTriangleIntersect(const Ray& ray, const Triangle& tri)
    {
       //Setup transformed Ray
-      Ray xr = TransformRay(ray, glm::inverse(tri.getModelXform()));
+      Ray xr = TransformRay(ray, tri.getModelInverse());
       //Intersection code (Essential Mathematics for Games & Interactive Applications)
       glm::vec3 e1 = tri.getVertex1() - tri.getVertex0();
       glm::vec3 e2 = tri.getVertex2() - tri.getVertex0();
