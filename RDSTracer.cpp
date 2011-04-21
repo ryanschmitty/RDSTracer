@@ -103,7 +103,7 @@ namespace RDST
          Intersection intrs;
          OBJ_TYPE type = (*cit)->getType();
          if (type == RDST::SPHERE) {
-            intrs = RaySphereIntersect(ray, *boost::dynamic_pointer_cast<Sphere, GeomObject>(*cit));
+            intrs = RaySphereIntersect(ray, *(Sphere*)(*cit).get());
          }
          else if (type == RDST::PLANE) {
             intrs = RayPlaneIntersect(ray, *boost::dynamic_pointer_cast<Plane, GeomObject>(*cit));
@@ -133,7 +133,7 @@ namespace RDST
    Intersection Tracer::RaySphereIntersect(const Ray& ray, const Sphere& sphere)
    {
       //Setup transformed ray
-      Ray xr = TransformRay(ray, sphere.getModelInverse());
+      Ray xr = ray; //TransformRay(ray, sphere.getModelInverse());
       //Intersection Code
       glm::vec3 l = sphere.getCenter() - xr.o;
       float s = glm::dot(l, xr.d);
@@ -153,7 +153,7 @@ namespace RDST
    Intersection Tracer::RayPlaneIntersect(const Ray& ray, const Plane& plane)
    {
       //Setup transformed Ray
-      Ray xr = TransformRay(ray, plane.getModelInverse());
+      Ray xr = ray; //TransformRay(ray, plane.getModelInverse());
       //Intersection code
       glm::vec3 n = plane.getNormal();
       float denom = glm::dot(xr.d, n);

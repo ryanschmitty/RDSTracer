@@ -33,6 +33,7 @@ namespace RDST
          else ss << ' ';
       }
       std::cout << ss.str() << "]\r";
+      std::cout.flush();
    }
 }
 
