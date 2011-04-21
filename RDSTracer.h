@@ -9,6 +9,8 @@
 #ifndef _RDS_TRACER_H_
 #define _RDS_TRACER_H_
 
+#define GLM_FORCE_INLINE
+
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include <glm/glm.hpp>

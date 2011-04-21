@@ -8,6 +8,8 @@
 #ifndef __POV_RAY_PARSER_H__
 #define __POV_RAY_PARSER_H__
 
+#define GLM_FORCE_INLINE
+
 #include <string>
 #include <vector>
 #include <fstream>

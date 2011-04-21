@@ -9,6 +9,8 @@
 #ifndef _RDS_IMAGE_H_
 #define _RDS_IMAGE_H_
 
+#define GLM_FORCE_INLINE
+
 #include <fstream>
 #include <vector>
 #include <boost/assert.hpp>

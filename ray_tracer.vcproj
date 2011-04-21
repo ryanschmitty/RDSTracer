@@ -201,6 +201,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ProgressBar.h"
+				>
+			</File>
+			<File
 				RelativePath=".\RDSImage.h"
 				>
 			</File>

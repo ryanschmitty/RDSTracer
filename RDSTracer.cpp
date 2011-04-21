@@ -7,6 +7,8 @@
 */
 
 #include "RDSTracer.h"
+#include "ProgressBar.h"
+#include <iostream>
 
 namespace RDST
 {
@@ -15,17 +17,23 @@ namespace RDST
       //Create rays
       std::vector<RayPtr> rays(GenerateRays(scene.cam(), image));
       //For each ray
+      std::cout << "\nTracing Rays\n";
       for (unsigned int rayi=0; rayi < rays.size(); ++rayi) { //note to self: using int for-loop here so I can use it to reference a pixel as well as a ray.
          Intersection intrs = RayObjectsIntersect(*rays[rayi], scene.objs());
          //Shade on hit
          if (intrs.hit) {
             ShadePixel(image.get(rayi), scene, intrs);
          }
+         //Progress Bar: update every 10,000 rays
+         if (rayi % 10000 == 0) UpdateProgress(int(float(rayi)/rays.size()*100.f));
       }
+      UpdateProgress(100);
+      std::cout << "\n";
    }
 
    std::vector<RayPtr> Tracer::GenerateRays(const Camera& cam, const Image& image)
    {
+      std::cout << "Generating Rays\n";
       std::vector<RayPtr> rays;
       float h = image.getHeight();
       float w = image.getWidth();
@@ -45,8 +53,14 @@ namespace RDST
             rayOrigin = glm::vec3(matViewWorld * glm::vec4(rayOrigin, 1.f)); //convert to world space
             rayDir = glm::normalize(glm::vec3(matViewWorld * glm::vec4(rayDir, 0.f)));
             rays.push_back(RayPtr(new Ray(rayDir, rayOrigin)));
+            //Progress Bar: update every 10,000 rays
+            if ((int)(y*w+x) % 10000 == 0) {
+               UpdateProgress(int((y*w+x)/(w*h)*100.f));
+            }
          }
       }
+      UpdateProgress(100);
+      std::cout << "\n";
       return rays;
    }
 
@@ -142,9 +156,12 @@ namespace RDST
       Ray xr = TransformRay(ray, plane.getModelInverse());
       //Intersection code
       glm::vec3 n = plane.getNormal();
-      if (glm::dot(xr.d, n) >= 0.f) return Intersection(); //ray either will hit on -t or be parallel
-      float t = -1*fabs(glm::dot(n,xr.o)+plane.getDistance()) / glm::dot(n,xr.d);
-      return Intersection(true, t, ray.o + (ray.d*t), plane.getNormal(), Surface(plane.getColor(), plane.getFinish()));
+      float denom = glm::dot(xr.d, n);
+      if (denom == 0.f) return Intersection(); //ray is parallel
+      float t = -(glm::dot(n, xr.o) - plane.getDistance()) / denom;
+      if (t < 0.f) return Intersection(); //ray intersected behind us
+      if (denom > 0.f) n = -n; //flip normal if we're under the plane
+      return Intersection(true, t, ray.o + (ray.d*t), n, Surface(plane.getColor(), plane.getFinish()));
    }
 
    Intersection Tracer::RayTriangleIntersect(const Ray& ray, const Triangle& tri)

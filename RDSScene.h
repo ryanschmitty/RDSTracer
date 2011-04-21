@@ -9,6 +9,8 @@
 #ifndef __RDS_SCENE_H__
 #define __RDS_SCENE_H__
 
+#define GLM_FORCE_INLINE
+
 #include <vector>
 #include <glm/glm.hpp>
 #include <boost/shared_ptr.hpp>
