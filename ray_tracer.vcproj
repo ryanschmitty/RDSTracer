@@ -183,6 +183,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\RDSIntersections.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\RDSScene.cpp"
 				>
 			</File>
@@ -206,6 +210,10 @@
 			</File>
 			<File
 				RelativePath=".\RDSImage.h"
+				>
+			</File>
+			<File
+				RelativePath=".\RDSIntersections.h"
 				>
 			</File>
 			<File
