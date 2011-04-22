@@ -18,16 +18,6 @@ namespace RDST
    GeomObject::~GeomObject()
    {}
 
-   //SceneDescritpion cleanup.
-   void
-   SceneDescription::cleanup()
-   {
-      std::vector<GeomObject*>::iterator it = _objs.begin();
-      for (; it != _objs.end(); ++it) {
-         delete *it;
-      }
-   }
-
    //Adjoint function
    glm::mat3
    GeomObject::adjoint(const glm::mat3& m) const

@@ -65,12 +65,13 @@ namespace RDST
       return rays;
    }
 
-   Intersection* Tracer::RayObjectsIntersect(Ray& ray, const std::vector<GeomObject*>& objs)
+   Intersection* Tracer::RayObjectsIntersect(Ray& ray, const std::vector<GeomObjectPtr>& objs)
    {
       Intersection* pRetIntrs = new Intersection(); //defaults to hit=false
       //Intersect loop over all objects to find the closest hit
-      for (unsigned int i=0; i<objs.size(); ++i) {
-         Intersection* pIntrs = objs[i]->intersect(ray);
+      std::vector<GeomObjectPtr>::const_iterator cit = objs.begin();
+      for (; cit != objs.end(); ++cit) {
+         Intersection* pIntrs = (*cit)->intersect(ray);
          //Check for closer, valid, hit
          if (pIntrs != NULL && //implies hit
              pIntrs->t < ray.tCur &&
