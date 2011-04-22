@@ -19,10 +19,10 @@ namespace RDST
       std::cout << "\nTracing Rays\n";
       for (unsigned int rayi=0; rayi < rays.size(); ++rayi) { //note to self: using int for-loop here so I can use it to reference a pixel as well as a ray.
          //Intersect each ray against all objects
-         IntersectionPtr pIntrs = RayObjectsIntersect(*rays[rayi], scene.objs());
+         Intersection intrs = RayObjectsIntersect(*rays[rayi], scene.objs());
          //Shade on hit
-         if (pIntrs->hit) {
-            ShadePixel(image.get(rayi), scene, *pIntrs);
+         if (intrs.hit) {
+            ShadePixel(image.get(rayi), scene, intrs);
          }
          //Progress Bar: update every 10,000 rays
          if (rayi % 10000 == 0) UpdateProgress(int(float(rayi)/rays.size()*100.f));
@@ -64,23 +64,23 @@ namespace RDST
       return rays;
    }
 
-   const IntersectionPtr Tracer::RayObjectsIntersect(Ray& ray, const std::vector<GeomObjectPtr>& objs)
+   Intersection Tracer::RayObjectsIntersect(Ray& ray, const std::vector<GeomObjectPtr>& objs)
    {
-      IntersectionPtr pRetIntrs(new Intersection()); //defaults to hit=false
+      Intersection retIntrs; //defaults to hit=false
       //Intersect loop over all objects to find the closest hit
       std::vector<GeomObjectPtr>::const_iterator cit = objs.begin();
       for (; cit != objs.end(); ++cit) {
-         IntersectionPtr pIntrs = (*cit)->intersect(ray);
+         Intersection intrs = (*cit)->intersect(ray);
          //Check for closer, valid, hit
-         if (pIntrs->hit &&
-             pIntrs->t < ray.tCur &&
-             pIntrs->t < ray.tMax &&
-             pIntrs->t > ray.tMin) {
-                ray.tCur = pIntrs->t; //set new current t
-                pRetIntrs = pIntrs; //it's closer; grab it!
+         if (intrs.hit &&
+             intrs.t < ray.tCur &&
+             intrs.t < ray.tMax &&
+             intrs.t > ray.tMin) {
+                ray.tCur = intrs.t; //set new current t
+                retIntrs = intrs; //it's closer; grab it!
          }
       }
-      return pRetIntrs;
+      return retIntrs;
    }
 
    void Tracer::ShadePixel(Pixel& p, const SceneDescription& scene, const Intersection& intrs)
@@ -95,7 +95,7 @@ namespace RDST
       shadowRay.tMax = glm::length(pointToLight);
       glm::vec3 diffuse(0.f);
       glm::vec3 specular(0.f);
-      if (!RayObjectsIntersect(shadowRay, scene.objs())->hit) {
+      if (!RayObjectsIntersect(shadowRay, scene.objs()).hit) {
          //diffuse calcs
          glm::vec3 l = glm::normalize(light.getPos()-intrs.p);
          float diff = glm::max(0.f, glm::dot(intrs.n, l));
