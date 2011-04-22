@@ -71,4 +71,5 @@ int main(int argc, char** argv)
    img.writeToDisk();
 
    std::cout << "\nRuntime: " << float(clock() - start) / CLOCKS_PER_SEC << " seconds\n";
+   desc.cleanup();
 }

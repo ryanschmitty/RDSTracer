@@ -45,11 +45,11 @@ namespace RDST
       static PointLightPtr ParseLight   (const std::string& inputText);
       static Finish        ParseFinish  (std::istringstream& tokens);
       static void          ParseGeomObject(std::istringstream& tokens, glm::vec4& color, glm::mat4& xforms, Finish& finish);
-      static BoxPtr        ParseBox     (const std::string& inputText);
-      static ConePtr       ParseCone    (const std::string& inputText);
-      static PlanePtr      ParsePlane   (const std::string& inputText);
-      static SpherePtr     ParseSphere  (const std::string& inputText);
-      static TrianglePtr   ParseTriangle(const std::string& inputText);
+      static Box*          ParseBox     (const std::string& inputText);
+      static Cone*         ParseCone    (const std::string& inputText);
+      static Plane*        ParsePlane   (const std::string& inputText);
+      static Sphere*       ParseSphere  (const std::string& inputText);
+      static Triangle*     ParseTriangle(const std::string& inputText);
 
    };
 } // end namespace RDST

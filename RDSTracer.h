@@ -39,7 +39,7 @@ namespace RDST
    private:
       /* Helper Functions */
       static std::vector<RayPtr> GenerateRays(const Camera& cam, const Image& image);
-      static Intersection*       RayObjectsIntersect(Ray& ray, const std::vector<GeomObjectPtr>& objs);
+      static Intersection*       RayObjectsIntersect(Ray& ray, const std::vector<GeomObject*>& objs);
       static void                ShadePixel(Pixel& p, const SceneDescription& scene, const Intersection& intrs);
    };
 }

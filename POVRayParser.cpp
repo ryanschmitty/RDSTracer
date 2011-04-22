@@ -22,7 +22,7 @@ namespace RDST
       //Scene description vars
       CameraPtr pCam;
       std::vector<PointLightPtr> lights;
-      std::vector<GeomObjectPtr> objs;
+      std::vector<GeomObject*> objs;
 
       std::string line;
       std::ifstream file(fileToParse.c_str());
@@ -300,7 +300,7 @@ namespace RDST
       }
    }
 
-   BoxPtr
+   Box*
    POVRayParser::ParseBox(const std::string& inputText)
    {
       //Box vars
@@ -323,10 +323,10 @@ namespace RDST
       corner2 = ParseVec3FromStream(tokens);
       ParseGeomObject(tokens, color, xforms, finish);
 
-      return BoxPtr(new Box(corner1, corner2, color, xforms, finish));
+      return new Box(corner1, corner2, color, xforms, finish);
    }
 
-   ConePtr
+   Cone*
    POVRayParser::ParseCone(const std::string& inputText)
    {
       //Cone vars
@@ -355,10 +355,10 @@ namespace RDST
       radius2 = ParseFloat(token);
       ParseGeomObject(tokens, color, xforms, finish);
 
-      return ConePtr(new Cone(end1, radius1, end2, radius2, color, xforms, finish));
+      return new Cone(end1, radius1, end2, radius2, color, xforms, finish);
    }
 
-   PlanePtr
+   Plane*
    POVRayParser::ParsePlane(const std::string& inputText)
    {
       //Plane vars
@@ -383,10 +383,10 @@ namespace RDST
       distance = ParseFloat(token);
       ParseGeomObject(tokens, color, xforms, finish);
 
-      return PlanePtr(new Plane(normal, distance, color, xforms, finish));
+      return new Plane(normal, distance, color, xforms, finish);
    }
 
-   SpherePtr
+   Sphere*
    POVRayParser::ParseSphere(const std::string& inputText)
    {
       //Sphere vars
@@ -411,10 +411,10 @@ namespace RDST
       radius = ParseFloat(token);
       ParseGeomObject(tokens, color, xforms, finish);
 
-      return SpherePtr(new Sphere(center, radius, color, xforms, finish));
+      return new Sphere(center, radius, color, xforms, finish);
    }
 
-   TrianglePtr
+   Triangle*
    POVRayParser::ParseTriangle(const std::string& inputText)
    {
       //Triangle vars
@@ -439,7 +439,7 @@ namespace RDST
       vert3 = ParseVec3FromStream(tokens);
       ParseGeomObject(tokens, color, xforms, finish);
 
-      return TrianglePtr(new Triangle(vert1, vert2, vert3, color, xforms, finish));
+      return new Triangle(vert1, vert2, vert3, color, xforms, finish);
    }
 
 }
