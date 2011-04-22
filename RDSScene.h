@@ -14,7 +14,6 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <boost/shared_ptr.hpp>
-#include "RDSIntersections.h"
 
 namespace RDST
 {
@@ -483,8 +482,7 @@ namespace RDST
       { return PLANE; }
 
       //Intersection
-      Intersection* intersect(const Ray& ray) const
-      { return RayPlaneIntersect(ray, *this); }
+      Intersection* intersect(const Ray& ray) const;
 
    private:
       glm::vec3 _normal;
@@ -525,8 +523,7 @@ namespace RDST
       { return SPHERE; }
 
       //Intersection
-      Intersection* intersect(const Ray& ray) const
-      { return RaySphereIntersect(ray, *this); }
+      Intersection* intersect(const Ray& ray) const;
 
    private:
       glm::vec3 _center;
@@ -572,8 +569,7 @@ namespace RDST
       { return TRIANGLE; }
 
       //Intersection
-      Intersection* intersect(const Ray& ray) const
-      { return RayTriangleIntersect(ray, *this); }
+      Intersection* intersect(const Ray& ray) const;
 
    private:
       glm::vec3 _vert0;
