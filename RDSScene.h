@@ -348,7 +348,7 @@ namespace RDST
       { _finish = finish; }
 
       //Intersection
-      virtual Intersection intersect(const Ray& ray) const = 0;
+      virtual Intersection* intersect(const Ray& ray) const = 0;
 
    private:
       //functions
@@ -392,8 +392,8 @@ namespace RDST
       { return BOX; }
 
       //Intersection
-      Intersection intersect(const Ray& ray) const
-      { return Intersection(); }
+      Intersection* intersect(const Ray& ray) const
+      { return NULL; }
 
    private:
       glm::vec3 _smCorner;
@@ -441,8 +441,8 @@ namespace RDST
       { return CONE; }
 
       //Intersection
-      Intersection intersect(const Ray& ray) const
-      { return Intersection(); }
+      Intersection* intersect(const Ray& ray) const
+      { return NULL; }
 
    private:
       glm::vec3 _end1; //center for end 1
@@ -482,7 +482,7 @@ namespace RDST
       { return PLANE; }
 
       //Intersection
-      Intersection intersect(const Ray& ray) const;
+      Intersection* intersect(const Ray& ray) const;
 
    private:
       glm::vec3 _normal;
@@ -523,7 +523,7 @@ namespace RDST
       { return SPHERE; }
 
       //Intersection
-      Intersection intersect(const Ray& ray) const;
+      Intersection* intersect(const Ray& ray) const;
 
    private:
       glm::vec3 _center;
@@ -569,7 +569,7 @@ namespace RDST
       { return TRIANGLE; }
 
       //Intersection
-      Intersection intersect(const Ray& ray) const;
+      Intersection* intersect(const Ray& ray) const;
 
    private:
       glm::vec3 _vert0;
