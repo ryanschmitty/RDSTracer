@@ -26,7 +26,7 @@ namespace RDST
    Intersection* RayPlaneIntersect(const Ray& ray, const Plane& plane)
    {
       //Setup transformed Ray
-      Ray xr = TransformRay(ray, plane.getModelInverse());
+      Ray xr = ray; //TransformRay(ray, plane.getModelInverse());
       //Intersection code
       glm::vec3 n = plane.getNormal();
       float denom = glm::dot(xr.d, n);
@@ -43,7 +43,7 @@ namespace RDST
    Intersection* RaySphereIntersect(const Ray& ray, const Sphere& sphere)
    {
       //Setup transformed ray
-      Ray xr = TransformRay(ray, sphere.getModelInverse());
+      Ray xr = ray; //TransformRay(ray, sphere.getModelInverse());
       //Intersection Code
       glm::vec3 l = sphere.getCenter() - xr.o;
       float s = glm::dot(l, xr.d);
@@ -66,7 +66,7 @@ namespace RDST
    Intersection* RayTriangleIntersect(const Ray& ray, const Triangle& tri)
    {
       //Setup transformed Ray
-      Ray xr = TransformRay(ray, tri.getModelInverse());
+      Ray xr = ray; //TransformRay(ray, tri.getModelInverse());
       //Intersection code (Essential Mathematics for Games & Interactive Applications)
       glm::vec3 e1 = tri.getVertex1() - tri.getVertex0();
       glm::vec3 e2 = tri.getVertex2() - tri.getVertex0();
