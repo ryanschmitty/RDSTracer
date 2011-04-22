@@ -38,9 +38,9 @@ namespace RDST
       static void RayTrace(const SceneDescription& scene, Image& image);
    private:
       /* Helper Functions */
-      static std::vector<RayPtr>    GenerateRays(const Camera& cam, const Image& image);
-      static const IntersectionPtr  RayObjectsIntersect(Ray& ray, const std::vector<GeomObjectPtr>& objs);
-      static void                   ShadePixel(Pixel& p, const SceneDescription& scene, const Intersection& intrs);
+      static std::vector<RayPtr> GenerateRays(const Camera& cam, const Image& image);
+      static Intersection        RayObjectsIntersect(Ray& ray, const std::vector<GeomObjectPtr>& objs);
+      static void                ShadePixel(Pixel& p, const SceneDescription& scene, const Intersection& intrs);
    };
 }
 
