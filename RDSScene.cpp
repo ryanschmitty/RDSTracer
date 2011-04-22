@@ -54,7 +54,7 @@ namespace RDST
    Sphere::intersect(const Ray& ray) const
    {
       //Setup transformed ray
-      Ray xr = ray; //transformRay(ray);
+      Ray xr = transformRay(ray);
       //Intersection Code
       glm::vec3 l = getCenter() - xr.o;
       float s = glm::dot(l, xr.d);
@@ -76,7 +76,7 @@ namespace RDST
    Plane::intersect(const Ray& ray) const
    {
       //Setup transformed Ray
-      Ray xr = ray; //transformRay(ray);
+      Ray xr = transformRay(ray);
       //Intersection code
       glm::vec3 n = getNormal();
       float denom = glm::dot(xr.d, n);
@@ -92,7 +92,7 @@ namespace RDST
    Triangle::intersect(const Ray& ray) const
    {
       //Setup transformed Ray
-      Ray xr = ray; //transformRay(ray);
+      Ray xr = transformRay(ray);
       //Intersection code (Essential Mathematics for Games & Interactive Applications)
       glm::vec3 e1 = getVertex1() - getVertex0();
       glm::vec3 e2 = getVertex2() - getVertex0();
