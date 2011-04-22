@@ -17,11 +17,18 @@
 
 namespace RDST
 {
+   //Object Type enum
+   enum OBJ_TYPE {CAMERA, LIGHT, BOX, CONE, PLANE, SPHERE, TRIANGLE};
+
+   //---------------------------------------------------------------------------
+   //
+   // PARENT CLASSES
+   //
+   //---------------------------------------------------------------------------
+
    /**
     * Abstract Base Object class for EVERYTHING
     */
-   //Type enum
-   enum OBJ_TYPE {CAMERA, LIGHT, BOX, CONE, PLANE, SPHERE, TRIANGLE};
    class SceneObject
    {
    public:
@@ -33,6 +40,7 @@ namespace RDST
       virtual OBJ_TYPE getType() const = 0;
    };
    typedef boost::shared_ptr<SceneObject> SceneObjectPtr;
+   typedef boost::shared_ptr<const SceneObject> ConstSceneObjectPtr;
 
    /**
     * Abstract Base Colored Object class
@@ -55,6 +63,13 @@ namespace RDST
       glm::vec4 _color; //rgba
    };
    typedef boost::shared_ptr<Colored> ColoredPtr;
+   typedef boost::shared_ptr<const Colored> ConstColoredPtr;
+
+   //---------------------------------------------------------------------------
+   //
+   // NON-GEOMETRIC OBJECT SCENE CLASSES
+   //
+   //---------------------------------------------------------------------------
 
    /**
     * Camera Storage Class.
@@ -108,6 +123,7 @@ namespace RDST
       glm::vec3 _dir;
    };
    typedef boost::shared_ptr<Camera> CameraPtr;
+   typedef boost::shared_ptr<const Camera> ConstCameraPtr;
 
    /**
     * Point Light Storage Class
@@ -135,6 +151,13 @@ namespace RDST
       glm::vec3 _position;
    };
    typedef boost::shared_ptr<PointLight> PointLightPtr;
+   typedef boost::shared_ptr<const PointLight> ConstPointLightPtr;
+
+   //---------------------------------------------------------------------------
+   //
+   // GEOMETRIC OBJECT PROPERTY CLASSES
+   //
+   //---------------------------------------------------------------------------
 
    /**
     * Surface Finish Storage Class
@@ -210,6 +233,83 @@ namespace RDST
       float _ior; //index of refraction
    };
 
+   //---------------------------------------------------------------------------
+   //
+   // INTERSECTION CLASSES
+   //
+   //---------------------------------------------------------------------------
+   
+   /**
+    * A ray with origin o and direction d.
+    */
+   class Ray
+   {
+   public:
+      explicit Ray(const glm::vec3& direction,
+                   const glm::vec3& origin = glm::vec3(0.f))
+      : d(direction),
+        o(origin),
+        tCur(FLT_MAX),
+        tMin(0.f),
+        tMax(FLT_MAX)
+      {}
+      glm::vec3 d, o;
+      float tCur;
+      float tMin;
+      float tMax;
+   };
+   typedef boost::shared_ptr<Ray> RayPtr;
+   typedef boost::shared_ptr<const Ray> ConstRayPtr;
+
+   /**
+    * Surface storage helper class
+    */
+   class Surface
+   {
+   public:
+      explicit Surface(const glm::vec4& _color = glm::vec4(1.f), const Finish& _finish = Finish())
+      : color(_color),
+        finish(_finish)
+      {}
+      glm::vec4 color;
+      Finish finish;
+   };
+
+   /**
+    * Intersection information.
+    */
+   class Intersection
+   {
+   public:
+      explicit Intersection()
+      : hit(false),
+        t(FLT_MAX),
+        p(glm::vec3(0.f)),
+        n(glm::vec3(0.f, 1.f, 0.f)),
+        surf(Surface())
+      {}
+      explicit Intersection(bool hit, float hitT, const glm::vec3& hitPoint, const glm::vec3& normal, const Surface& surface)
+      : hit(hit),
+        t(hitT),
+        p(hitPoint),
+        n(normal),
+        surf(surface)
+      {}
+      bool hit;
+      float t;
+      glm::vec3 p;
+      glm::vec3 n;
+      Surface surf;
+   };
+   typedef boost::shared_ptr<Intersection> IntersectionPtr;
+   typedef boost::shared_ptr<const Intersection> ConstIntersectionPtr;
+
+   //---------------------------------------------------------------------------
+   //
+   // GEOMETRIC OBJECT CLASSES
+   //
+   //---------------------------------------------------------------------------
+
    /**
     * Abstract Base Geometric Object Storage Class
     */
@@ -222,7 +322,7 @@ namespace RDST
       : Colored(color),
         _modelXform(modelXform),
         _inverse(glm::inverse(modelXform)),
-        _transposedAdjoint(glm::transpose(Adjoint(glm::mat3(modelXform)))),
+        _transposedAdjoint(glm::transpose(adjoint(glm::mat3(modelXform)))),
         _finish(finish)
       {}
       virtual ~GeomObject() = 0;
@@ -237,8 +337,9 @@ namespace RDST
       void setModelXform(const glm::mat4& modelXform) {
          _modelXform = modelXform;
          _inverse = glm::inverse(modelXform);
-         _transposedAdjoint = glm::transpose(Adjoint(glm::mat3(modelXform)));
+         _transposedAdjoint = glm::transpose(adjoint(glm::mat3(modelXform)));
       }
+      Ray transformRay(const Ray& ray) const;
 
       //Finish
       const Finish& getFinish() const
@@ -246,26 +347,20 @@ namespace RDST
       void setFinish(const Finish& finish)
       { _finish = finish; }
 
-   private:
-      static glm::mat3 Adjoint(const glm::mat3& m) {
-         float d00 = (m[1][1]*m[2][2]) - (m[2][1]*m[1][2]);
-         float d01 = (m[0][1]*m[2][2]) - (m[2][1]*m[0][2]);
-         float d02 = (m[0][1]*m[1][2]) - (m[1][1]*m[0][2]);
-         float d10 = (m[1][0]*m[2][2]) - (m[2][0]*m[1][2]);
-         float d11 = (m[0][0]*m[2][2]) - (m[2][0]*m[0][2]);
-         float d12 = (m[0][0]*m[1][2]) - (m[1][0]*m[0][2]);
-         float d20 = (m[1][0]*m[2][1]) - (m[2][0]*m[1][1]);
-         float d21 = (m[0][0]*m[2][1]) - (m[2][0]*m[0][1]);
-         float d22 = (m[0][0]*m[1][1]) - (m[1][0]*m[0][1]);
-         return glm::mat3 (d00, -d01, d02, -d10, d11, -d12, d20, -d21, d22);
-      }
+      //Intersection
+      virtual const IntersectionPtr intersect(const Ray& ray) const = 0;
 
+   private:
+      //functions
+      glm::mat3 adjoint(const glm::mat3& m) const;
+      //data
       glm::mat4 _modelXform;
       glm::mat4 _inverse;
       glm::mat3 _transposedAdjoint;
       Finish    _finish;
    };
    typedef boost::shared_ptr<GeomObject> GeomObjectPtr;
+   typedef boost::shared_ptr<const GeomObject> ConstGeomObjectPtr;
 
    /**
     * Box Geometric Object Storage Class
@@ -296,11 +391,16 @@ namespace RDST
       OBJ_TYPE getType() const
       { return BOX; }
 
+      //Intersection
+      const IntersectionPtr intersect(const Ray& ray) const
+      { return IntersectionPtr(new Intersection()); }
+
    private:
       glm::vec3 _smCorner;
       glm::vec3 _lgCorner;
    };
    typedef boost::shared_ptr<Box> BoxPtr;
+   typedef boost::shared_ptr<const Box> ConstBoxPtr;
 
    /**
     * Cone Geometric Object Storage Class
@@ -340,6 +440,10 @@ namespace RDST
       OBJ_TYPE getType() const
       { return CONE; }
 
+      //Intersection
+      const IntersectionPtr intersect(const Ray& ray) const
+      { return IntersectionPtr(new Intersection()); }
+
    private:
       glm::vec3 _end1; //center for end 1
       glm::vec3 _end2; //center for end 2
@@ -347,6 +451,7 @@ namespace RDST
       float     _radius2;
    };
    typedef boost::shared_ptr<Cone> ConePtr;
+   typedef boost::shared_ptr<const Cone> ConstConePtr;
 
    /**
     * Plane Geometric Object Storage Class
@@ -376,11 +481,15 @@ namespace RDST
       OBJ_TYPE getType() const
       { return PLANE; }
 
+      //Intersection
+      const IntersectionPtr intersect(const Ray& ray) const;
+
    private:
       glm::vec3 _normal;
       float     _distance;
    };
    typedef boost::shared_ptr<Plane> PlanePtr;
+   typedef boost::shared_ptr<const Plane> ConstPlanePtr;
 
    /**
     * Sphere Geometric Object Storage Class
@@ -413,11 +522,15 @@ namespace RDST
       OBJ_TYPE getType() const
       { return SPHERE; }
 
+      //Intersection
+      const IntersectionPtr intersect(const Ray& ray) const;
+
    private:
       glm::vec3 _center;
       float     _radius, _radiusSquared;
    };
    typedef boost::shared_ptr<Sphere> SpherePtr;
+   typedef boost::shared_ptr<const Sphere> ConstSpherePtr;
 
    /**
     * Triangle Geometric Object Storage Class
@@ -455,6 +568,9 @@ namespace RDST
       OBJ_TYPE getType() const
       { return TRIANGLE; }
 
+      //Intersection
+      const IntersectionPtr intersect(const Ray& ray) const;
+
    private:
       glm::vec3 _vert0;
       glm::vec3 _vert1;
@@ -462,6 +578,7 @@ namespace RDST
       glm::vec3 _normal;
    };
    typedef boost::shared_ptr<Triangle> TrianglePtr;
+   typedef boost::shared_ptr<const Triangle> ConstTrianglePtr;
 
    /**
     * Package class for all data required for a scene.

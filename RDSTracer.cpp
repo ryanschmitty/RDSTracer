@@ -16,13 +16,13 @@ namespace RDST
    {
       //Create rays
       std::vector<RayPtr> rays(GenerateRays(scene.cam(), image));
-      //For each ray
       std::cout << "\nTracing Rays\n";
       for (unsigned int rayi=0; rayi < rays.size(); ++rayi) { //note to self: using int for-loop here so I can use it to reference a pixel as well as a ray.
-         Intersection intrs = RayObjectsIntersect(*rays[rayi], scene.objs());
+         //Intersect each ray against all objects
+         IntersectionPtr pIntrs = RayObjectsIntersect(*rays[rayi], scene.objs());
          //Shade on hit
-         if (intrs.hit) {
-            ShadePixel(image.get(rayi), scene, intrs);
+         if (pIntrs->hit) {
+            ShadePixel(image.get(rayi), scene, *pIntrs);
          }
          //Progress Bar: update every 10,000 rays
          if (rayi % 10000 == 0) UpdateProgress(int(float(rayi)/rays.size()*100.f));
@@ -64,6 +64,25 @@ namespace RDST
       return rays;
    }
 
+   const IntersectionPtr Tracer::RayObjectsIntersect(Ray& ray, const std::vector<GeomObjectPtr>& objs)
+   {
+      IntersectionPtr pRetIntrs(new Intersection()); //defaults to hit=false
+      //Intersect loop over all objects to find the closest hit
+      std::vector<GeomObjectPtr>::const_iterator cit = objs.begin();
+      for (; cit != objs.end(); ++cit) {
+         IntersectionPtr pIntrs = (*cit)->intersect(ray);
+         //Check for closer, valid, hit
+         if (pIntrs->hit &&
+             pIntrs->t < ray.tCur &&
+             pIntrs->t < ray.tMax &&
+             pIntrs->t > ray.tMin) {
+                ray.tCur = pIntrs->t; //set new current t
+                pRetIntrs = pIntrs; //it's closer; grab it!
+         }
+      }
+      return pRetIntrs;
+   }
+
    void Tracer::ShadePixel(Pixel& p, const SceneDescription& scene, const Intersection& intrs)
    {
       //Required Vars
@@ -76,7 +95,7 @@ namespace RDST
       shadowRay.tMax = glm::length(pointToLight);
       glm::vec3 diffuse(0.f);
       glm::vec3 specular(0.f);
-      if (!RayObjectsIntersect(shadowRay, scene.objs()).hit) {
+      if (!RayObjectsIntersect(shadowRay, scene.objs())->hit) {
          //diffuse calcs
          glm::vec3 l = glm::normalize(light.getPos()-intrs.p);
          float diff = glm::max(0.f, glm::dot(intrs.n, l));
@@ -92,101 +111,5 @@ namespace RDST
       glm::vec4 dst = p.rgba();
       dst = (src*src.a) + (dst*(1-src.a)); //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
       p.set(dst);
-   }
-
-   Intersection Tracer::RayObjectsIntersect(Ray& ray, const std::vector<GeomObjectPtr>& objs)
-   {
-      Intersection retIntrs; //defaults to hit=false
-      //Intersect loop over all objects to find the closest hit
-      std::vector<GeomObjectPtr>::const_iterator cit = objs.begin();
-      for (; cit != objs.end(); ++cit) {
-         Intersection intrs;
-         OBJ_TYPE type = (*cit)->getType();
-         if (type == RDST::SPHERE) {
-            intrs = RaySphereIntersect(ray, *(Sphere*)(*cit).get());
-         }
-         else if (type == RDST::PLANE) {
-            intrs = RayPlaneIntersect(ray, *boost::dynamic_pointer_cast<Plane, GeomObject>(*cit));
-         }
-         else if (type == RDST::TRIANGLE) {
-            intrs = RayTriangleIntersect(ray, *boost::dynamic_pointer_cast<Triangle, GeomObject>(*cit));
-         }
-         //Check for closer, valid, hit
-         if (intrs.hit &&
-            intrs.t < ray.tCur &&
-            intrs.t < ray.tMax &&
-            intrs.t > ray.tMin) {
-               ray.tCur = intrs.t; //set new current t
-               retIntrs = intrs; //it's closer; grab it!
-         }
-      }
-      return retIntrs;
-   }
-
-   Ray Tracer::TransformRay(const Ray& ray, const glm::mat4& worldToObj)
-   {
-      glm::vec3 o = glm::vec3(worldToObj*glm::vec4(ray.o,1.f));
-      glm::vec3 dir = glm::vec3(worldToObj*glm::vec4(ray.d,0.f));
-      return Ray(glm::normalize(dir), o);
-   }
-
-   Intersection Tracer::RaySphereIntersect(const Ray& ray, const Sphere& sphere)
-   {
-      //Setup transformed ray
-      Ray xr = ray; //TransformRay(ray, sphere.getModelInverse());
-      //Intersection Code
-      glm::vec3 l = sphere.getCenter() - xr.o;
-      float s = glm::dot(l, xr.d);
-      float ll = glm::dot(l, l);
-      float rr = sphere.getRadiusSquared();
-      if (s < 0.f && ll > rr) return Intersection(); //sphere is behind us and we're not inside
-      float mm = ll-(s*s); //dist from sphere center projected onto ray to sphere center
-      if (mm > rr) return Intersection(); //ray misses (sphere center projected onto ray - sphere center > radius)
-      float q = sqrtf(rr-mm);
-      float t = 0.f;
-      if (ll > rr) t = s-q; //we're outside the sphere so return first point
-      else t = s+q;
-      glm::vec3 n = sphere.getNormalXform() * glm::normalize((xr.o+(xr.d*t))-sphere.getCenter()); //make sure to normalize n after this.
-      return Intersection(true, t, ray.o + (ray.d*t), glm::normalize(n), Surface(sphere.getColor(), sphere.getFinish()));
-   }
-
-   Intersection Tracer::RayPlaneIntersect(const Ray& ray, const Plane& plane)
-   {
-      //Setup transformed Ray
-      Ray xr = ray; //TransformRay(ray, plane.getModelInverse());
-      //Intersection code
-      glm::vec3 n = plane.getNormal();
-      float denom = glm::dot(xr.d, n);
-      if (denom == 0.f) return Intersection(); //ray is parallel
-      float t = -(glm::dot(n, xr.o) - plane.getDistance()) / denom;
-      if (t < 0.f) return Intersection(); //ray intersected behind us
-      if (denom > 0.f) n = -n; //flip normal if we're under the plane
-      return Intersection(true, t, ray.o + (ray.d*t), n, Surface(plane.getColor(), plane.getFinish()));
-   }
-
-   Intersection Tracer::RayTriangleIntersect(const Ray& ray, const Triangle& tri)
-   {
-      //Setup transformed Ray
-      Ray xr = TransformRay(ray, tri.getModelInverse());
-      //Intersection code (Essential Mathematics for Games & Interactive Applications)
-      glm::vec3 e1 = tri.getVertex1() - tri.getVertex0();
-      glm::vec3 e2 = tri.getVertex2() - tri.getVertex0();
-      glm::vec3 p = glm::cross(xr.d, e2);
-      float a = glm::dot(e1, p);
-      //if result zero, no intersection or infinite intersections
-      //(ray parallel to triangle plane)
-      if (a == 0.f) return Intersection();
-      //compute denominator
-      float f = 1.f/a;
-      //compute barycentric coordinates
-      glm::vec3 s = xr.o - tri.getVertex0();
-      float u = f*glm::dot(s, p);
-      if (u < 0.f || u > 1.f) return Intersection();
-      glm::vec3 q = glm::cross(s, e1);
-      float v = f*glm::dot(xr.d, q);
-      if (v < 0.f || u+v > 1.f) return Intersection();
-      //compute line parameter
-      float t = f*glm::dot(e2, q);
-      return Intersection(true, t, ray.o+(ray.d*t), tri.getNormal(), Surface(tri.getColor(), tri.getFinish()));
    }
 }
