@@ -16,13 +16,42 @@ namespace RDST
    {
       //Create rays
       std::vector<RayPtr> rays(GenerateRays(scene.cam(), image));
-      std::cout << "\nTracing Rays\n";
-      for (unsigned int rayi=0; rayi < rays.size(); ++rayi) { //note to self: using int for-loop here so I can use it to reference a pixel as well as a ray.
+
+      //Create CUDA data structures
+      // spheres
+      cuda_sphere_t* cudaSphereArray = new cuda_sphere_t[scene.spheres().size()];
+      initCudaSpheres(cudaSphereArray, scene.spheres());
+      // rays
+      cuda_ray_t* cudaRayArray = new cuda_ray_t[rays.size()];
+      initCudaRays(cudaRayArray, rays);
+      // intersections
+      cuda_intersection_t* cudaIntersectionArray = new cuda_intersection_t[rays.size()](); //1 intersection per ray
+
+      //Run CUDA
+      std::cout << "\nRunning CUDA Intersections...";
+      /*
+          CUDA code goes here
+      */
+      std::cout << "Done!\n";
+
+      //Trace non-CUDA obects and shade
+      std::cout << "Tracing Rays\n";
+      for (unsigned int rayi=0; rayi < rays.size(); ++rayi) {
          //Intersect each ray against all objects
          Intersection* pIntrs = RayObjectsIntersect(*rays[rayi], scene.objs());
          //Shade on hit
-         if (pIntrs->hit) {
+         if (pIntrs->hit && cudaIntersectionArray[rayi].t > pIntrs->t) {
             ShadePixel(image.get(rayi), scene, *pIntrs);
+         }
+         else if (cudaIntersectionArray[rayi].objIndx > -1) {
+            float cudaT = cudaIntersectionArray[rayi].t;
+            glm::vec3 hitPoint = rays[rayi]->o + (rays[rayi]->d*cudaT);
+            glm::vec3 center = scene.spheres()[cudaIntersectionArray[rayi].objIndx]->getCenter();
+            glm::mat3 normalXform = scene.spheres()[cudaIntersectionArray[rayi].objIndx]->getNormalXform(); //May not need this as there's no model xforms for this lab.
+            glm::vec3 n = normalXform * glm::normalize(hitPoint-center);
+            Surface s = Surface(scene.spheres()[cudaIntersectionArray[rayi].objIndx]->getColor(), scene.spheres()[cudaIntersectionArray[rayi].objIndx]->getFinish());
+            Intersection cudaIntrs = Intersection(true, cudaT, hitPoint, n, s);
+            ShadePixel(image.get(rayi), scene, cudaIntrs);
          }
          delete pIntrs;
          //Progress Bar: update every 10,000 rays
@@ -30,6 +59,31 @@ namespace RDST
       }
       UpdateProgress(100);
       std::cout << "\n";
+   }
+
+   /* Assumes pSphereArr has enough space to fit all spheres */
+   void Tracer::initCudaSpheres(cuda_sphere_t pSphereArr[], const std::vector<SpherePtr>& spheres)
+   {
+      std::vector<SpherePtr>::const_iterator cit = spheres.begin();
+      for (int i=0; cit != spheres.end(); ++cit, ++i) {
+         pSphereArr[i].rr = (*cit)->getRadiusSquared(); //only radius squared is needed, and why not just store it rather than compute it?
+         pSphereArr[i].x = (*cit)->getCenter().x;
+         pSphereArr[i].y = (*cit)->getCenter().y;
+         pSphereArr[i].z = (*cit)->getCenter().z;
+      }
+   }
+
+   void Tracer::initCudaRays(cuda_ray_t pRayArr[], const std::vector<RayPtr>& rays)
+   {
+      std::vector<RayPtr>::const_iterator cit = rays.begin();
+      for (int i=0; cit != rays.end(); ++cit, ++i) {
+         pRayArr[i].dx = (*cit)->d.x;
+         pRayArr[i].dy = (*cit)->d.y;
+         pRayArr[i].dz = (*cit)->d.z;
+         pRayArr[i].ox = (*cit)->o.x;
+         pRayArr[i].oy = (*cit)->o.y;
+         pRayArr[i].oz = (*cit)->o.z;
+      }
    }
 
    std::vector<RayPtr> Tracer::GenerateRays(const Camera& cam, const Image& image)
@@ -88,17 +142,17 @@ namespace RDST
    void Tracer::ShadePixel(Pixel& p, const SceneDescription& scene, const Intersection& intrs)
    {
       //Required Vars
-      PointLight& light = *scene.lights().at(0);
+      PointLight& light = *scene.lights().at(0); //TODO: add more lights
       //Ambient
       glm::vec3 ambient(intrs.surf.finish.getAmbient() * intrs.surf.color * light.getColor());
       //Diffuse and Specular
       glm::vec3 pointToLight = light.getPos()-intrs.p;
-      Ray shadowRay = Ray(glm::normalize(pointToLight), intrs.p+(0.01f*intrs.n)); //Note to self: needed to move the shadow ray off the origin object a bit
-      shadowRay.tMax = glm::length(pointToLight);
+      //Ray shadowRay = Ray(glm::normalize(pointToLight), intrs.p+(0.01f*intrs.n)); //Note to self: needed to move the shadow ray off the origin object a bit
+      //shadowRay.tMax = glm::length(pointToLight);
       glm::vec3 diffuse(0.f);
       glm::vec3 specular(0.f);
-      Intersection* pShadowIntrs = RayObjectsIntersect(shadowRay, scene.objs());
-      if (!pShadowIntrs->hit) {
+      //Intersection* pShadowIntrs = RayObjectsIntersect(shadowRay, scene.objs());
+      if (true /*!pShadowIntrs->hit*/) {
          //diffuse calcs
          glm::vec3 l = glm::normalize(light.getPos()-intrs.p);
          float diff = glm::max(0.f, glm::dot(intrs.n, l));
@@ -109,7 +163,7 @@ namespace RDST
          float spec = glm::max(0.f, glm::dot(intrs.n, h));
          specular = glm::vec3(powf(spec,1.f/intrs.surf.finish.getRoughness()) * intrs.surf.color * intrs.surf.finish.getSpecular() * light.getColor());
       }
-      delete pShadowIntrs;
+      //delete pShadowIntrs;
       //Put it all together and blend
       glm::vec4 src(ambient + diffuse + specular,1.f);
       glm::vec4 dst = p.rgba();

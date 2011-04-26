@@ -17,6 +17,7 @@
 #include "RDSImage.h"
 #include "RDSScene.h"
 #include "POVRayParser.h"
+#include "cuda_stuff.h"
 
 namespace RDST
 {
@@ -41,6 +42,9 @@ namespace RDST
       static std::vector<RayPtr> GenerateRays(const Camera& cam, const Image& image);
       static Intersection*       RayObjectsIntersect(Ray& ray, const std::vector<GeomObjectPtr>& objs);
       static void                ShadePixel(Pixel& p, const SceneDescription& scene, const Intersection& intrs);
+      /* CUDA Helper Functions */
+      static void                initCudaSpheres(cuda_sphere_t pSphereArr[], const std::vector<SpherePtr>& spheres);
+      static void                initCudaRays(cuda_ray_t pRayArr[], const std::vector<RayPtr>& rays);
    };
 }
 
