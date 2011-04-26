@@ -16,22 +16,55 @@ namespace RDST
    {
       //Create rays
       std::vector<RayPtr> rays(GenerateRays(scene.cam(), image));
+      
+      //Run CUDA
+      std::cout << "\nRunning CUDA Intersections...";
 
       //Create CUDA data structures
       // spheres
-      cuda_sphere_t* cudaSphereArray = new cuda_sphere_t[scene.spheres().size()];
-      initCudaSpheres(cudaSphereArray, scene.spheres());
-      // rays
-      cuda_ray_t* cudaRayArray = new cuda_ray_t[rays.size()];
-      initCudaRays(cudaRayArray, rays);
-      // intersections
-      cuda_intersection_t* cudaIntersectionArray = new cuda_intersection_t[rays.size()](); //1 intersection per ray
+      int spheresLen = scene.spheres().size();
+      cuda_sphere_t* cudaHostSphereArray = new cuda_sphere_t[spheresLen];
+      initCudaSpheres(cudaHostSphereArray, scene.spheres());
 
-      //Run CUDA
-      std::cout << "\nRunning CUDA Intersections...";
-      /*
-          CUDA code goes here
-      */
+      //Allocate and copy spheres to device
+      cuda_sphere_t* cudaDeviceSphereArray;
+      cudaMalloc((void**)&cudaDeviceSphereArray, spheresLen * sizeof(cuda_sphere_t));
+      cudaMemcpy(cudaDeviceSphereArray, cudaHostSphereArray, spheresLen * sizeof(cuda_sphere_t), 
+              cudaMemcpyHostToDevice);
+
+      // rays
+      int raysLen = rays.size();
+      cuda_ray_t* cudaHostRayArray = new cuda_ray_t[raysLen];
+      initCudaRays(cudaHostRayArray, rays);
+
+      //Allocate and copy rays to device
+      cuda_ray_t* cudaDeviceRayArray;
+      cudaMalloc((void**)&cudaDeviceRayArray, raysLen * sizeof(cuda_ray_t));
+      cudaMemcpy(cudaDeviceRayArray, cudaHostRayArray, raysLen * sizeof(cuda_ray_t), 
+              cudaMemcpyHostToDevice);
+
+      // intersections
+      cuda_intersection_t* cudaHostIntersectionArray = new cuda_intersection_t[raysLen](); //1 intersection per ray
+
+      //Allocate and copy rays to device
+      cuda_intersection_t* cudaDeviceIntersectionArray;
+      cudaMalloc((void**)&cudaDeviceIntersectionArray, raysLen * sizeof(cuda_intersection_t));
+      cudaMemcpy(cudaDeviceIntersectionArray, cudaHostIntersectionArray, raysLen * sizeof(cuda_intersection_t), 
+              cudaMemcpyHostToDevice);
+
+      dim3 dimBlock(16, 16);
+      dim3 dimGrid(512, 512);
+
+      // Run kernel on spheres
+      RayTraceKernel<<<dimGrid, dimBlock>>>(cudaDeviceSphereArray, spheresLen, cudaDeviceRayArray, cudaDeviceIntersectionArray, image.getWidth(), image.getHeight());
+
+      cudaMemcpy(cudaHostIntersectionArray, cudaDeviceIntersectionArray, raysLen * sizeof(cuda_intersection_t), 
+              cudaMemcpyDeviceToHost);
+
+      cudaFree(cudaDeviceSphereArray);
+      cudaFree(cudaDeviceRayArray);
+      cudaFree(cudaDeviceIntersectionArray);
+
       std::cout << "Done!\n";
 
       //Trace non-CUDA obects and shade
@@ -40,16 +73,16 @@ namespace RDST
          //Intersect each ray against all objects
          Intersection* pIntrs = RayObjectsIntersect(*rays[rayi], scene.objs());
          //Shade on hit
-         if (pIntrs->hit && cudaIntersectionArray[rayi].t > pIntrs->t) {
+         if (pIntrs->hit && cudaHostIntersectionArray[rayi].t > pIntrs->t) {
             ShadePixel(image.get(rayi), scene, *pIntrs);
          }
-         else if (cudaIntersectionArray[rayi].objIndx > -1) {
-            float cudaT = cudaIntersectionArray[rayi].t;
+         else if (cudaHostIntersectionArray[rayi].objIndx > -1) {
+            float cudaT = cudaHostIntersectionArray[rayi].t;
             glm::vec3 hitPoint = rays[rayi]->o + (rays[rayi]->d*cudaT);
-            glm::vec3 center = scene.spheres()[cudaIntersectionArray[rayi].objIndx]->getCenter();
-            glm::mat3 normalXform = scene.spheres()[cudaIntersectionArray[rayi].objIndx]->getNormalXform(); //May not need this as there's no model xforms for this lab.
+            glm::vec3 center = scene.spheres()[cudaHostIntersectionArray[rayi].objIndx]->getCenter();
+            glm::mat3 normalXform = scene.spheres()[cudaHostIntersectionArray[rayi].objIndx]->getNormalXform(); //May not need this as there's no model xforms for this lab.
             glm::vec3 n = normalXform * glm::normalize(hitPoint-center);
-            Surface s = Surface(scene.spheres()[cudaIntersectionArray[rayi].objIndx]->getColor(), scene.spheres()[cudaIntersectionArray[rayi].objIndx]->getFinish());
+            Surface s = Surface(scene.spheres()[cudaHostIntersectionArray[rayi].objIndx]->getColor(), scene.spheres()[cudaHostIntersectionArray[rayi].objIndx]->getFinish());
             Intersection cudaIntrs = Intersection(true, cudaT, hitPoint, n, s);
             ShadePixel(image.get(rayi), scene, cudaIntrs);
          }
@@ -67,9 +100,7 @@ namespace RDST
       std::vector<SpherePtr>::const_iterator cit = spheres.begin();
       for (int i=0; cit != spheres.end(); ++cit, ++i) {
          pSphereArr[i].rr = (*cit)->getRadiusSquared(); //only radius squared is needed, and why not just store it rather than compute it?
-         pSphereArr[i].x = (*cit)->getCenter().x;
-         pSphereArr[i].y = (*cit)->getCenter().y;
-         pSphereArr[i].z = (*cit)->getCenter().z;
+         pSphereArr[i].c = vec3((*cit)->getCenter().x, (*cit)->getCenter().y, (*cit)->getCenter().z);
       }
    }
 
@@ -77,12 +108,8 @@ namespace RDST
    {
       std::vector<RayPtr>::const_iterator cit = rays.begin();
       for (int i=0; cit != rays.end(); ++cit, ++i) {
-         pRayArr[i].dx = (*cit)->d.x;
-         pRayArr[i].dy = (*cit)->d.y;
-         pRayArr[i].dz = (*cit)->d.z;
-         pRayArr[i].ox = (*cit)->o.x;
-         pRayArr[i].oy = (*cit)->o.y;
-         pRayArr[i].oz = (*cit)->o.z;
+         pRayArr[i].d = vec3((*cit)->d.x, (*cit)->d.y, (*cit)->d.z);
+         pRayArr[i].o = vec3((*cit)->o.x, (*cit)->o.y, (*cit)->o.z);
       }
    }
 

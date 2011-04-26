@@ -12,12 +12,19 @@
 
 namespace RDST
 {
+   struct vec3
+   {
+       vec3(float _x, float _y, float _z)
+       : x(_x), y(_y), z(_z) {}
+       float x, y, z;
+   };
+
    /**
     * Struct the represents a sphere.
     */
    struct cuda_sphere_t
    {
-      float x, y, z; //Center location in world space
+      vec3 c; //Center location in world space
       float rr; //radius squared
    };
 
@@ -26,8 +33,8 @@ namespace RDST
     */
    struct cuda_ray_t
    {
-      float ox, oy, oz; //origin x,y,z
-      float dx, dy, dz; //direction x,y,z
+      vec3 o; //origin x,y,z
+      vec3 d; //direction x,y,z
    };
 
    /**

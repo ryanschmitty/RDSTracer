@@ -9,5 +9,8 @@ build: ${FILES}
 gprof: ${FILES}
 	${C} ${FILES} ${INCLS} -o ${OUTNAME} -O3 -pg
 
+debug: ${FILES}
+	${C} ${FILES} ${INCLS} -o ${OUTNAME} -g
+
 clean:
 	rm ${OUTNAME}
