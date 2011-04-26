@@ -1,0 +1,3 @@
+[submodule "cubuild"]
+	path = cubuild
+	url = https://github.com/bobsomers/cubuild.git

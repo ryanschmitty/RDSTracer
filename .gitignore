@@ -1,8 +1,10 @@
-# Ignored files
+*.[oa]
+*.swp
+*.ppm
 *.ncb
 *.suo
 *.user
-*.ppm
 *.tga
-Debug/*
-Release/*
+src/cubuild
+src/raytrace*
+src/blueprint.lua
