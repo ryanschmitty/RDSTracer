@@ -42,7 +42,7 @@ namespace RDST
    {
       glm::vec3 o = glm::vec3(getModelInverse()*glm::vec4(ray.o,1.f));
       glm::vec3 dir = glm::vec3(getModelInverse()*glm::vec4(ray.d,0.f));
-      return Ray(glm::normalize(dir), o);
+      return Ray(dir, o);
    }
 
    //---------------------------------------------------------------------------
@@ -56,6 +56,7 @@ namespace RDST
    Box::intersect(const Ray& ray) const
    {
       /*
+      //SHORT AWESOME BOX TESTING
       //Setup transformed ray
       Ray xr = transformRay(ray);
       //Code
@@ -68,8 +69,9 @@ namespace RDST
       if (smallestMax < largestMin) return NULL;
       return new Intersection(true, largestMin, ray.o+(ray.d*largestMin), glm::vec3(0,1,0), Surface(getColor(), getFinish()));
       */
+      //LONG OBNOXIOUS BOX TESTING
       //Setup transformed ray
-      Ray xr = ray;//transformRay(ray);
+      Ray xr = transformRay(ray);
       //Intersection code
       float maxS = 0.f;
       float minT = FLT_MAX; //ray.tCur;
