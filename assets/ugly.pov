@@ -29,23 +29,6 @@ sphere { <0, 0, 0>, 2
 }
 
 
-box { <-0.5, -0.5, -0.5>, <0.5, 0.5, 0.5>
-  pigment { color rgb <0.2, 0.8, 0.3>}
-  finish {ambient 0.6 diffuse 0.4}
-  scale <10, 3.5, 3.5>
-  rotate <45, 0, 0>
-  rotate <0, 0, 10.5>
-  translate <3, 2, -3>
-}
-
-box { <-0.5, -0.5, -0.5>, <0.5, 0.5, 0.5>
-  pigment { color rgb <0.8, 0.159, 0.0>}
-  finish {ambient 0.8 diffuse 0.1}
-  scale <3.5, 3.5, 10>
-  rotate <45, 0, 0>
-  rotate <0, 0, 10.5>
-  translate <3, 2, -3>
-}
 
 cone { <0, 0, 1>, 2, <0, 0, -3>, 0
   pigment {color rgb <0.5, 0.5, 0.8>}
@@ -453,3 +436,20 @@ plane {<0, 1, 0>, -4
       finish {ambient 0.4 diffuse 0.8}
 }
 
+box { <-0.5, -0.5, -0.5>, <0.5, 0.5, 0.5>
+  pigment { color rgb <0.2, 0.8, 0.3>}
+  finish {ambient 0.6 diffuse 0.4}
+  scale <10, 3.5, 3.5>
+  rotate <45, 0, 0>
+  rotate <0, 0, 10.5>
+  translate <3, 2, -3>
+}
+
+box { <-0.5, -0.5, -0.5>, <0.5, 0.5, 0.5>
+  pigment { color rgb <0.8, 0.159, 0.0>}
+  finish {ambient 0.8 diffuse 0.1}
+  scale <3.5, 3.5, 10>
+  rotate <45, 0, 0>
+  rotate <0, 0, 10.5>
+  translate <3, 2, -3>
+}

@@ -73,13 +73,19 @@ namespace RDST
       for (; cit != objs.end(); ++cit) {
          Intersection* pIntrs = (*cit)->intersect(ray);
          //Check for closer, valid, hit
-         if (pIntrs != NULL && //implies hit
-             pIntrs->t < ray.tCur &&
-             pIntrs->t < ray.tMax &&
-             pIntrs->t > ray.tMin) {
-                ray.tCur = pIntrs->t; //set new current t
-                delete pRetIntrs;
-                pRetIntrs = pIntrs; //it's closer; grab it!
+         if (pIntrs != NULL) { //NULL == no hit
+             if (pIntrs->t < ray.tCur &&
+                 pIntrs->t < ray.tMax &&
+                 pIntrs->t > ray.tMin) {
+                    //std::cout << "new T: " << pIntrs->t << std::endl;
+                    ray.tCur = pIntrs->t; //set new current t
+                    //std::cout << "ray T: " << ray.tCur << std::endl;
+                    delete pRetIntrs;
+                    pRetIntrs = pIntrs; //it's closer; grab it!
+             }
+             else {
+                delete pIntrs;
+             }
          }
       }
       return pRetIntrs;
