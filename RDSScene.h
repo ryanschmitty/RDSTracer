@@ -392,8 +392,7 @@ namespace RDST
       { return BOX; }
 
       //Intersection
-      Intersection* intersect(const Ray& ray) const
-      { return NULL; }
+      Intersection* intersect(const Ray& ray) const;
 
    private:
       glm::vec3 _smCorner;

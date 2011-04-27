@@ -7,6 +7,7 @@
 */
 
 #include "RDSScene.h"
+#include <algorithm>
 
 namespace RDST
 {
@@ -48,6 +49,74 @@ namespace RDST
    // INTERSECTION TEST CODE
    //
    //---------------------------------------------------------------------------
+
+   //Box Intersection
+   Intersection*
+   Box::intersect(const Ray& ray) const
+   {
+      //Setup transformed ray
+      Ray xr = transformRay(ray);
+      //Code
+      glm::vec3 tmin = (getSmallCorner() - xr.o)/xr.d;
+      glm::vec3 tmax = (getLargeCorner() - xr.o)/xr.d;
+      glm::vec3 real_min = glm::min(tmin, tmax);
+      glm::vec3 real_max = glm::max(tmin, tmax);
+      float smallestMax = glm::min( glm::min(real_max.x, real_max.y), real_max.z);
+      float largestMin = glm::max( glm::max(real_min.x, real_min.y), real_min.z);
+      if (smallestMax < largestMin) return NULL;
+      return new Intersection(true, largestMin, ray.o+(ray.d*largestMin), glm::vec3(0,1,0), Surface(getColor(), getFinish()));
+      /*
+      //Setup transformed ray
+      Ray xr = transformRay(ray);
+      //Intersection code
+      int axis;
+      float maxS = 0.f;
+      float minT = FLT_MAX; //ray.tCur;
+      glm::vec3 min = getSmallCorner();
+      glm::vec3 max = getLargeCorner();
+
+      // do x coordinate test (yz planes)
+      float s, t;
+      float recip = 1.f/xr.d.x;
+      s  = (min.x - xr.o.x) * recip;
+      t  = (max.x - xr.o.x) * recip;
+      if (s > t) std::swap(s,t);
+      //adjust min and max values
+      if (s > maxS) maxS = s;
+      if (t < minT) minT = t;
+      //check for intersection failure
+      if (maxS > minT) return NULL;
+
+      // do y coordinate test (xz planes)
+      recip = 1.f/xr.d.y;
+      s = (min.y - xr.o.y) * recip;
+      t = (max.y - xr.o.y) * recip;
+      if (s > t) std::swap(s,t);
+      //adjust min and max values
+      if (s > maxS) maxS = s;
+      if (t < minT) minT = t;
+      //check for intersection failure
+      if (maxS > minT) return NULL;
+
+      // do z coordinate test (xy planes)
+      recip = 1.f/xr.d.z;
+      s = (min.z - xr.o.z) * recip;
+      t = (max.z - xr.o.z) * recip;
+      if (s > t) std::swap(s,t);
+      //adjust min and max values
+      if (s > maxS) maxS = s;
+      if (t < minT) minT = t;
+      //check for intersection failure
+      if (maxS > minT) return NULL;
+
+      glm::vec3 n;
+      if (axis == 0) n = glm::vec3(1, 0, 0);
+      else if (axis == 1) n = glm::vec3(0, 1, 0);
+      else if (axis == 2) n = glm::vec3(0, 0, 1);
+      n = glm::normalize(getNormalXform() * n);
+      return new Intersection(true, maxS, ray.o+(ray.d*maxS), n, Surface(getColor(), getFinish()));
+      */
+   }
 
    //Sphere Intersection
    Intersection*
