@@ -55,7 +55,7 @@ namespace RDST
       std::vector<SpherePtr> spheres(scene.spheres());
 
       //Run CUDA
-      std::cout << "\nRunning CUDA Intersections...";
+      std::cout << "\nRunning CUDA Intersections..." << flush;
       ray_vec cRays(rays.size());
       transform(rays.begin(), rays.end(), cRays.begin(),
               toCUDARay);

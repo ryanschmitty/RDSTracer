@@ -16,7 +16,7 @@
 #include "RDSImage.h"
 #include "RDSScene.h"
 #include "POVRayParser.h"
-#include "cuda_stuff.h"
+#include "cuda_ray_tracer.h"
 
 namespace RDST
 {

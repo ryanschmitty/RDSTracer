@@ -3,7 +3,7 @@
 #include <cfloat>
 #include <thrust/device_vector.h>
 #include <thrust/copy.h>
-#include "cuda_stuff.h"
+#include "cuda_ray_tracer.h"
 
 using namespace RDST;
 
