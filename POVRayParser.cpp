@@ -293,10 +293,10 @@ namespace RDST
          }
          else if (token.find("scale") != std::string::npos)
             xforms = glm::scale(glm::mat4(), ParseScale(tokens)) * xforms;
-         else if (token.find("rgb") != std::string::npos)
-            color = glm::vec4(ParseVec3FromStream(tokens), 1.f);
          else if (token.find("rgbf") != std::string::npos)
             color = ParseVec4FromStream(tokens);
+         else if (token.find("rgb") != std::string::npos)
+            color = glm::vec4(ParseVec3FromStream(tokens), 1.f);
       }
    }
 

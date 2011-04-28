@@ -137,8 +137,9 @@ namespace RDST
       glm::vec3 color(0.f);
       //Loop for each reflection
       for (int i=0; i<numReflections; ++i) {
+         if (curSurf.finish.getReflection() == 0.f) break; //skip hard work if no reflection
          Intersection* pReflectionIntrs = RayObjectsIntersect(curRay, objs);
-         if (!pReflectionIntrs->hit) { //no more intersections
+         if (!pReflectionIntrs->hit) { //we missed; ray goes flying into nothingness... :'(
             delete pReflectionIntrs;
             break;
          }
