@@ -119,8 +119,8 @@ namespace RDST
       delete pShadowIntrs;
 
       //Reflection
-         Ray reflectionRay = Ray(glm::reflect(-v, intrs.n), intrs.p, 0.001f);
-         reflection = CalcReflection(reflectionRay, scene.objs(), intrs.surf, reflection, 0);
+      Ray reflectionRay = Ray(glm::reflect(-v, intrs.n), intrs.p, 0.001f);
+      reflection = CalcReflection(reflectionRay, scene.objs(), intrs.surf, 5);
 
       //Put it all together and blend
       glm::vec4 src(ambient + diffuse + specular + reflection,1.f);
@@ -129,14 +129,24 @@ namespace RDST
       p.set(dst);
    }
 
-   glm::vec3 Tracer::CalcReflection(Ray& reflectionRay, const std::vector<GeomObjectPtr>& objs, const Surface& currentSurface, glm::vec3& reflectionColor, int numReflections)
+   glm::vec3 Tracer::CalcReflection(Ray& reflectionRay, const std::vector<GeomObjectPtr>& objs, const Surface& startSurface, int numReflections)
    {
-      if (numReflections <= 0) return reflectionColor; //base case
-      Intersection* pReflectionIntrs = RayObjectsIntersect(reflectionRay, objs);
-      if (pReflectionIntrs == NULL) return reflectionColor; //no more intersections
-      Surface hitSurface = pReflectionIntrs->surf;
-      delete pReflectionIntrs;
-      reflectionColor += glm::vec3(currentSurface.finish.getReflection() * currentSurface.color * pReflectionIntrs->surf.color);
-      return CalcReflection(Ray(glm::reflect(-reflectionRay.d, pReflectionIntrs->n), pReflectionIntrs->p, 0.001f), objs, pReflectionIntrs->surf, reflectionColor, --numReflections);
+      //Init temp variables
+      Ray curRay = reflectionRay;
+      Surface curSurf = startSurface;
+      glm::vec3 color(0.f);
+      //Loop for each reflection
+      for (int i=0; i<numReflections; ++i) {
+         Intersection* pReflectionIntrs = RayObjectsIntersect(curRay, objs);
+         if (!pReflectionIntrs->hit) { //no more intersections
+            delete pReflectionIntrs;
+            break;
+         }
+         color += glm::vec3(curSurf.finish.getReflection() * curSurf.color * pReflectionIntrs->surf.color);
+         curRay = Ray(glm::reflect(-curRay.d, pReflectionIntrs->n), pReflectionIntrs->p, 0.001f);
+         curSurf = pReflectionIntrs->surf;
+         delete pReflectionIntrs;
+      }
+      return color;
    }
 }
