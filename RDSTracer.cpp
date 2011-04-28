@@ -107,7 +107,8 @@ namespace RDST
       glm::vec3 ambient(intrs.surf.finish.getAmbient() * intrs.surf.color * light.getColor());
 
       //Diffuse and Specular (Shadow Ray)
-      Intersection* pShadowIntrs = RayObjectsIntersect(Ray(l, intrs.p, 0.001f, pointToLightDist), scene.objs());
+      Ray shadowRay = Ray(l, intrs.p, 0.001f, pointToLightDist);
+      Intersection* pShadowIntrs = RayObjectsIntersect(shadowRay, scene.objs());
       if (!pShadowIntrs->hit) {
          //diffuse calcs
          diffuse = glm::vec3(glm::max(0.f, glm::dot(intrs.n, l)) * intrs.surf.finish.getDiffuse() * intrs.surf.color * light.getColor());
