@@ -41,6 +41,7 @@ namespace RDST
       static std::vector<RayPtr> GenerateRays(const Camera& cam, const Image& image);
       static Intersection*       RayObjectsIntersect(Ray& ray, const std::vector<GeomObjectPtr>& objs);
       static void                ShadePixel(Pixel& p, const SceneDescription& scene, const Intersection& intrs);
+      static glm::vec3           CalcReflection(Ray& reflectionRay, const std::vector<GeomObjectPtr>& objs, const Surface& currentSurface, glm::vec3& reflectionColor, int numReflections);
    };
 }
 

@@ -95,31 +95,48 @@ namespace RDST
    {
       //Required Vars
       PointLight& light = *scene.lights().at(0);
-      //Ambient
-      glm::vec3 ambient(intrs.surf.finish.getAmbient() * intrs.surf.color * light.getColor());
-      //Diffuse and Specular
-      glm::vec3 pointToLight = light.getPos()-intrs.p;
-      Ray shadowRay = Ray(glm::normalize(pointToLight), intrs.p+(0.01f*intrs.n)); //Note to self: needed to move the shadow ray off the origin object a bit
-      shadowRay.tMax = glm::length(pointToLight);
+      glm::vec3 l = light.getPos()-intrs.p;
+      float pointToLightDist = glm::length(l);
+      l = glm::normalize(l);
+      glm::vec3 v = glm::normalize(scene.cam().getPos()-intrs.p);
       glm::vec3 diffuse(0.f);
       glm::vec3 specular(0.f);
-      Intersection* pShadowIntrs = RayObjectsIntersect(shadowRay, scene.objs());
+      glm::vec3 reflection(0.f);
+
+      //Ambient
+      glm::vec3 ambient(intrs.surf.finish.getAmbient() * intrs.surf.color * light.getColor());
+
+      //Diffuse and Specular (Shadow Ray)
+      Intersection* pShadowIntrs = RayObjectsIntersect(Ray(l, intrs.p, 0.001f, pointToLightDist), scene.objs());
       if (!pShadowIntrs->hit) {
          //diffuse calcs
-         glm::vec3 l = glm::normalize(light.getPos()-intrs.p);
-         float diff = glm::max(0.f, glm::dot(intrs.n, l));
-         diffuse = glm::vec3(diff * intrs.surf.finish.getDiffuse() * intrs.surf.color * light.getColor());
+         diffuse = glm::vec3(glm::max(0.f, glm::dot(intrs.n, l)) * intrs.surf.finish.getDiffuse() * intrs.surf.color * light.getColor());
          //specular calcs
-         glm::vec3 v = glm::normalize(scene.cam().getPos()-intrs.p);
          glm::vec3 h = glm::normalize(l+v);
          float spec = glm::max(0.f, glm::dot(intrs.n, h));
          specular = glm::vec3(powf(spec,1.f/intrs.surf.finish.getRoughness()) * intrs.surf.color * intrs.surf.finish.getSpecular() * light.getColor());
       }
       delete pShadowIntrs;
+
+      //Reflection
+         Ray reflectionRay = Ray(glm::reflect(-v, intrs.n), intrs.p, 0.001f);
+         reflection = CalcReflection(reflectionRay, scene.objs(), intrs.surf, reflection, 0);
+
       //Put it all together and blend
-      glm::vec4 src(ambient + diffuse + specular,1.f);
+      glm::vec4 src(ambient + diffuse + specular + reflection,1.f);
       glm::vec4 dst = p.rgba();
       dst = (src*src.a) + (dst*(1-src.a)); //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
       p.set(dst);
+   }
+
+   glm::vec3 Tracer::CalcReflection(Ray& reflectionRay, const std::vector<GeomObjectPtr>& objs, const Surface& currentSurface, glm::vec3& reflectionColor, int numReflections)
+   {
+      if (numReflections <= 0) return reflectionColor; //base case
+      Intersection* pReflectionIntrs = RayObjectsIntersect(reflectionRay, objs);
+      if (pReflectionIntrs == NULL) return reflectionColor; //no more intersections
+      Surface hitSurface = pReflectionIntrs->surf;
+      delete pReflectionIntrs;
+      reflectionColor += glm::vec3(currentSurface.finish.getReflection() * currentSurface.color * pReflectionIntrs->surf.color);
+      return CalcReflection(Ray(glm::reflect(-reflectionRay.d, pReflectionIntrs->n), pReflectionIntrs->p, 0.001f), objs, pReflectionIntrs->surf, reflectionColor, --numReflections);
    }
 }

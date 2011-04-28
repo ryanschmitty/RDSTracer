@@ -246,12 +246,14 @@ namespace RDST
    {
    public:
       explicit Ray(const glm::vec3& direction,
-                   const glm::vec3& origin = glm::vec3(0.f))
+                   const glm::vec3& origin = glm::vec3(0.f),
+                   float minT = 0.f,
+                   float maxT = FLT_MAX)
       : d(direction),
         o(origin),
         tCur(FLT_MAX),
-        tMin(0.f),
-        tMax(FLT_MAX)
+        tMin(minT),
+        tMax(maxT)
       {}
       glm::vec3 d, o;
       float tCur;
