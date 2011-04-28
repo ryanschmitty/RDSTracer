@@ -6,8 +6,14 @@ FILES = ./*.cpp
 build: ${FILES}
 	${C} ${FILES} ${INCLS} -o ${OUTNAME} -O3
 
+fast: ${FILES}
+	${C} ${FILES} ${INCLS} -o ${OUTNAME} -O3 -ffast-math
+
 gprof: ${FILES}
 	${C} ${FILES} ${INCLS} -o ${OUTNAME} -O3 -pg
+
+gproffast: ${FILES}
+	${C} ${FILES} ${INCLS} -o ${OUTNAME} -O3 -ffast-math -pg
 
 clean:
 	rm ${OUTNAME}
