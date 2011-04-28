@@ -37,7 +37,7 @@ if (length $gcc != 0) {
 push @PATH, @oldPath;
 
 chdir 'src' or die $!;
-my $pid = open3(gensym, \*OUT, \*OUT, 'cubuild', $target);
+my $pid = open3(gensym, \*OUT, \*OUT, 'cubuild', $target, "-verbose");
 while (<OUT>) {
     print $_;
 }

@@ -8,62 +8,63 @@
 
 #include "RDSTracer.h"
 #include "ProgressBar.h"
+#include <glm/glm.hpp>
 #include <iostream>
+#include <algorithm>
+
+using namespace std;
 
 namespace RDST
 {
+
+   static cuda_sphere_t toCUDASphere(SpherePtr s)
+   {
+      vec3 v;
+      v.x = s->getCenter().x;
+      v.y = s->getCenter().y;
+      v.z = s->getCenter().z;
+      cuda_sphere_t cSphere;
+      cSphere.rr = s->getRadiusSquared();
+      cSphere.c = v;
+      return cSphere;
+   }
+
+   static cuda_ray_t toCUDARay(RayPtr r)
+   {
+       vec3 o;
+       o.x = r->o.x;
+       o.y = r->o.y;
+       o.z = r->o.z;
+
+       vec3 d;
+       d.x = r->d.x;
+       d.y = r->d.y;
+       d.z = r->d.z;
+
+       cuda_ray_t cRay;
+       cRay.o = o;
+       cRay.d = d;
+
+       return cRay;
+   }
+
    void Tracer::RayTrace(const SceneDescription& scene, Image& image)
    {
       //Create rays
       std::vector<RayPtr> rays(GenerateRays(scene.cam(), image));
-      
+      std::vector<SpherePtr> spheres(scene.spheres());
+
       //Run CUDA
       std::cout << "\nRunning CUDA Intersections...";
+      ray_vec cRays(rays.size());
+      transform(rays.begin(), rays.end(), cRays.begin(),
+              toCUDARay);
 
-      //Create CUDA data structures
-      // spheres
-      int spheresLen = scene.spheres().size();
-      cuda_sphere_t* cudaHostSphereArray = new cuda_sphere_t[spheresLen];
-      initCudaSpheres(cudaHostSphereArray, scene.spheres());
-
-      //Allocate and copy spheres to device
-      cuda_sphere_t* cudaDeviceSphereArray;
-      cudaMalloc((void**)&cudaDeviceSphereArray, spheresLen * sizeof(cuda_sphere_t));
-      cudaMemcpy(cudaDeviceSphereArray, cudaHostSphereArray, spheresLen * sizeof(cuda_sphere_t), 
-              cudaMemcpyHostToDevice);
-
-      // rays
-      int raysLen = rays.size();
-      cuda_ray_t* cudaHostRayArray = new cuda_ray_t[raysLen];
-      initCudaRays(cudaHostRayArray, rays);
-
-      //Allocate and copy rays to device
-      cuda_ray_t* cudaDeviceRayArray;
-      cudaMalloc((void**)&cudaDeviceRayArray, raysLen * sizeof(cuda_ray_t));
-      cudaMemcpy(cudaDeviceRayArray, cudaHostRayArray, raysLen * sizeof(cuda_ray_t), 
-              cudaMemcpyHostToDevice);
-
-      // intersections
-      cuda_intersection_t* cudaHostIntersectionArray = new cuda_intersection_t[raysLen](); //1 intersection per ray
-
-      //Allocate and copy rays to device
-      cuda_intersection_t* cudaDeviceIntersectionArray;
-      cudaMalloc((void**)&cudaDeviceIntersectionArray, raysLen * sizeof(cuda_intersection_t));
-      cudaMemcpy(cudaDeviceIntersectionArray, cudaHostIntersectionArray, raysLen * sizeof(cuda_intersection_t), 
-              cudaMemcpyHostToDevice);
-
-      dim3 dimBlock(16, 16);
-      dim3 dimGrid(512, 512);
-
-      // Run kernel on spheres
-      RayTraceKernel<<<dimGrid, dimBlock>>>(cudaDeviceSphereArray, spheresLen, cudaDeviceRayArray, cudaDeviceIntersectionArray, image.getWidth(), image.getHeight());
-
-      cudaMemcpy(cudaHostIntersectionArray, cudaDeviceIntersectionArray, raysLen * sizeof(cuda_intersection_t), 
-              cudaMemcpyDeviceToHost);
-
-      cudaFree(cudaDeviceSphereArray);
-      cudaFree(cudaDeviceRayArray);
-      cudaFree(cudaDeviceIntersectionArray);
+      sphere_vec cSpheres(spheres.size());
+      transform(spheres.begin(), spheres.end(),
+              cSpheres.begin(), toCUDASphere);
+      intersection_vec iVec = cuda_ray_trace(cSpheres, cRays,
+              image.getWidth(), image.getHeight());
 
       std::cout << "Done!\n";
 
@@ -73,16 +74,16 @@ namespace RDST
          //Intersect each ray against all objects
          Intersection* pIntrs = RayObjectsIntersect(*rays[rayi], scene.objs());
          //Shade on hit
-         if (pIntrs->hit && cudaHostIntersectionArray[rayi].t > pIntrs->t) {
+         if (pIntrs->hit && iVec[rayi].t > pIntrs->t) {
             ShadePixel(image.get(rayi), scene, *pIntrs);
          }
-         else if (cudaHostIntersectionArray[rayi].objIndx > -1) {
-            float cudaT = cudaHostIntersectionArray[rayi].t;
+         else if (iVec[rayi].objIndx > -1) {
+            float cudaT = iVec[rayi].t;
             glm::vec3 hitPoint = rays[rayi]->o + (rays[rayi]->d*cudaT);
-            glm::vec3 center = scene.spheres()[cudaHostIntersectionArray[rayi].objIndx]->getCenter();
-            glm::mat3 normalXform = scene.spheres()[cudaHostIntersectionArray[rayi].objIndx]->getNormalXform(); //May not need this as there's no model xforms for this lab.
+            glm::vec3 center = scene.spheres()[iVec[rayi].objIndx]->getCenter();
+            glm::mat3 normalXform = scene.spheres()[iVec[rayi].objIndx]->getNormalXform(); //May not need this as there's no model xforms for this lab.
             glm::vec3 n = normalXform * glm::normalize(hitPoint-center);
-            Surface s = Surface(scene.spheres()[cudaHostIntersectionArray[rayi].objIndx]->getColor(), scene.spheres()[cudaHostIntersectionArray[rayi].objIndx]->getFinish());
+            Surface s = Surface(scene.spheres()[iVec[rayi].objIndx]->getColor(), scene.spheres()[iVec[rayi].objIndx]->getFinish());
             Intersection cudaIntrs = Intersection(true, cudaT, hitPoint, n, s);
             ShadePixel(image.get(rayi), scene, cudaIntrs);
          }
@@ -90,27 +91,9 @@ namespace RDST
          //Progress Bar: update every 10,000 rays
          if (rayi % 10000 == 0) UpdateProgress(int(float(rayi)/rays.size()*100.f));
       }
+
       UpdateProgress(100);
       std::cout << "\n";
-   }
-
-   /* Assumes pSphereArr has enough space to fit all spheres */
-   void Tracer::initCudaSpheres(cuda_sphere_t pSphereArr[], const std::vector<SpherePtr>& spheres)
-   {
-      std::vector<SpherePtr>::const_iterator cit = spheres.begin();
-      for (int i=0; cit != spheres.end(); ++cit, ++i) {
-         pSphereArr[i].rr = (*cit)->getRadiusSquared(); //only radius squared is needed, and why not just store it rather than compute it?
-         pSphereArr[i].c = vec3((*cit)->getCenter().x, (*cit)->getCenter().y, (*cit)->getCenter().z);
-      }
-   }
-
-   void Tracer::initCudaRays(cuda_ray_t pRayArr[], const std::vector<RayPtr>& rays)
-   {
-      std::vector<RayPtr>::const_iterator cit = rays.begin();
-      for (int i=0; cit != rays.end(); ++cit, ++i) {
-         pRayArr[i].d = vec3((*cit)->d.x, (*cit)->d.y, (*cit)->d.z);
-         pRayArr[i].o = vec3((*cit)->o.x, (*cit)->o.y, (*cit)->o.z);
-      }
    }
 
    std::vector<RayPtr> Tracer::GenerateRays(const Camera& cam, const Image& image)

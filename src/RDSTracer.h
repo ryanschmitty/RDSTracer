@@ -13,7 +13,6 @@
 
 #include <vector>
 #include <boost/shared_ptr.hpp>
-#include <glm/glm.hpp>
 #include "RDSImage.h"
 #include "RDSScene.h"
 #include "POVRayParser.h"
