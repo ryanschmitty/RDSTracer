@@ -3,6 +3,7 @@
 *.suo
 *.user
 *.ppm
+*.png
 *.tga
 Debug/*
 Release/*
