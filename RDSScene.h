@@ -287,20 +287,23 @@ namespace RDST
       : hit(false),
         t(FLT_MAX),
         p(glm::vec3(0.f)),
-        n(glm::vec3(0.f, 1.f, 0.f)),
+        n(glm::vec3(0.f)),
+        incDir(glm::vec3(0.f)),
         surf(Surface())
       {}
-      explicit Intersection(bool hit, float hitT, const glm::vec3& hitPoint, const glm::vec3& normal, const Surface& surface)
+      explicit Intersection(bool hit, float hitT, const glm::vec3& incomingDir, const glm::vec3& hitPoint, const glm::vec3& normal, const Surface& surface)
       : hit(hit),
         t(hitT),
         p(hitPoint),
         n(normal),
+        incDir(incomingDir),
         surf(surface)
       {}
       bool hit;
       float t;
       glm::vec3 p;
       glm::vec3 n;
+      glm::vec3 incDir;
       Surface surf;
    };
    typedef boost::shared_ptr<Intersection> IntersectionPtr;

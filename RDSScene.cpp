@@ -69,7 +69,7 @@ namespace RDST
       glm::vec3 n = largestMin == real_min.x ? xr.d.x >= 0 ? glm::vec3(-1,0,0) : glm::vec3(1,0,0) :
                     largestMin == real_min.y ? xr.d.y >= 0 ? glm::vec3(0,-1,0) : glm::vec3(0,1,0) :
                                                xr.d.z >= 0 ? glm::vec3(0,0,-1) : glm::vec3(0,0,1);
-      return new Intersection(true, largestMin, ray.o+(ray.d*largestMin), glm::normalize(getNormalXform()*n), Surface(getColor(), getFinish()));
+      return new Intersection(true, largestMin, ray.d, ray.o+(ray.d*largestMin), glm::normalize(getNormalXform()*n), Surface(getColor(), getFinish()));
       /*
       //LONG OBNOXIOUS BOX TESTING
       //Setup transformed ray
@@ -148,7 +148,7 @@ namespace RDST
       if (ll > rr) t = s-q; //we're outside the sphere so return first point
       else t = s+q;
       glm::vec3 n = getNormalXform() * glm::normalize((xr.o+(xr.d*t))-getCenter()); //make sure to normalize n after this.
-      return new Intersection(true, t, ray.o + (ray.d*t), glm::normalize(n), Surface(getColor(), getFinish()));
+      return new Intersection(true, t, ray.d, ray.o + (ray.d*t), glm::normalize(n), Surface(getColor(), getFinish()));
    }
 
    //Plane Intersection
@@ -164,7 +164,7 @@ namespace RDST
       float t = -(glm::dot(n, xr.o) - getDistance()) / denom;
       if (t < 0.f) return NULL; //ray intersected behind us
       if (denom > 0.f) n = -n; //flip normal if we're under the plane
-      return new Intersection(true, t, ray.o + (ray.d*t), n, Surface(getColor(), getFinish()));
+      return new Intersection(true, t, ray.d, ray.o + (ray.d*t), glm::normalize(getNormalXform()*n), Surface(getColor(), getFinish()));
    }
 
    //Triangle Intersection
@@ -192,6 +192,6 @@ namespace RDST
       if (v < 0.f || u+v > 1.f) return NULL;
       //compute line parameter
       float t = f*glm::dot(e2, q);
-      return new Intersection(true, t, ray.o+(ray.d*t), getNormal(), Surface(getColor(), getFinish()));
+      return new Intersection(true, t, ray.d, ray.o+(ray.d*t), glm::normalize(getNormalXform()*getNormal()), Surface(getColor(), getFinish()));
    }
 }

@@ -10,6 +10,8 @@
 #include "ProgressBar.h"
 #include <iostream>
 
+#define MAX_REFLECTIONS 5
+
 namespace RDST
 {
    void Tracer::RayTrace(const SceneDescription& scene, Image& image)
@@ -22,7 +24,7 @@ namespace RDST
          Intersection* pIntrs = RayObjectsIntersect(*rays[rayi], scene.objs());
          //Shade on hit
          if (pIntrs->hit) {
-            glm::vec4 src = glm::vec4(ShadePoint(*pIntrs, scene, 5), 1.f);
+            glm::vec4 src = glm::vec4(ShadePoint(*pIntrs, scene, MAX_REFLECTIONS), 1.f);
             glm::vec4 dst = image.get(rayi).rgba();
             dst = (src*src.a) + (dst*(1-src.a)); //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
             image.get(rayi).set(dst);
@@ -80,9 +82,7 @@ namespace RDST
              if (pIntrs->t < ray.tCur &&
                  pIntrs->t < ray.tMax &&
                  pIntrs->t > ray.tMin) {
-                    //std::cout << "new T: " << pIntrs->t << std::endl;
                     ray.tCur = pIntrs->t; //set new current t
-                    //std::cout << "ray T: " << ray.tCur << std::endl;
                     delete pRetIntrs;
                     pRetIntrs = pIntrs; //it's closer; grab it!
              }
@@ -94,14 +94,14 @@ namespace RDST
       return pRetIntrs;
    }
 
-   glm::vec3 Tracer::ShadePoint(const Intersection& intrs, const SceneDescription& scene, unsigned int numReflectionBounces)
+   glm::vec3 Tracer::ShadePoint(const Intersection& intrs, const SceneDescription& scene, unsigned int numReflections)
    {
       //Required Vars
       glm::vec3 ambient(0.f);
       glm::vec3 diffuse(0.f);
       glm::vec3 specular(0.f);
       glm::vec3 reflection(0.f);
-      glm::vec3 v = glm::normalize(scene.cam().getPos()-intrs.p);
+      glm::vec3 v = -intrs.incDir;
 
       //For each light do Phong Shading & additively blend
       std::vector<PointLightPtr>::const_iterator cit = scene.lights().begin();
@@ -128,9 +128,13 @@ namespace RDST
       }
 
       //Reflection
-      if (intrs.surf.finish.getReflection() > 0.f) {
-         Ray reflectionRay = Ray(glm::reflect(-v, intrs.n), intrs.p, 0.001f);
-         reflection = CalcReflection(reflectionRay, scene, numReflectionBounces);
+      if (numReflections > 0 && intrs.surf.finish.getReflection() > 0.f) {
+         Ray reflectionRay = Ray(glm::reflect(intrs.incDir, intrs.n), intrs.p, 0.001f);
+         Intersection* pReflectionIntrs = RayObjectsIntersect(reflectionRay, scene.objs());
+         if (pReflectionIntrs->hit) {
+            reflection = ShadePoint(*pReflectionIntrs, scene, numReflections-1);
+         }
+         delete pReflectionIntrs;
       }
 
       //Put it all together and blend
