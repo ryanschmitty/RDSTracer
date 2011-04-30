@@ -9,6 +9,8 @@
 #include "RDSScene.h"
 #include <algorithm>
 #include <iostream>
+#define GLM_FORCE_INLINE
+#include <glm/gtx/vector_query.hpp>
 
 namespace RDST
 {
@@ -137,7 +139,7 @@ namespace RDST
       Ray xr = transformRay(ray);
       //Intersection Code
       glm::vec3 l = getCenter() - xr.o;
-      float s = glm::dot(l, xr.d);
+      float s = glm::dot(l, glm::normalize(xr.d));
       float ll = glm::dot(l, l);
       float rr = getRadiusSquared();
       if (s < 0.f && ll > rr) return NULL; //sphere is behind us and we're not inside
@@ -147,7 +149,7 @@ namespace RDST
       float t = 0.f;
       if (ll > rr) t = s-q; //we're outside the sphere so return first point
       else t = s+q;
-      glm::vec3 n = getNormalXform() * glm::normalize((xr.o+(xr.d*t))-getCenter()); //make sure to normalize n after this.
+      glm::vec3 n = getNormalXform() * ((xr.o+(xr.d*t))-getCenter()); //make sure to normalize n after this.
       return new Intersection(true, t, ray.d, ray.o + (ray.d*t), glm::normalize(n), Surface(getColor(), getFinish()));
    }
 
