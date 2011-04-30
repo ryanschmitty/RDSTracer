@@ -40,8 +40,9 @@ namespace RDST
       /* Helper Functions */
       static std::vector<RayPtr> GenerateRays(const Camera& cam, const Image& image);
       static Intersection*       RayObjectsIntersect(Ray& ray, const std::vector<GeomObjectPtr>& objs);
+      static glm::vec3           CalcDirectIllum(const Intersection& intrs, const SceneDescription& scene);
+      static glm::vec3           CalcReflection(const Intersection& intrs, const SceneDescription& scene, unsigned int numReflections);
       static glm::vec3           ShadePoint(const Intersection& intrs, const SceneDescription& scene, unsigned int numReflections);
-      static glm::vec3           CalcReflection(Ray& reflectionRay, const SceneDescription& scene, int numReflections);
    };
 }
 

@@ -94,14 +94,12 @@ namespace RDST
       return pRetIntrs;
    }
 
-   glm::vec3 Tracer::ShadePoint(const Intersection& intrs, const SceneDescription& scene, unsigned int numReflections)
+   glm::vec3 Tracer::CalcDirectIllum(const Intersection& intrs, const SceneDescription& scene)
    {
-      //Required Vars
+      //Parts
       glm::vec3 ambient(0.f);
       glm::vec3 diffuse(0.f);
       glm::vec3 specular(0.f);
-      glm::vec3 reflection(0.f);
-      glm::vec3 v = -intrs.incDir;
 
       //For each light do Phong Shading & additively blend
       std::vector<PointLightPtr>::const_iterator cit = scene.lights().begin();
@@ -120,6 +118,7 @@ namespace RDST
             //diffuse calcs
             diffuse += glm::vec3(glm::max(0.f, glm::dot(intrs.n, l)) * intrs.surf.finish.getDiffuse() * intrs.surf.color * light.getColor());
             //specular calcs
+            glm::vec3 v = -intrs.incDir;
             glm::vec3 h = glm::normalize(l+v);
             float spec = glm::max(0.f, glm::dot(intrs.n, h));
             specular += glm::vec3(powf(spec,1.f/intrs.surf.finish.getRoughness()) * intrs.surf.color * intrs.surf.finish.getSpecular() * light.getColor());
@@ -127,7 +126,13 @@ namespace RDST
          delete pShadowIntrs;
       }
 
-      //Reflection
+      //Additively blend all components and return
+      return ambient + diffuse + specular;
+   }
+
+   glm::vec3 Tracer::CalcReflection(const Intersection& intrs, const SceneDescription& scene, unsigned int numReflections)
+   {
+      glm::vec3 reflection(0.f);
       if (numReflections > 0 && intrs.surf.finish.getReflection() > 0.f) {
          Ray reflectionRay = Ray(glm::reflect(intrs.incDir, intrs.n), intrs.p, 0.001f);
          Intersection* pReflectionIntrs = RayObjectsIntersect(reflectionRay, scene.objs());
@@ -136,53 +141,22 @@ namespace RDST
          }
          delete pReflectionIntrs;
       }
+      return reflection;
+   }
 
-      //Put it all together and blend
-      glm::vec3 finalColor(ambient + diffuse + specular);
+   glm::vec3 Tracer::ShadePoint(const Intersection& intrs, const SceneDescription& scene, unsigned int numReflections)
+   {
+      //Direct illumination
+      glm::vec3 finalColor = CalcDirectIllum(intrs, scene);
+
+      //Reflection
+      glm::vec3 reflection = CalcReflection(intrs, scene, numReflections);
+
+      //Blend if there is reflection
       if (glm::length(reflection) > 0.f) {
          float reflCoef = intrs.surf.finish.getReflection();
          finalColor = ((1.f-reflCoef)*glm::vec3(finalColor)) + (reflCoef*reflection);
       }
-      return finalColor;
-   }
-
-   glm::vec3 Tracer::CalcReflection(Ray& reflectionRay, const SceneDescription& scene, int numReflections)
-   {
-      //Short Circuit
-      if (numReflections <= 0) return glm::vec3(0.f); //skip hard work if no reflection
-
-      //Initialization
-      glm::vec3 finalColor(0.f);
-      Ray curRay = reflectionRay;
-      std::vector<glm::vec4> surfProps; //r, g, b, reflection coef
-
-      //Loop for each reflection
-      for (int i=0; i<numReflections; ++i) {
-         Intersection* pReflectionIntrs = RayObjectsIntersect(curRay, scene.objs());
-         if (!pReflectionIntrs->hit) {
-            //TODO: background color
-            delete pReflectionIntrs;
-            break;
-         }
-         //evaluate full color of intersection point
-         glm::vec3 hitSurfColor = ShadePoint(*pReflectionIntrs, scene, numReflections-1);
-         surfProps.push_back( glm::vec4(hitSurfColor.r,
-                                        hitSurfColor.g,
-                                        hitSurfColor.b,
-                                        pReflectionIntrs->surf.finish.getReflection()) );
-         if (pReflectionIntrs->surf.finish.getReflection() == 0.f) {delete pReflectionIntrs; break;} //finish when no reflection
-         delete pReflectionIntrs;
-         curRay = Ray(glm::reflect(curRay.d, pReflectionIntrs->n), pReflectionIntrs->p, 0.001f);
-      }
-      if (surfProps.size() == 0) return glm::vec3(0.f); //no reflections hit anything
-      surfProps.back().a = 0.f; //set final reflectance to 0... for safety!
-
-      //Construct color
-      std::vector<glm::vec4>::reverse_iterator crit = surfProps.rbegin();
-      for (; crit != surfProps.rend(); ++crit) {
-         finalColor = (glm::vec3(*crit) * (1.f - crit->a)) + (finalColor * crit->a);
-      }
-
       return finalColor;
    }
 }
