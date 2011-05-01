@@ -130,14 +130,14 @@ namespace RDST
       return ambient + diffuse + specular;
    }
 
-   glm::vec3 Tracer::CalcReflection(const Intersection& intrs, const SceneDescription& scene, unsigned int numReflections)
+   glm::vec3 Tracer::CalcReflection(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionDepth)
    {
       glm::vec3 reflection(0.f);
-      if (numReflections > 0 && intrs.surf.finish.getReflection() > 0.f) {
+      if (recursionDepth > 0 && intrs.surf.finish.getReflection() > 0.f) {
          Ray reflectionRay = Ray(glm::reflect(intrs.incDir, intrs.n), intrs.p, 0.001f);
          Intersection* pReflectionIntrs = RayObjectsIntersect(reflectionRay, scene.objs());
          if (pReflectionIntrs->hit) {
-            reflection = ShadePoint(*pReflectionIntrs, scene, numReflections-1);
+            reflection = ShadePoint(*pReflectionIntrs, scene, recursionDepth-1);
          }
          delete pReflectionIntrs;
       }
@@ -156,8 +156,29 @@ namespace RDST
       return n * incident + (n * cosI - cosT) * normal;
    }
 
-   glm::vec3 Tracer::CalcRefraction(const Intersection& intrs, const SceneDescription& scene)
+   glm::vec3 Tracer::CalcRefraction(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionDepth)
    {
+      glm::vec3 refraction(0.f);
+      if (intrs.surf.finish.getRefraction() > 0.f) {
+         float eta = intrs.surf.finish.getIndexOfRefraction();
+         glm::vec3 normal = -intrs.n;
+         if (glm::dot(intrs.n, intrs.incDir) < 0) {
+            eta = 1.f/eta;
+            normal = -normal;
+         }
+         Ray refractionRay = Ray(glm::refract(intrs.incDir, normal, eta), intrs.p-(0.01f*normal));
+         if (glm::length(refractionRay.d) == 0.f) return refraction;
+         Intersection* pRefractionIntrs = RayObjectsIntersect(refractionRay, scene.objs()); //TODO: perhaps store the actual object hit in the Intersection type.
+         if (pRefractionIntrs->hit) {
+            refraction = ShadePoint(*pRefractionIntrs, scene, recursionDepth-1);
+         }
+         else {
+            refraction = glm::vec3(0, 0, 0);
+         }
+         delete pRefractionIntrs;
+      }
+      return refraction;
+      /*
       glm::vec3 refraction(0.f);
       if (intrs.surf.finish.getRefraction() > 0.f) {
          //Calc needed vars
@@ -183,28 +204,29 @@ namespace RDST
          }
          pRefractionIntrs = RayObjectsIntersect(refractionRay, scene.objs());
          if (pRefractionIntrs->hit) {
-            refraction = ShadePoint(*pRefractionIntrs, scene, 0);
+            refraction = ShadePoint(*pRefractionIntrs, scene, 5);
          }
          delete pRefractionIntrs;
       }
+      */
       return refraction;
    }
 
-   glm::vec3 Tracer::ShadePoint(const Intersection& intrs, const SceneDescription& scene, unsigned int numReflections)
+   glm::vec3 Tracer::ShadePoint(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionDepth)
    {
       //Direct illumination
       glm::vec3 finalColor = CalcDirectIllum(intrs, scene);
 
       //Reflection
-      glm::vec3 reflection = CalcReflection(intrs, scene, numReflections);
+      glm::vec3 reflection = CalcReflection(intrs, scene, recursionDepth);
       if (glm::length(reflection) > 0.f) {
          float reflCoef = intrs.surf.finish.getReflection();
          finalColor = ((1.f-reflCoef)*glm::vec3(finalColor)) + (reflCoef*reflection);
       }
 
       //Refraction
-      glm::vec3 refraction = CalcRefraction(intrs, scene);
-      if (glm::length(refraction) > 0.f) {
+      if (intrs.surf.finish.getRefraction() > 0.f) {
+         glm::vec3 refraction = CalcRefraction(intrs, scene, recursionDepth);
          float refrCoef = intrs.surf.finish.getRefraction();
          finalColor = ((1.f-refrCoef)*glm::vec3(finalColor)) + (refrCoef*refraction);
       }
