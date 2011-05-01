@@ -19,17 +19,14 @@ namespace RDST
       //Create rays
       std::vector<RayPtr> rays(GenerateRays(scene.cam(), image));
       std::cout << "\nTracing Rays\n";
-      for (unsigned int rayi=0; rayi < rays.size(); ++rayi) { //note to self: using int for-loop here so I can use it to reference a pixel as well as a ray.
-         //Intersect each ray against all objects
-         Intersection* pIntrs = RayObjectsIntersect(*rays[rayi], scene.objs());
-         //Shade on hit
-         if (pIntrs->hit) {
-            glm::vec4 src = glm::vec4(ShadePoint(*pIntrs, scene, MAX_REFLECTIONS), 1.f);
-            glm::vec4 dst = image.get(rayi).rgba();
-            dst = (src*src.a) + (dst*(1-src.a)); //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-            image.get(rayi).set(dst);
-         }
-         delete pIntrs;
+      for (unsigned int rayi=0; rayi < rays.size(); ++rayi) {
+         //Get color
+         glm::vec3 color = TraceRay(*rays[rayi], scene, MAX_REFLECTIONS);
+         //Blend color with existing and store it in the image
+         glm::vec4 src = glm::vec4(color, 1.f);
+         glm::vec4 dst = image.get(rayi).rgba();
+         dst = (src*src.a) + (dst*(1-src.a)); //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+         image.get(rayi).set(dst);
          //Progress Bar: update every 10,000 rays
          if (rayi % 10000 == 0) UpdateProgress(int(float(rayi)/rays.size()*100.f));
       }
@@ -70,6 +67,17 @@ namespace RDST
       return rays;
    }
 
+   glm::vec3 Tracer::TraceRay(Ray& ray, const SceneDescription& scene, unsigned int recursionsLeft)
+   {
+      glm::vec3 color(0.f);
+      Intersection* pIntrs = RayObjectsIntersect(ray, scene.objs());
+      if (pIntrs->hit) {
+         color = ShadePoint(*pIntrs, scene, recursionsLeft);
+      }
+      delete pIntrs;
+      return color;
+   }
+
    Intersection* Tracer::RayObjectsIntersect(Ray& ray, const std::vector<GeomObjectPtr>& objs)
    {
       Intersection* pRetIntrs = new Intersection(); //defaults to hit=false
@@ -92,6 +100,28 @@ namespace RDST
          }
       }
       return pRetIntrs;
+   }
+   
+   glm::vec3 Tracer::ShadePoint(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft)
+   {
+      //Direct illumination
+      glm::vec3 finalColor = CalcDirectIllum(intrs, scene);
+
+      //Reflection
+      if (intrs.surf.finish.getReflection() > 0.f) {
+         glm::vec3 reflection = CalcReflection(intrs, scene, recursionsLeft);
+         float reflCoef = intrs.surf.finish.getReflection();
+         finalColor = ((1.f-reflCoef)*glm::vec3(finalColor)) + (reflCoef*reflection);
+      }
+
+      //Refraction
+      if (intrs.surf.finish.getRefraction() > 0.f) {
+         glm::vec3 refraction = CalcRefraction(intrs, scene, recursionsLeft);
+         float refrCoef = intrs.surf.finish.getRefraction();
+         finalColor = ((1.f-refrCoef)*glm::vec3(finalColor)) + (refrCoef*refraction);
+      }
+
+      return finalColor;
    }
 
    glm::vec3 Tracer::CalcDirectIllum(const Intersection& intrs, const SceneDescription& scene)
@@ -130,33 +160,17 @@ namespace RDST
       return ambient + diffuse + specular;
    }
 
-   glm::vec3 Tracer::CalcReflection(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionDepth)
+   glm::vec3 Tracer::CalcReflection(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft)
    {
       glm::vec3 reflection(0.f);
-      if (recursionDepth > 0 && intrs.surf.finish.getReflection() > 0.f) {
+      if (recursionsLeft > 0 && intrs.surf.finish.getReflection() > 0.f) {
          Ray reflectionRay = Ray(glm::reflect(intrs.incDir, intrs.n), intrs.p, 0.001f);
-         Intersection* pReflectionIntrs = RayObjectsIntersect(reflectionRay, scene.objs());
-         if (pReflectionIntrs->hit) {
-            reflection = ShadePoint(*pReflectionIntrs, scene, recursionDepth-1);
-         }
-         delete pReflectionIntrs;
+         reflection = TraceRay(reflectionRay, scene, recursionsLeft-1);
       }
       return reflection;
    }
 
-   glm::vec3 Tracer::refract(const glm::vec3& normal, const glm::vec3& incident, float n1, float n2)
-   {
-      float n = n1 / n2;
-      float cosI = -glm::dot(normal, incident);
-      float sinT2 = n * n * (1.f - cosI * cosI);
-      if (sinT2 > 1.0) {
-         return glm::vec3(0.f); //TIR
-      }
-      float cosT = sqrtf(1.f - sinT2);
-      return n * incident + (n * cosI - cosT) * normal;
-   }
-
-   glm::vec3 Tracer::CalcRefraction(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionDepth)
+   glm::vec3 Tracer::CalcRefraction(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft)
    {
       glm::vec3 refraction(0.f);
       if (intrs.surf.finish.getRefraction() > 0.f) {
@@ -168,14 +182,7 @@ namespace RDST
          }
          Ray refractionRay = Ray(glm::refract(intrs.incDir, normal, eta), intrs.p-(0.01f*normal));
          if (glm::length(refractionRay.d) == 0.f) return refraction;
-         Intersection* pRefractionIntrs = RayObjectsIntersect(refractionRay, scene.objs()); //TODO: perhaps store the actual object hit in the Intersection type.
-         if (pRefractionIntrs->hit) {
-            refraction = ShadePoint(*pRefractionIntrs, scene, recursionDepth-1);
-         }
-         else {
-            refraction = glm::vec3(0, 0, 0);
-         }
-         delete pRefractionIntrs;
+         refraction = TraceRay(refractionRay, scene, recursionsLeft-1);
       }
       return refraction;
       /*
@@ -212,25 +219,20 @@ namespace RDST
       return refraction;
    }
 
-   glm::vec3 Tracer::ShadePoint(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionDepth)
+
+
+
+   
+
+   glm::vec3 Tracer::refract(const glm::vec3& normal, const glm::vec3& incident, float n1, float n2)
    {
-      //Direct illumination
-      glm::vec3 finalColor = CalcDirectIllum(intrs, scene);
-
-      //Reflection
-      glm::vec3 reflection = CalcReflection(intrs, scene, recursionDepth);
-      if (glm::length(reflection) > 0.f) {
-         float reflCoef = intrs.surf.finish.getReflection();
-         finalColor = ((1.f-reflCoef)*glm::vec3(finalColor)) + (reflCoef*reflection);
+      float n = n1 / n2;
+      float cosI = -glm::dot(normal, incident);
+      float sinT2 = n * n * (1.f - cosI * cosI);
+      if (sinT2 > 1.0) {
+         return glm::vec3(0.f); //TIR
       }
-
-      //Refraction
-      if (intrs.surf.finish.getRefraction() > 0.f) {
-         glm::vec3 refraction = CalcRefraction(intrs, scene, recursionDepth);
-         float refrCoef = intrs.surf.finish.getRefraction();
-         finalColor = ((1.f-refrCoef)*glm::vec3(finalColor)) + (refrCoef*refraction);
-      }
-
-      return finalColor;
+      float cosT = sqrtf(1.f - sinT2);
+      return n * incident + (n * cosI - cosT) * normal;
    }
 }

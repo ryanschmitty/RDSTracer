@@ -39,12 +39,14 @@ namespace RDST
    private:
       /* Helper Functions */
       static std::vector<RayPtr> GenerateRays(const Camera& cam, const Image& image);
+      static glm::vec3           TraceRay(Ray& ray, const SceneDescription& scene, unsigned int recursionsLeft);
       static Intersection*       RayObjectsIntersect(Ray& ray, const std::vector<GeomObjectPtr>& objs);
+      static glm::vec3           ShadePoint(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft);
       static glm::vec3           CalcDirectIllum(const Intersection& intrs, const SceneDescription& scene);
-      static glm::vec3           CalcReflection(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionDepth);
+      static glm::vec3           CalcReflection(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft);
+      static glm::vec3           CalcRefraction(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft);
+     
       static glm::vec3           refract(const glm::vec3& normal, const glm::vec3& incident, float n1, float n2);
-      static glm::vec3           CalcRefraction(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionDepth);
-      static glm::vec3           ShadePoint(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionDepth);
    };
 }
 
