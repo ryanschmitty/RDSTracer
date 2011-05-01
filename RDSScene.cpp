@@ -147,8 +147,12 @@ namespace RDST
       if (mm > rr) return NULL; //ray misses (sphere center projected onto ray - sphere center > radius)
       float q = sqrtf(rr-mm);
       float t = 0.f;
-      if (ll > rr) t = s-q; //we're outside the sphere so return first point
-      else t = s+q;
+      if (ll > rr) {
+         t = s-q; //we're outside the sphere so return first point
+      }
+      else {
+         t = s+q;
+      }
       glm::vec3 n = getNormalXform() * ((xr.o+(xr.d*t))-getCenter()); //make sure to normalize n after this.
       return new Intersection(true, t, ray.d, ray.o + (ray.d*t), glm::normalize(n), Surface(getColor(), getFinish()));
    }

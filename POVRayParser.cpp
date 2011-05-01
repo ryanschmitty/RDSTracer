@@ -224,47 +224,49 @@ namespace RDST
       std::string token;
       bool running(true);
       while (running && std::getline(tokens, token, ' ')) {
+         if (token.find("}") != std::string::npos) //Exit if we reach the closing '}'
+            running = false;
          //Parse different types of Finish floats
          if (token.find("ambient") != std::string::npos) {
             tokens >> token;
             if (token.find("}") != std::string::npos) //Exit if we reach the closing '}'
-               running = false;
+            running = false;
             ambient = ParseFloat(token);
          }
          else if (token.find("diffuse") != std::string::npos) {
             tokens >> token;
-            if (token.find("}") != std::string::npos)
-               running = false;
+            if (token.find("}") != std::string::npos) //Exit if we reach the closing '}'
+            running = false;
             diffuse = ParseFloat(token);
          }
          else if (token.find("specular") != std::string::npos) {
             tokens >> token;
-            if (token.find("}") != std::string::npos)
-               running = false;
+            if (token.find("}") != std::string::npos) //Exit if we reach the closing '}'
+            running = false;
             specular = ParseFloat(token);
          }
          else if (token.find("roughness") != std::string::npos) {
             tokens >> token;
-            if (token.find("}") != std::string::npos)
-               running = false;
+            if (token.find("}") != std::string::npos) //Exit if we reach the closing '}'
+            running = false;
             roughness = ParseFloat(token);
          }
          else if (token.find("reflection") != std::string::npos) {
             tokens >> token;
-            if (token.find("}") != std::string::npos)
-               running = false;
+            if (token.find("}") != std::string::npos) //Exit if we reach the closing '}'
+            running = false;
             reflection = ParseFloat(token);
          }
          else if (token.find("refraction") != std::string::npos) {
             tokens >> token;
-            if (token.find("}") != std::string::npos)
-               running = false;
+            if (token.find("}") != std::string::npos) //Exit if we reach the closing '}'
+            running = false;
             refraction = ParseFloat(token);
          }
          else if (token.find("ior") != std::string::npos) {
             tokens >> token;
-            if (token.find("}") != std::string::npos)
-               running = false;
+            if (token.find("}") != std::string::npos) //Exit if we reach the closing '}'
+            running = false;
             ior = ParseFloat(token);
          }
       }

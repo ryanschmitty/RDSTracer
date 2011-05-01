@@ -144,6 +144,52 @@ namespace RDST
       return reflection;
    }
 
+   glm::vec3 Tracer::refract(const glm::vec3& normal, const glm::vec3& incident, float n1, float n2)
+   {
+      float n = n1 / n2;
+      float cosI = -glm::dot(normal, incident);
+      float sinT2 = n * n * (1.f - cosI * cosI);
+      if (sinT2 > 1.0) {
+         return glm::vec3(0.f); //TIR
+      }
+      float cosT = sqrtf(1.f - sinT2);
+      return n * incident + (n * cosI - cosT) * normal;
+   }
+
+   glm::vec3 Tracer::CalcRefraction(const Intersection& intrs, const SceneDescription& scene)
+   {
+      glm::vec3 refraction(0.f);
+      if (intrs.surf.finish.getRefraction() > 0.f) {
+         //Calc needed vars
+         float matToAir = intrs.surf.finish.getIndexOfRefraction();
+         float airToMat = 1.f / matToAir;
+         //First refraction into the object
+         //Ray refractionRay = Ray(refract(intrs.n, intrs.incDir, 1.f, intrs.surf.finish.getIndexOfRefraction()), intrs.p-(0.001f*intrs.n));
+         Ray refractionRay = Ray(glm::refract(intrs.incDir, intrs.n, airToMat), intrs.p-(0.001f*intrs.n));
+         if (glm::length(refractionRay.d) == 0.f) {
+            return refraction;
+         }
+         Intersection* pRefractionIntrs = RayObjectsIntersect(refractionRay, scene.objs()); //TODO: perhaps store the actual object hit in the Intersection type.
+         if (!pRefractionIntrs->hit) { //ERROR
+            delete pRefractionIntrs;
+            return glm::vec3(5.f, 0.f, 0.f);
+         }
+         //Second refraction out of the object
+         //refractionRay = Ray(refract(-pRefractionIntrs->n, pRefractionIntrs->incDir, intrs.surf.finish.getIndexOfRefraction(), 1.f), pRefractionIntrs->p, 0.1f);
+         refractionRay = Ray(glm::refract(pRefractionIntrs->incDir, -pRefractionIntrs->n, matToAir), pRefractionIntrs->p, 0.1f);
+         delete pRefractionIntrs;
+         if (glm::length(refractionRay.d) == 0.f) {
+            return refraction;
+         }
+         pRefractionIntrs = RayObjectsIntersect(refractionRay, scene.objs());
+         if (pRefractionIntrs->hit) {
+            refraction = ShadePoint(*pRefractionIntrs, scene, 0);
+         }
+         delete pRefractionIntrs;
+      }
+      return refraction;
+   }
+
    glm::vec3 Tracer::ShadePoint(const Intersection& intrs, const SceneDescription& scene, unsigned int numReflections)
    {
       //Direct illumination
@@ -151,12 +197,18 @@ namespace RDST
 
       //Reflection
       glm::vec3 reflection = CalcReflection(intrs, scene, numReflections);
-
-      //Blend if there is reflection
       if (glm::length(reflection) > 0.f) {
          float reflCoef = intrs.surf.finish.getReflection();
          finalColor = ((1.f-reflCoef)*glm::vec3(finalColor)) + (reflCoef*reflection);
       }
+
+      //Refraction
+      glm::vec3 refraction = CalcRefraction(intrs, scene);
+      if (glm::length(refraction) > 0.f) {
+         float refrCoef = intrs.surf.finish.getRefraction();
+         finalColor = ((1.f-refrCoef)*glm::vec3(finalColor)) + (refrCoef*refraction);
+      }
+
       return finalColor;
    }
 }
