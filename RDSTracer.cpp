@@ -9,6 +9,7 @@
 #include "RDSTracer.h"
 #include "ProgressBar.h"
 #include <iostream>
+#include <ctime>
 
 #define MAX_RECURSION_DEPTH 50
 
@@ -44,11 +45,15 @@ namespace RDST
       float l = -r;
       float t = glm::length(cam.getUp())*0.5f;
       float b = -t;
+      srand((unsigned int)time(NULL));
       for (int y=0; y<h; y++) {
          for (int x=0; x<w; x++) {
+            //Randomize AA samples
+            float xOffset = (float)rand() / RAND_MAX;
+            float yOffset = (float)rand() / RAND_MAX;
             //Get view coords
-            float u = l+((r-l)*(x+0.5f)/w);
-            float v = b+((t-b)*(y+0.5f)/h);
+            float u = l+((r-l)*(x+xOffset)/w);
+            float v = b+((t-b)*(y+yOffset)/h);
             //Create Ray
             glm::vec3 rayOrigin(0.f,0.f,0.f); //view space
             glm::vec3 rayDir(u,v,1.f);

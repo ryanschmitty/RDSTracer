@@ -69,20 +69,22 @@ namespace RDST
    class Image
    {
    public:
-      explicit Image(short width, short height, const std::string& filename)
+      explicit Image(const Image& inputBuffer, int superSamples)
+         : w(inputBuffer.getWidth()/(superSamples/2)),
+           h(inputBuffer.getHeight()/(superSamples/2))
+      {
+         BOOST_ASSERT(superSamples%2==0); //assert we've got an even number
+         image.resize(0);
+         image.resize(w*h);
+         downSample(inputBuffer, superSamples);
+      }
+      explicit Image(short width, short height)
       : w(width),
-        h(height),
-        fname(filename)
+        h(height)
       {
          image.resize(0); //force vector to clear
          image.resize(w*h); //Initialize all Pixels with default ctor
       }
-
-      /* filename get/set */
-      const std::string& getFilename() const
-      { return fname; }
-      void setFilename(const std::string filename)
-      { fname = filename; }
 
       /* Dimension inquiries */
       short getWidth() const
@@ -106,7 +108,7 @@ namespace RDST
       void set(int i, const Pixel& pixel)
       { image.at(i) = pixel; }
 
-      void writeToDisk()
+      void writeToDisk(std::string& fname)
       {
          /* Write an uncompressed PPM, ADAPTED FROM: http://rosettacode.org/wiki/Bitmap/Write_a_PPM_file#C */
          std::string fnameExtension = fname;
@@ -173,8 +175,28 @@ namespace RDST
       }
 
    private:
+      void downSample(const Image& inputBuffer, int superSamples)
+      {
+         BOOST_ASSERT(superSamples%2==0);
+         int halfSS = superSamples/2;
+         int ibMaxY = inputBuffer.getHeight()-1;
+         for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+               int inputBufY = y*halfSS;
+               int inputBufX = x*halfSS;
+               glm::vec4 finalColor(0.f);
+               //Box filter
+               for (int i=0; i<superSamples/2; ++i) {
+                  for (int j=0; j<superSamples/2; ++j) {
+                     finalColor += inputBuffer.get(inputBufX+i,(ibMaxY)-(inputBufY+j)).rgba() / float(superSamples);
+                  }
+               }
+               get(x,h-1-y).set(finalColor);
+            }
+         }
+      }
+
       short w, h;
-      std::string fname;
       std::vector<Pixel> image;
    };
 } // end namespace RDST

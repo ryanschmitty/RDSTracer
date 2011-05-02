@@ -65,10 +65,13 @@ int main(int argc, char** argv)
    clock_t start = clock();
 
    parseParameters(argc, argv);
-   RDST::Image img(w, h, imgname);
+   //Create big buffer
+   RDST::Image img(w*2, h*2);
    RDST::SceneDescription desc(RDST::POVRayParser::ParseFile(filename));
    RDST::Tracer::RayTrace(desc, img);
-   img.writeToDisk();
+   //Anti-Alias by downsampling the big buffer
+   RDST::Image downSampledImg(img, 4);
+   downSampledImg.writeToDisk(imgname);
 
    std::cout << "\nRuntime: " << float(clock() - start) / CLOCKS_PER_SEC << " seconds\n";
 }
