@@ -121,9 +121,15 @@ namespace RDST
          // data, 0,0 is top left...
          for (int y = 0; y < h; ++y) {
             for (int x = 0; x < w; ++x) {
+               //Clamp it (TODO: HDR)
                float red = glm::clamp(get(x,h-1-y).r(), 0.f, 1.f); //reverse because my Ray Tracer (and most other peoples') assumes 0,0 is bottom left not top left!
                float green = glm::clamp(get(x,h-1-y).g(), 0.f, 1.f);
                float blue = glm::clamp(get(x,h-1-y).b(), 0.f, 1.f);
+               //Gamma Correction it
+               red = powf(red, 1.f / 2.2f); // 1/gamma
+               green = powf(green, 1.f / 2.2f); // 1/gamma
+               blue = powf(blue, 1.f / 2.2f); // 1/gamma
+               //Write it
                file.put((int)(red*255));
                file.put((int)(green*255));
                file.put((int)(blue*255));

@@ -10,7 +10,7 @@
 #include "ProgressBar.h"
 #include <iostream>
 
-#define MAX_REFLECTIONS 5
+#define MAX_RECURSION_DEPTH 50
 
 namespace RDST
 {
@@ -21,7 +21,7 @@ namespace RDST
       std::cout << "\nTracing Rays\n";
       for (unsigned int rayi=0; rayi < rays.size(); ++rayi) {
          //Get color
-         glm::vec3 color = TraceRay(*rays[rayi], scene, MAX_REFLECTIONS);
+         glm::vec3 color = TraceRay(*rays[rayi], scene, MAX_RECURSION_DEPTH);
          //Blend color with existing and store it in the image
          glm::vec4 src = glm::vec4(color, 1.f);
          glm::vec4 dst = image.get(rayi).rgba();
@@ -173,12 +173,11 @@ namespace RDST
    glm::vec3 Tracer::CalcRefraction(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft)
    {
       glm::vec3 refraction(0.f);
-      if (intrs.surf.finish.getRefraction() > 0.f) {
-         float eta = intrs.surf.finish.getIndexOfRefraction();
-         glm::vec3 normal = -intrs.n;
-         if (glm::dot(intrs.n, intrs.incDir) < 0) {
-            eta = 1.f/eta;
-            normal = -normal;
+      if (recursionsLeft > 0 && intrs.surf.finish.getRefraction() > 0.f) {
+         float eta = intrs.surf.finish.getIndexOfRefraction(); //material-to-air
+         glm::vec3 normal = intrs.n;
+         if (!intrs.inside) {
+            eta = 1.f/eta; //air-to-material
          }
          Ray refractionRay = Ray(glm::refract(intrs.incDir, normal, eta), intrs.p-(0.01f*normal));
          if (glm::length(refractionRay.d) == 0.f) return refraction;

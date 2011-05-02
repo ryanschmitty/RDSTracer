@@ -71,7 +71,12 @@ namespace RDST
       glm::vec3 n = largestMin == real_min.x ? xr.d.x >= 0 ? glm::vec3(-1,0,0) : glm::vec3(1,0,0) :
                     largestMin == real_min.y ? xr.d.y >= 0 ? glm::vec3(0,-1,0) : glm::vec3(0,1,0) :
                                                xr.d.z >= 0 ? glm::vec3(0,0,-1) : glm::vec3(0,0,1);
-      return new Intersection(true, largestMin, ray.d, ray.o+(ray.d*largestMin), glm::normalize(getNormalXform()*n), Surface(getColor(), getFinish()));
+      bool inside = false;
+      if (largestMin < 0.f) { // check for inside box
+         inside = true;
+         largestMin = smallestMax;
+      }
+      return new Intersection(true, largestMin, ray.d, ray.o+(ray.d*largestMin), glm::normalize(getNormalXform()*n), Surface(getColor(), getFinish()), inside);
       /*
       //LONG OBNOXIOUS BOX TESTING
       //Setup transformed ray
@@ -127,7 +132,7 @@ namespace RDST
       if (maxS > minT) return NULL;
 
       n = glm::normalize(getNormalXform() * n);
-      return new Intersection(true, maxS, ray.o+(ray.d*maxS), n, Surface(getColor(), getFinish()));
+      return new Intersection(true, maxS, ray.d, ray.o+(ray.d*maxS), n, Surface(getColor(), getFinish()));
       */
    }
 
@@ -147,14 +152,18 @@ namespace RDST
       if (mm > rr) return NULL; //ray misses (sphere center projected onto ray - sphere center > radius)
       float q = sqrtf(rr-mm);
       float t = 0.f;
+      float flipNormal = 1.f;
+      bool inside = false;
       if (ll > rr) {
          t = s-q; //we're outside the sphere so return first point
       }
       else {
-         t = s+q;
+         t = s+q; //we're inside the sphere to return the second point
+         flipNormal = -1.f; //and flip the normal;
+         inside = true;
       }
-      glm::vec3 n = getNormalXform() * ((xr.o+(xr.d*t))-getCenter()); //make sure to normalize n after this.
-      return new Intersection(true, t, ray.d, ray.o + (ray.d*t), glm::normalize(n), Surface(getColor(), getFinish()));
+      glm::vec3 n = flipNormal * glm::normalize(getNormalXform() * ((xr.o+(xr.d*t))-getCenter()));
+      return new Intersection(true, t, ray.d, ray.o + (ray.d*t), n, Surface(getColor(), getFinish()), inside);
    }
 
    //Plane Intersection
@@ -170,7 +179,7 @@ namespace RDST
       float t = -(glm::dot(n, xr.o) - getDistance()) / denom;
       if (t < 0.f) return NULL; //ray intersected behind us
       if (denom > 0.f) n = -n; //flip normal if we're under the plane
-      return new Intersection(true, t, ray.d, ray.o + (ray.d*t), glm::normalize(getNormalXform()*n), Surface(getColor(), getFinish()));
+      return new Intersection(true, t, ray.d, ray.o + (ray.d*t), glm::normalize(getNormalXform()*n), Surface(getColor(), getFinish()), false);
    }
 
    //Triangle Intersection
@@ -198,6 +207,6 @@ namespace RDST
       if (v < 0.f || u+v > 1.f) return NULL;
       //compute line parameter
       float t = f*glm::dot(e2, q);
-      return new Intersection(true, t, ray.d, ray.o+(ray.d*t), glm::normalize(getNormalXform()*getNormal()), Surface(getColor(), getFinish()));
+      return new Intersection(true, t, ray.d, ray.o+(ray.d*t), glm::normalize(getNormalXform()*getNormal()), Surface(getColor(), getFinish()), false);
    }
 }

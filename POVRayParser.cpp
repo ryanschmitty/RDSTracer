@@ -155,13 +155,15 @@ namespace RDST
    POVRayParser::ParseScale(std::istringstream& tokens)
    {
       glm::vec3 scale(1.f); //default no scaling
-      while (char c = tokens.get()) {
+      while (char c = tokens.peek()) {
          if (c == '<') {
             scale = ParseVec3FromStream(tokens);
             break;
          }
          else if (std::isdigit(c)) {
-            scale = glm::vec3(boost::lexical_cast<float>(c));
+            std::string token;
+            tokens >> token;
+            scale = glm::vec3(boost::lexical_cast<float>(token));
             break;
          }
       }
