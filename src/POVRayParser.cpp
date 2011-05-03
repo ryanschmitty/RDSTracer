@@ -24,6 +24,7 @@ namespace RDST
       std::vector<PointLightPtr> lights;
       std::vector<GeomObjectPtr> objs;
       std::vector<SpherePtr> spheres;
+      std::vector<TrianglePtr> triangles;
 
       std::string line;
       std::ifstream file(fileToParse.c_str());
@@ -73,10 +74,10 @@ namespace RDST
          if (pos != std::string::npos) {
             line = line.substr(pos);
             GetWholeObject(line, file);
-            objs.push_back(ParseTriangle(line));
+            triangles.push_back(ParseTriangle(line));
          }
       }
-      return SceneDescription(pCam, lights, objs, spheres);
+      return SceneDescription(pCam, lights, objs, spheres, triangles);
    }
 
    std::string&
