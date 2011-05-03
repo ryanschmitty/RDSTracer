@@ -11,6 +11,14 @@ __device__ float dot(vec3 &v1, vec3 &v2) {
     return (v1.x * v2.x) + (v1.y * v2.y) + (v1.z * v2.z);
 }
 
+__device__ vec3 cross(vec3 &v1, vec3 &v2) {
+    vec3 r;
+    r.x = v1.y * v2.z - v1.z * v2.y;
+    r.y = v1.z * v2.x - v1.x * v2.z;
+    r.z = v1.x * v2.y - v1.y * v2.x;
+    return r;
+}
+
 //Sphere Intersection
 __device__ float intersect(cuda_sphere_t &sp, cuda_ray_t &r) {
     //Intersection Code
@@ -34,7 +42,7 @@ __device__ float intersect(cuda_sphere_t &sp, cuda_ray_t &r) {
 
 __global__ void SphereIntersectKernel(cuda_sphere_t spheres[], int spheresSize,
         cuda_ray_t rays[], cuda_intersection_t intrs[], int rayCount) {
-    extern __shared__ cuda_sphere_t shared[];
+    extern __shared__ cuda_sphere_t sShared[];
 
     if ((blockIdx.x * blockDim.x + blockIdx.y * blockDim.y * gridDim.x * blockDim.x) > rayCount)
         return;
@@ -50,13 +58,14 @@ __global__ void SphereIntersectKernel(cuda_sphere_t spheres[], int spheresSize,
     int count = spheresSize / (blockDim.x * blockDim.y);
     int i = 0;
     for (; i < count; i++) {
-        shared[shPos] = spheres[blockDim.x * blockDim.y * i + shPos];
+        sShared[shPos] = spheres[blockDim.x * blockDim.y * i + shPos];
         __syncthreads();
         for (int k = 0; k < blockDim.x * blockDim.y; k++) {
-            float newT = intersect(shared[k], rays[rayPos]);
+            float newT = intersect(sShared[k], rays[rayPos]);
             if (newT >= 0 && newT < inter.t) {
                 inter.t = newT;
                 inter.objIndx = i * blockDim.x * blockDim.y + k;
+                inter.type = _SPHERE;
             }
         }
         __syncthreads();
@@ -64,10 +73,10 @@ __global__ void SphereIntersectKernel(cuda_sphere_t spheres[], int spheresSize,
 
     int spill = spheresSize % (blockDim.x * blockDim.y);
     if (shPos < spill)
-        shared[shPos] = spheres[blockDim.x * blockDim.y * i + shPos];
+        sShared[shPos] = spheres[blockDim.x * blockDim.y * i + shPos];
     __syncthreads();
     for (int k = 0; k < spill; k++) {
-        float newT = intersect(shared[k], rays[rayPos]);
+        float newT = intersect(sShared[k], rays[rayPos]);
         if (newT >= 0 && newT < inter.t) {
             inter.t = newT;
             inter.objIndx = i * blockDim.x * blockDim.y + k;
@@ -120,4 +129,78 @@ __host__ intersection_vec RDST::cuda_sphere_intersect(const sphere_vec &spheres,
     }
 
     return iVec;
+}
+
+//Triangle Intersection
+#define VEC_DIFF(vr, v1, v2)    \
+{                               \
+    vr.x = v1.x - v2.x;         \
+    vr.y = v1.y - v2.y;         \
+    vr.z = v1.z - v2.z;         \
+}
+__device__ float intersect(cuda_triangle_t &tr, cuda_ray_t &r) {
+    vec3 e1;
+    VEC_DIFF(e1, tr.v1, tr.v0);
+    vec3 e2;
+    VEC_DIFF(e2, tr.v2, tr.v0);
+    vec3 p = cross(r.d, e2);
+    float a = dot(e1, p);
+    if (a == 0.f) return -1;
+    float f = 1.f/a;
+    vec3 s;
+    VEC_DIFF(s, r.o, tr.v0);
+    float u = f * dot(s, p);
+    if (u < 0.f || u > 1.f) return -1;
+    vec3 q = cross(s, e1);
+    float v = f * dot(r.d, q);
+    if (v < 0.f || u+v > 1.f) return -1;
+    return f * dot(e2, q);
+}
+#undef VEC_DIFF
+
+__global__ void TriangleIntersectKernel(cuda_triangle_t triangles[], int triangleSize,
+        cuda_ray_t rays[], cuda_intersection_t intrs[], int rayCount) {
+    extern __shared__ cuda_triangle_t tShared[];
+
+    if ((blockIdx.x * blockDim.x + blockIdx.y * blockDim.y * gridDim.x * blockDim.x) > rayCount)
+        return;
+
+    int rayPos = threadIdx.y * gridDim.x * blockDim.x + threadIdx.x + blockIdx.x * blockDim.x + blockIdx.y * blockDim.y * gridDim.x * blockDim.x;
+
+    cuda_intersection_t inter;
+    inter.objIndx = -1;
+    inter.t = FLT_MAX;
+
+    int shPos = threadIdx.y * blockDim.x + threadIdx.x;
+
+    int count = triangleSize / (blockDim.x * blockDim.y);
+    int i = 0;
+    for (; i < count; i++) {
+        tShared[shPos] = triangles[blockDim.x * blockDim.y * i + shPos];
+        __syncthreads();
+        for (int k = 0; k < blockDim.x * blockDim.y; k++) {
+            float newT = intersect(tShared[k], rays[rayPos]);
+            if (newT >= 0 && newT < inter.t) {
+                inter.t = newT;
+                inter.objIndx = i * blockDim.x * blockDim.y + k;
+                inter.type = _TRIANGLE;
+            }
+        }
+        __syncthreads();
+    }
+
+    int spill = triangleSize % (blockDim.x * blockDim.y);
+    if (shPos < spill)
+        tShared[shPos] = triangles[blockDim.x * blockDim.y * i + shPos];
+    __syncthreads();
+    for (int k = 0; k < spill; k++) {
+        float newT = intersect(tShared[k], rays[rayPos]);
+        if (newT >= 0 && newT < inter.t) {
+            inter.t = newT;
+            inter.objIndx = i * blockDim.x * blockDim.y + k;
+        }
+    }
+
+    if (rayPos < rayCount)
+        intrs[rayPos] = inter;
 }

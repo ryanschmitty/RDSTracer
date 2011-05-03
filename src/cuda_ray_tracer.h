@@ -27,6 +27,16 @@ namespace RDST
     };
 
     /**
+     * Struct the represents a triangle.
+     */
+    struct cuda_triangle_t
+    {
+        vec3 v0, v1, v2;
+        vec3 normal;
+    };
+
+
+    /**
      * Struct that represents a ray
      */
     struct cuda_ray_t
@@ -35,11 +45,16 @@ namespace RDST
         vec3 d; //direction x,y,z
     };
 
+    enum ObjType {
+        _SPHERE,
+        _TRIANGLE
+    };
     /**
      * Struct that represents an intersection
      */
     struct cuda_intersection_t
     {
+        ObjType type;
         int objIndx; //index of object that was hit, default -1
         float t; //defines intersection point along an implicit line (i.e. ray)
     };
