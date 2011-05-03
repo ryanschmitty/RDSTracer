@@ -44,11 +44,10 @@ namespace RDST
         float t; //defines intersection point along an implicit line (i.e. ray)
     };
 
-
     typedef std::vector<cuda_sphere_t> sphere_vec;
     typedef std::vector<cuda_ray_t> ray_vec;
     typedef std::vector<cuda_intersection_t> intersection_vec;
-    intersection_vec cuda_ray_trace(const sphere_vec &, const ray_vec &, int width, int height);
+    intersection_vec cuda_sphere_intersect(const sphere_vec &, const ray_vec &, int width, int height);
 }
 
 #endif

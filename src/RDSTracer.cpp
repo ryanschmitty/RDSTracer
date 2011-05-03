@@ -63,7 +63,7 @@ namespace RDST
       sphere_vec cSpheres(spheres.size());
       transform(spheres.begin(), spheres.end(),
               cSpheres.begin(), toCUDASphere);
-      intersection_vec iVec = cuda_ray_trace(cSpheres, cRays,
+      intersection_vec iVec = cuda_sphere_intersect(cSpheres, cRays,
               image.getWidth(), image.getHeight());
 
       std::cout << "Done!\n";

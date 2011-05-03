@@ -32,7 +32,7 @@ __device__ float intersect(cuda_sphere_t &sp, cuda_ray_t &r) {
     return t;
 }
 
-__global__ void RayTraceKernel(cuda_sphere_t spheres[], int spheresSize,
+__global__ void SphereIntersectKernel(cuda_sphere_t spheres[], int spheresSize,
         cuda_ray_t rays[], cuda_intersection_t intrs[], int rayCount) {
     extern __shared__ cuda_sphere_t shared[];
 
@@ -78,7 +78,7 @@ __global__ void RayTraceKernel(cuda_sphere_t spheres[], int spheresSize,
         intrs[rayPos] = inter;
 }
 
-__host__ intersection_vec RDST::cuda_ray_trace(const sphere_vec &spheres, const ray_vec &rays, int width, int height) {
+__host__ intersection_vec RDST::cuda_sphere_intersect(const sphere_vec &spheres, const ray_vec &rays, int width, int height) {
     static dim3 dimBlock(16, 16);
     static dim3 dimGrid(60, 45);
     static int batchSize = dimBlock.x * dimBlock.y * dimGrid.x * dimGrid.y;
@@ -98,7 +98,7 @@ __host__ intersection_vec RDST::cuda_ray_trace(const sphere_vec &spheres, const 
         cuda_ray_t *rPtr = thrust::raw_pointer_cast(&(*dRays.begin()));
         cuda_intersection_t *iPtr = thrust::raw_pointer_cast(&(*dIntersects.begin()));
 
-        RayTraceKernel<<<dimGrid, dimBlock, sizeof(cuda_sphere_t) * dimBlock.x * dimBlock.y>>>(sPtr,
+        SphereIntersectKernel<<<dimGrid, dimBlock, sizeof(cuda_sphere_t) * dimBlock.x * dimBlock.y>>>(sPtr,
                 spheres.size(), rPtr, iPtr, batchSize);
 
         thrust::copy(dIntersects.begin(), dIntersects.end(), iVecI);
@@ -113,7 +113,7 @@ __host__ intersection_vec RDST::cuda_ray_trace(const sphere_vec &spheres, const 
         cuda_ray_t *rPtr = thrust::raw_pointer_cast(&(*dRays.begin()));
         cuda_intersection_t *iPtr = thrust::raw_pointer_cast(&(*dIntersects.begin()));
 
-        RayTraceKernel<<<dimGrid, dimBlock, sizeof(cuda_sphere_t) * dimBlock.x * dimBlock.y>>>(sPtr,
+        SphereIntersectKernel<<<dimGrid, dimBlock, sizeof(cuda_sphere_t) * dimBlock.x * dimBlock.y>>>(sPtr,
                 spheres.size(), rPtr, iPtr, spill);
 
         thrust::copy(dIntersects.begin(), dIntersects.end(), iVecI);
