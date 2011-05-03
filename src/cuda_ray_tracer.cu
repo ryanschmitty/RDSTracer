@@ -87,50 +87,6 @@ __global__ void SphereIntersectKernel(cuda_sphere_t spheres[], int spheresSize,
         intrs[rayPos] = inter;
 }
 
-__host__ intersection_vec RDST::cuda_sphere_intersect(const sphere_vec &spheres, const ray_vec &rays, int width, int height) {
-    static dim3 dimBlock(16, 16);
-    static dim3 dimGrid(60, 45);
-    static int batchSize = dimBlock.x * dimBlock.y * dimGrid.x * dimGrid.y;
-    int count = (width * height) / batchSize;
-    int spill = (width * height) % batchSize;
-    intersection_vec iVec(rays.size());
-
-    thrust::device_vector<cuda_sphere_t> dSpheres(spheres.begin(), spheres.end());
-    cuda_sphere_t *sPtr = thrust::raw_pointer_cast(&(*dSpheres.begin()));
-
-    ray_vec::const_iterator rVecI = rays.begin();
-    intersection_vec::iterator iVecI = iVec.begin();
-    for (int i = 0 ; i < count; i++) {
-        thrust::device_vector<cuda_ray_t> dRays(rVecI, rVecI + batchSize);
-
-        thrust::device_vector<cuda_intersection_t> dIntersects(batchSize);
-        cuda_ray_t *rPtr = thrust::raw_pointer_cast(&(*dRays.begin()));
-        cuda_intersection_t *iPtr = thrust::raw_pointer_cast(&(*dIntersects.begin()));
-
-        SphereIntersectKernel<<<dimGrid, dimBlock, sizeof(cuda_sphere_t) * dimBlock.x * dimBlock.y>>>(sPtr,
-                spheres.size(), rPtr, iPtr, batchSize);
-
-        thrust::copy(dIntersects.begin(), dIntersects.end(), iVecI);
-        rVecI += batchSize;
-        iVecI += batchSize;
-    }
-
-    if (spill) {
-        thrust::device_vector<cuda_ray_t> dRays(rVecI, rVecI + spill);
-
-        thrust::device_vector<cuda_intersection_t> dIntersects(spill);
-        cuda_ray_t *rPtr = thrust::raw_pointer_cast(&(*dRays.begin()));
-        cuda_intersection_t *iPtr = thrust::raw_pointer_cast(&(*dIntersects.begin()));
-
-        SphereIntersectKernel<<<dimGrid, dimBlock, sizeof(cuda_sphere_t) * dimBlock.x * dimBlock.y>>>(sPtr,
-                spheres.size(), rPtr, iPtr, spill);
-
-        thrust::copy(dIntersects.begin(), dIntersects.end(), iVecI);
-    }
-
-    return iVec;
-}
-
 //Triangle Intersection
 #define VEC_DIFF(vr, v1, v2)    \
 {                               \
@@ -203,4 +159,56 @@ __global__ void TriangleIntersectKernel(cuda_triangle_t triangles[], int triangl
 
     if (rayPos < rayCount)
         intrs[rayPos] = inter;
+}
+
+__host__ intersection_vec RDST::cuda_intersect(const sphere_vec &spheres,
+        const triangle_vec &triangles, const ray_vec &rays, int width, int height) {
+    static dim3 dimBlock(16, 16);
+    static dim3 dimGrid(60, 45);
+    static int batchSize = dimBlock.x * dimBlock.y * dimGrid.x * dimGrid.y;
+    int count = (width * height) / batchSize;
+    int spill = (width * height) % batchSize;
+    intersection_vec iVec(rays.size());
+
+    thrust::device_vector<cuda_sphere_t> dSpheres(spheres.begin(), spheres.end());
+    cuda_sphere_t *sPtr = thrust::raw_pointer_cast(&(*dSpheres.begin()));
+
+    thrust::device_vector<cuda_triangle_t> dTriangles(triangles.begin(), triangles.end());
+    cuda_triangle_t *tPtr = thrust::raw_pointer_cast(&(*dTriangles.begin()));
+
+    ray_vec::const_iterator rVecI = rays.begin();
+    intersection_vec::iterator iVecI = iVec.begin();
+    for (int i = 0 ; i < count; i++) {
+        thrust::device_vector<cuda_ray_t> dRays(rVecI, rVecI + batchSize);
+
+        thrust::device_vector<cuda_intersection_t> dIntersects(batchSize);
+        cuda_ray_t *rPtr = thrust::raw_pointer_cast(&(*dRays.begin()));
+        cuda_intersection_t *iPtr = thrust::raw_pointer_cast(&(*dIntersects.begin()));
+
+        SphereIntersectKernel<<<dimGrid, dimBlock, sizeof(cuda_sphere_t) * dimBlock.x * dimBlock.y>>>(sPtr,
+                spheres.size(), rPtr, iPtr, batchSize);
+        TriangleIntersectKernel<<<dimGrid, dimBlock, sizeof(cuda_triangle_t) * dimBlock.x * dimBlock.y>>>(tPtr,
+                triangles.size(), rPtr, iPtr, batchSize);
+
+        thrust::copy(dIntersects.begin(), dIntersects.end(), iVecI);
+        rVecI += batchSize;
+        iVecI += batchSize;
+    }
+
+    if (spill) {
+        thrust::device_vector<cuda_ray_t> dRays(rVecI, rVecI + spill);
+
+        thrust::device_vector<cuda_intersection_t> dIntersects(spill);
+        cuda_ray_t *rPtr = thrust::raw_pointer_cast(&(*dRays.begin()));
+        cuda_intersection_t *iPtr = thrust::raw_pointer_cast(&(*dIntersects.begin()));
+
+        SphereIntersectKernel<<<dimGrid, dimBlock, sizeof(cuda_sphere_t) * dimBlock.x * dimBlock.y>>>(sPtr,
+                spheres.size(), rPtr, iPtr, spill);
+        TriangleIntersectKernel<<<dimGrid, dimBlock, sizeof(cuda_triangle_t) * dimBlock.x * dimBlock.y>>>(tPtr,
+                triangles.size(), rPtr, iPtr, spill);
+
+        thrust::copy(dIntersects.begin(), dIntersects.end(), iVecI);
+    }
+
+    return iVec;
 }

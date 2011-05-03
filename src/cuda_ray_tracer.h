@@ -32,7 +32,6 @@ namespace RDST
     struct cuda_triangle_t
     {
         vec3 v0, v1, v2;
-        vec3 normal;
     };
 
 
@@ -60,9 +59,11 @@ namespace RDST
     };
 
     typedef std::vector<cuda_sphere_t> sphere_vec;
+    typedef std::vector<cuda_triangle_t> triangle_vec;
     typedef std::vector<cuda_ray_t> ray_vec;
     typedef std::vector<cuda_intersection_t> intersection_vec;
-    intersection_vec cuda_sphere_intersect(const sphere_vec &, const ray_vec &, int width, int height);
+    intersection_vec cuda_intersect(const sphere_vec &, const triangle_vec &,
+            const ray_vec &, int width, int height);
 }
 
 #endif

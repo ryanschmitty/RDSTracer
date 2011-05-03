@@ -19,32 +19,39 @@ namespace RDST
 
    static cuda_sphere_t toCUDASphere(SpherePtr s)
    {
-      vec3 v;
-      v.x = s->getCenter().x;
-      v.y = s->getCenter().y;
-      v.z = s->getCenter().z;
       cuda_sphere_t cSphere;
       cSphere.rr = s->getRadiusSquared();
-      cSphere.c = v;
+      cSphere.c.x = s->getCenter().x;
+      cSphere.c.y = s->getCenter().y;
+      cSphere.c.z = s->getCenter().z;
       return cSphere;
    }
 
+   static cuda_triangle_t toCUDATriangle(TrianglePtr t)
+   {
+      cuda_triangle_t cTri;
+      cTri.v0.x = t->getVertex0().x;
+      cTri.v0.y = t->getVertex0().y;
+      cTri.v0.z = t->getVertex0().z;
+      cTri.v1.x = t->getVertex1().x;
+      cTri.v1.y = t->getVertex1().y;
+      cTri.v1.z = t->getVertex1().z;
+      cTri.v2.x = t->getVertex2().x;
+      cTri.v2.y = t->getVertex2().y;
+      cTri.v2.z = t->getVertex2().z;
+      return cTri;
+   }
+
+
    static cuda_ray_t toCUDARay(RayPtr r)
    {
-       vec3 o;
-       o.x = r->o.x;
-       o.y = r->o.y;
-       o.z = r->o.z;
-
-       vec3 d;
-       d.x = r->d.x;
-       d.y = r->d.y;
-       d.z = r->d.z;
-
        cuda_ray_t cRay;
-       cRay.o = o;
-       cRay.d = d;
-
+       cRay.o.x = r->o.x;
+       cRay.o.y = r->o.y;
+       cRay.o.z = r->o.z;
+       cRay.d.x = r->d.x;
+       cRay.d.y = r->d.y;
+       cRay.d.z = r->d.z;
        return cRay;
    }
 
@@ -52,7 +59,6 @@ namespace RDST
    {
       //Create rays
       std::vector<RayPtr> rays(GenerateRays(scene.cam(), image));
-      std::vector<SpherePtr> spheres(scene.spheres());
 
       //Run CUDA
       std::cout << "\nRunning CUDA Intersections..." << flush;
@@ -60,10 +66,13 @@ namespace RDST
       transform(rays.begin(), rays.end(), cRays.begin(),
               toCUDARay);
 
-      sphere_vec cSpheres(spheres.size());
-      transform(spheres.begin(), spheres.end(),
+      sphere_vec cSpheres(scene.spheres().size());
+      transform(scene.spheres().begin(), scene.spheres().end(),
               cSpheres.begin(), toCUDASphere);
-      intersection_vec iVec = cuda_sphere_intersect(cSpheres, cRays,
+      triangle_vec cTriangles(scene.triangles().size());
+      transform(scene.triangles().begin(), scene.triangles().end(),
+              cTriangles.begin(), toCUDATriangle);
+      intersection_vec iVec = cuda_intersect(cSpheres, cTriangles, cRays,
               image.getWidth(), image.getHeight());
 
       std::cout << "Done!\n";
@@ -77,13 +86,23 @@ namespace RDST
          if (pIntrs->hit && iVec[rayi].t > pIntrs->t) {
             ShadePixel(image.get(rayi), scene, *pIntrs);
          }
-         else if (iVec[rayi].objIndx > -1) {
+         else if (iVec[rayi].objIndx > -1 && iVec[rayi].type == _SPHERE) {
             float cudaT = iVec[rayi].t;
             glm::vec3 hitPoint = rays[rayi]->o + (rays[rayi]->d*cudaT);
             glm::vec3 center = scene.spheres()[iVec[rayi].objIndx]->getCenter();
-            glm::mat3 normalXform = scene.spheres()[iVec[rayi].objIndx]->getNormalXform(); //May not need this as there's no model xforms for this lab.
-            glm::vec3 n = normalXform * glm::normalize(hitPoint-center);
+            //glm::mat3 normalXform = scene.spheres()[iVec[rayi].objIndx]->getNormalXform(); //May not need this as there's no model xforms for this lab.
+            //glm::vec3 n = normalXform * glm::normalize(hitPoint-center);
+            glm::vec3 n = glm::normalize(hitPoint-center);
             Surface s = Surface(scene.spheres()[iVec[rayi].objIndx]->getColor(), scene.spheres()[iVec[rayi].objIndx]->getFinish());
+            Intersection cudaIntrs = Intersection(true, cudaT, hitPoint, n, s);
+            ShadePixel(image.get(rayi), scene, cudaIntrs);
+         }
+         else if (iVec[rayi].objIndx > -1 && iVec[rayi].type == _TRIANGLE) {
+            float cudaT = iVec[rayi].t;
+            glm::vec3 hitPoint = rays[rayi]->o + (rays[rayi]->d*cudaT);
+            TrianglePtr pTri = scene.triangles()[iVec[rayi].objIndx];
+            glm::vec3 n = pTri->getNormal();
+            Surface s = Surface(pTri->getColor(), pTri->getFinish());
             Intersection cudaIntrs = Intersection(true, cudaT, hitPoint, n, s);
             ShadePixel(image.get(rayi), scene, cudaIntrs);
          }
