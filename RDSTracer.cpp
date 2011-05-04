@@ -139,7 +139,7 @@ namespace RDST
       //For each light do Phong Shading & additively blend
       std::vector<PointLightPtr>::const_iterator cit = scene.lights().begin();
       for (; cit != scene.lights().end(); ++cit) {
-         PointLight& light = **cit;
+         const PointLight& light = **cit;
          glm::vec3 l = light.getPos()-intrs.p;
          float pointToLightDist = glm::length(l);
          l = glm::normalize(l);

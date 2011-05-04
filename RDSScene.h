@@ -18,7 +18,7 @@
 namespace RDST
 {
    //Object Type enum
-   enum OBJ_TYPE {CAMERA, LIGHT, BOX, CONE, PLANE, SPHERE, TRIANGLE};
+   enum OBJ_TYPE {INVALID, CAMERA, LIGHT, BOX, CONE, PLANE, SPHERE, TRIANGLE};
 
    //---------------------------------------------------------------------------
    //
@@ -333,7 +333,10 @@ namespace RDST
         _transposedAdjoint(glm::transpose(adjoint(glm::mat3(modelXform)))),
         _finish(finish)
       {}
-      virtual ~GeomObject() = 0;
+      virtual ~GeomObject() {}
+
+      virtual OBJ_TYPE getType() const
+      { return INVALID; }
 
       //Model Transformations
       const glm::mat4& getModelXform() const
@@ -356,7 +359,10 @@ namespace RDST
       { _finish = finish; }
 
       //Intersection
-      virtual Intersection* intersect(const Ray& ray) const = 0;
+      virtual Intersection* intersect(const Ray& ray) const
+      {
+         return NULL;
+      }
 
    private:
       //functions
@@ -595,35 +601,37 @@ namespace RDST
    public:
       explicit SceneDescription()
       : _pCam(boost::shared_ptr<Camera>()),
-        _lights(std::vector<PointLightPtr>()),
-        _objs(std::vector<GeomObjectPtr>())
+        _pLights(boost::shared_ptr<std::vector<PointLightPtr>>()),
+        _pObjs(boost::shared_ptr<std::vector<GeomObjectPtr>>())
       {}
-      explicit SceneDescription(CameraPtr pCamera, std::vector<PointLightPtr> lights, std::vector<GeomObjectPtr> geometryObjects)
+      explicit SceneDescription(CameraPtr pCamera,
+                                boost::shared_ptr<std::vector<PointLightPtr>> lights,
+                                boost::shared_ptr<std::vector<GeomObjectPtr>> geometryObjects)
       : _pCam(pCamera),
-        _lights(lights),
-        _objs(geometryObjects)
+        _pLights(lights),
+        _pObjs(geometryObjects)
       {}
 
       //Mutable
       void setCam(CameraPtr pCamera)
       { _pCam = pCamera; }
-      void setLights(std::vector<PointLightPtr> lights)
-      { _lights = lights; }
-      void setObjs(std::vector<GeomObjectPtr> objs)
-      { _objs = objs; }
+      void setLights(boost::shared_ptr<std::vector<PointLightPtr>> lights)
+      { _pLights = lights; }
+      void setObjs(boost::shared_ptr<std::vector<GeomObjectPtr>> objs)
+      { _pObjs = objs; }
 
       //Non-mutable
       const Camera& cam() const
       { return *_pCam; }
       const std::vector<PointLightPtr>& lights() const
-      { return _lights; }
+      { return *_pLights; }
       const std::vector<GeomObjectPtr>& objs() const
-      { return _objs; }
+      { return *_pObjs; }
 
    private:
       CameraPtr _pCam;
-      std::vector<PointLightPtr> _lights;
-      std::vector<GeomObjectPtr> _objs;
+      boost::shared_ptr<std::vector<PointLightPtr>> _pLights;
+      boost::shared_ptr<std::vector<GeomObjectPtr>> _pObjs;
    };
 } // end namespace RDST
 
