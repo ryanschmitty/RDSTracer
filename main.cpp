@@ -8,70 +8,75 @@
 #include "RDSImage.h"
 #include "RDSTracer.h"
 
-std::string filename, imgname;
-short w, h; //img width and height
+using std::string;
+using std::cerr;
+using std::cout;
+using boost::lexical_cast;
 
+struct Options
+{
+   Options()
+   : povRayFile(""), imgname(""), height(0), width(0), sqrtSS(0)
+   {}
+   string povRayFile, imgname;
+   int height, width;
+   int sqrtSS; //square root of the sub-samples
+};
 
 void printUsageAndExit(char* name)
 {
-   std::cerr << "Usage: " << name << " +W<width> +H<height> +I<pov_input>" << std::endl;
-   exit(EXIT_FAILURE);
+   cerr << "usage: " << name << " [-w <width> | +W<width>] [-h <height> | +H<height>] [-aa <#sub-samples>] (-f <pov_input> | +I<pov_input>)\n";
+   exit(EXIT_SUCCESS);
 }
 
-void parseParameters(int argc, char** argv)
+Options parseParameters(int argc, char** argv)
 {
    //Check for proper number of parameters
-   if (argc != 4)
+   if (argc < 2 || argc > 9)
       printUsageAndExit(argv[0]);
-
-   //Parse Parameters
-   for (int i=1; i < argc; i++) {
-      if (argv[i][0] != '+')
+   //Process command line arguments
+   Options opts;
+   for (int i=1; i<argc; ++i) {
+      if (!strcmp(argv[i], "+W")) opts.width = lexical_cast<int>(&argv[i][2]);
+      else if (!strcmp(argv[i], "-w")) opts.width = lexical_cast<int>(argv[++i]);
+      else if (!strcmp(argv[i], "+H")) opts.height = lexical_cast<int>(&argv[i][2]);
+      else if (!strcmp(argv[i], "-h")) opts.height = lexical_cast<int>(argv[++i]);
+      else if (!strcmp(argv[i], "-aa")) {
+         int subSamples = lexical_cast<int>(argv[++i]);
+         float f_sqrt = sqrtf((float)subSamples);
+         int i_sqrt = (int)f_sqrt;
+         if (f_sqrt != i_sqrt) {
+            cerr << "Anti-Aliasing sub-samples must be a perfect square.\n";
+            exit(EXIT_FAILURE);
+         }
+         opts.sqrtSS = i_sqrt;
+      }
+      else if (!strcmp(argv[i], "+I")) {
+         opts.povRayFile = string(&argv[i][2]);
+         opts.imgname = opts.povRayFile.substr(0,opts.povRayFile.find(".pov")); //erase .pov extension if it exists
+      }
+      else if (!strcmp(argv[i], "-f")) {
+         opts.povRayFile = string(argv[++i]);
+         opts.imgname = opts.povRayFile.substr(0,opts.povRayFile.find(".pov")); //erase .pov extension if it exists
+      }
+      else if (!strcmp(argv[i], "--help")) {
          printUsageAndExit(argv[0]);
-      switch (argv[i][1]) {
-         case 'W':
-            w = boost::lexical_cast<short>(&argv[i][2]);
-            if (w <= 0) {
-               std::cerr << "***Error: width not a positive integer: " << w << std::endl;
-               exit(EXIT_FAILURE);
-            }
-            break;
-         case 'H':
-            h = boost::lexical_cast<short>(&argv[i][2]);
-            if (h <= 0) {
-               std::cerr << "***Error: height not a positive integer: " << h << std::endl;
-               exit(EXIT_FAILURE);
-            }
-            break;
-         case 'I':
-            //POVRay file
-            filename = std::string(&argv[i][2]);
-            //Image file
-            imgname = filename.substr(0,filename.find(".pov"));//erase .pov extension if it exists
-            if (imgname.empty()) {
-               std::cerr << "***Error: empty file name." << std::endl;
-               exit(EXIT_FAILURE);
-            }
-            break;
-         default:
-            printUsageAndExit(argv[0]);
-            break;
       }
    }
+   return opts;
 }
 
 int main(int argc, char** argv)
 {
    clock_t start = clock();
 
-   parseParameters(argc, argv);
+   Options opts = parseParameters(argc, argv);
    //Create big buffer
-   RDST::Image img(w*2, h*2);
-   RDST::SceneDescription desc(RDST::POVRayParser::ParseFile(filename));
+   RDST::Image img(opts.width*opts.sqrtSS, opts.height*opts.sqrtSS);
+   RDST::SceneDescription desc(RDST::POVRayParser::ParseFile(opts.povRayFile));
    RDST::Tracer::RayTrace(desc, img);
    //Anti-Alias by downsampling the big buffer
-   RDST::Image downSampledImg(img, 4);
-   downSampledImg.writeToDisk(imgname);
+   img.downSample(opts.sqrtSS,opts.sqrtSS).writeToDisk(opts.imgname);
 
-   std::cout << "\nRuntime: " << float(clock() - start) / CLOCKS_PER_SEC << " seconds\n";
+   cout << "\nRuntime: " << float(clock() - start) / CLOCKS_PER_SEC << " seconds\n";
 }
