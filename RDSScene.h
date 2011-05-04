@@ -14,33 +14,15 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <boost/shared_ptr.hpp>
+#include "RDSBBox.h"
 
 namespace RDST
 {
-   //Object Type enum
-   enum OBJ_TYPE {INVALID, CAMERA, LIGHT, BOX, CONE, PLANE, SPHERE, TRIANGLE};
-
    //---------------------------------------------------------------------------
    //
    // PARENT CLASSES
    //
    //---------------------------------------------------------------------------
-
-   /**
-    * Abstract Base Object class for EVERYTHING
-    */
-   class SceneObject
-   {
-   public:
-      explicit SceneObject()
-      {}
-      virtual ~SceneObject() = 0;
-
-      //Abstract type identifier function
-      virtual OBJ_TYPE getType() const = 0;
-   };
-   typedef boost::shared_ptr<SceneObject> SceneObjectPtr;
-   typedef boost::shared_ptr<const SceneObject> ConstSceneObjectPtr;
 
    /**
     * Abstract Base Colored Object class
@@ -75,15 +57,14 @@ namespace RDST
     * Camera Storage Class.
     * Note: Normalizes on set for Up and LookAt vectors.
     */
-   class Camera: public SceneObject
+   class Camera
    {
    public:
       explicit Camera(const glm::vec3& position = glm::vec3(0.f, 0.f, 0.f),
                       const glm::vec3& up = glm::vec3(0.f, 1.f, 0.f),
                       const glm::vec3& right = glm::vec3(1.333f, 0.f, 0.f),
                       const glm::vec3& dir = glm::vec3(0.f, 0.f, -1.f))
-      : SceneObject(),
-        _position(position),
+      : _position(position),
         _up(glm::normalize(up)),
         _right(right),
         _dir(glm::normalize(dir))
@@ -113,9 +94,6 @@ namespace RDST
       void setLookAt(const glm::vec3& dir)
       { _dir = glm::normalize(dir); }
 
-      OBJ_TYPE getType() const
-      { return CAMERA; }
-
    private:
       glm::vec3 _position;
       glm::vec3 _up;
@@ -128,13 +106,12 @@ namespace RDST
    /**
     * Point Light Storage Class
     */
-   class PointLight: public Colored, public SceneObject
+   class PointLight: public Colored
    {
    public:
       explicit PointLight(const glm::vec3& position = glm::vec3(0.f),
                           const glm::vec4& color = glm::vec4(1.f))
       : Colored(color),
-        SceneObject(),
         _position(position)
       {}
 
@@ -143,9 +120,6 @@ namespace RDST
       { return _position; }
       void setPos(const glm::vec3& position)
       { _position = position; }
-
-      OBJ_TYPE getType() const
-      { return LIGHT; }
 
    private:
       glm::vec3 _position;
@@ -321,7 +295,7 @@ namespace RDST
    /**
     * Abstract Base Geometric Object Storage Class
     */
-   class GeomObject: public Colored, public SceneObject
+   class GeomObject: public Colored
    {
    public:
       explicit GeomObject(const glm::vec4& color = glm::vec4(1.f, 1.f, 1.f, 1.f),
@@ -331,12 +305,10 @@ namespace RDST
         _modelXform(modelXform),
         _inverse(glm::inverse(modelXform)),
         _transposedAdjoint(glm::transpose(adjoint(glm::mat3(modelXform)))),
-        _finish(finish)
+        _finish(finish),
+        _bbox(BBox())
       {}
-      virtual ~GeomObject() {}
-
-      virtual OBJ_TYPE getType() const
-      { return INVALID; }
+      virtual ~GeomObject() = 0;
 
       //Model Transformations
       const glm::mat4& getModelXform() const
@@ -359,10 +331,13 @@ namespace RDST
       { _finish = finish; }
 
       //Intersection
-      virtual Intersection* intersect(const Ray& ray) const
-      {
-         return NULL;
-      }
+      virtual Intersection* intersect(const Ray& ray) const = 0;
+
+      //Bounds
+      const BBox& getWorldBounds() const
+      { return _bbox; }
+      BBox& getWorldBounds()
+      { return _bbox; }
 
    private:
       //functions
@@ -372,6 +347,8 @@ namespace RDST
       glm::mat4 _inverse;
       glm::mat3 _transposedAdjoint;
       Finish    _finish;
+   protected:
+      BBox      _bbox;
    };
    typedef boost::shared_ptr<GeomObject> GeomObjectPtr;
    typedef boost::shared_ptr<const GeomObject> ConstGeomObjectPtr;
@@ -391,7 +368,7 @@ namespace RDST
       : GeomObject(color, modelXform, finish),
         _smCorner(smallCorner),
         _lgCorner(largeCorner)
-      {}
+      { _bbox = BBox(glm::vec3(modelXform*glm::vec4(smallCorner,1.f)), glm::vec3(modelXform*glm::vec4(largeCorner,1.f))); }
 
       //Corners of a box (corner 1 must be less than corner 2 in all elements)
       const glm::vec3& getSmallCorner() const
@@ -401,9 +378,6 @@ namespace RDST
 
       void setDimensions(const glm::vec3& smallCorner, const glm::vec3& largeCorner)
       { _smCorner = smallCorner; _lgCorner = largeCorner; }
-
-      OBJ_TYPE getType() const
-      { return BOX; }
 
       //Intersection
       Intersection* intersect(const Ray& ray) const;
@@ -450,9 +424,6 @@ namespace RDST
       void setDimensions(const glm::vec3& end1, float radius1, const glm::vec3& end2, float radius2)
       { _end1 = end1; _end2 = end2; _radius1 = radius1; _radius2 = radius2; }
 
-      OBJ_TYPE getType() const
-      { return CONE; }
-
       //Intersection
       Intersection* intersect(const Ray& ray) const
       { return NULL; }
@@ -491,9 +462,6 @@ namespace RDST
       void setDimensions(const glm::vec3& normal, float distance)
       { _normal = normal; _distance = distance; }
 
-      OBJ_TYPE getType() const
-      { return PLANE; }
-
       //Intersection
       Intersection* intersect(const Ray& ray) const;
 
@@ -519,7 +487,7 @@ namespace RDST
         _center(center),
         _radius(radius),
         _radiusSquared(radius*radius)
-      {}
+      { _bbox = BBox(glm::vec3(modelXform*glm::vec4(center,1.f))); _bbox.expand(radius); }
 
       //Center and radius define a sphere
       const glm::vec3& getCenter() const
@@ -531,9 +499,6 @@ namespace RDST
 
       void setDimensions(const glm::vec3& center, float radius)
       { _center = center; _radius = radius; _radiusSquared = radius*radius; }
-
-      OBJ_TYPE getType() const
-      { return SPHERE; }
 
       //Intersection
       Intersection* intersect(const Ray& ray) const;
@@ -562,7 +527,11 @@ namespace RDST
         _vert1(vertex1),
         _vert2(vertex2),
         _normal(glm::normalize(glm::cross(vertex1-vertex0, vertex2-vertex0)))
-      {}
+      {
+         glm::vec3 max = glm::max(glm::max(vertex0, vertex1), vertex2);
+         glm::vec3 min = glm::min(glm::min(vertex0, vertex1), vertex2);
+         _bbox = BBox(glm::vec3(modelXform*glm::vec4(min,1.f)), glm::vec3(modelXform*glm::vec4(max,1.f)));
+      }
 
       //Vertices
       const glm::vec3& getVertex0() const
@@ -577,9 +546,6 @@ namespace RDST
 
       void setDimensions(const glm::vec3& vertex0, const glm::vec3& vertex1, const glm::vec3& vertex2)
       { _vert0 = vertex0; _vert1 = vertex1; _vert2 = vertex2; _normal = glm::normalize(glm::cross(_vert1-_vert0, _vert2-_vert0)); }
-
-      OBJ_TYPE getType() const
-      { return TRIANGLE; }
 
       //Intersection
       Intersection* intersect(const Ray& ray) const;

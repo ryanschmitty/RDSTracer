@@ -35,10 +35,10 @@ namespace RDST
       {}
    public:
       /* Ray tracing functions */
-      static void RayTrace(const SceneDescription& scene, Image& image);
+      static void RayTrace(const SceneDescription& scene, Image& image, bool jittered);
    private:
       /* Helper Functions */
-      static std::vector<RayPtr> GenerateRays(const Camera& cam, const Image& image);
+      static std::vector<RayPtr> GenerateRays(const Camera& cam, const Image& image, bool jittered);
       static glm::vec3           TraceRay(Ray& ray, const SceneDescription& scene, unsigned int recursionsLeft);
       static Intersection*       RayObjectsIntersect(Ray& ray, const std::vector<GeomObjectPtr>& objs);
       static glm::vec3           ShadePoint(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft);

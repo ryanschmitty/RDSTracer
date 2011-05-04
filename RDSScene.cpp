@@ -15,9 +15,9 @@
 namespace RDST
 {
    //Definitions for pure virtual destructors
-   SceneObject::~SceneObject()
-   {}
    Colored::~Colored()
+   {}
+   GeomObject::~GeomObject()
    {}
 
    //Adjoint function

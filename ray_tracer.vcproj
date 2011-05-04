@@ -183,6 +183,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\RDSbvh.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\RDSScene.cpp"
 				>
 			</File>
@@ -202,6 +206,14 @@
 			</File>
 			<File
 				RelativePath=".\ProgressBar.h"
+				>
+			</File>
+			<File
+				RelativePath=".\RDSBBox.h"
+				>
+			</File>
+			<File
+				RelativePath=".\RDSbvh.h"
 				>
 			</File>
 			<File

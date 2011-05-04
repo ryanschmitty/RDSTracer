@@ -7,25 +7,22 @@
 #include "RDSScene.h"
 #include "RDSImage.h"
 #include "RDSTracer.h"
-
-using std::string;
-using std::cerr;
-using std::cout;
-using boost::lexical_cast;
+#include "RDSbvh.h"
 
 struct Options
 {
    Options()
-   : povRayFile(""), imgname(""), height(0), width(0), sqrtSS(0)
+   : povRayFile(""), imgname(""), height(480), width(640), enableAA(false), sqrtSS(1)
    {}
-   string povRayFile, imgname;
+   std::string povRayFile, imgname;
    int height, width;
+   bool enableAA;
    int sqrtSS; //square root of the sub-samples
 };
 
 void printUsageAndExit(char* name)
 {
-   cerr << "usage: " << name << " [-w <width> | +W<width>] [-h <height> | +H<height>] [-aa <#sub-samples>] (-f <pov_input> | +I<pov_input>)\n";
+   std::cerr << "usage: " << name << " [-w <width> | +W<width>] [-h <height> | +H<height>] [-aa <#sub-samples>] (-f <pov_input> | +I<pov_input>)\n";
    exit(EXIT_SUCCESS);
 }
 
@@ -37,26 +34,27 @@ Options parseParameters(int argc, char** argv)
    //Process command line arguments
    Options opts;
    for (int i=1; i<argc; ++i) {
-      if (!strcmp(argv[i], "+W")) opts.width = lexical_cast<int>(&argv[i][2]);
-      else if (!strcmp(argv[i], "-w")) opts.width = lexical_cast<int>(argv[++i]);
-      else if (!strcmp(argv[i], "+H")) opts.height = lexical_cast<int>(&argv[i][2]);
-      else if (!strcmp(argv[i], "-h")) opts.height = lexical_cast<int>(argv[++i]);
+      if (!strcmp(argv[i], "+W")) opts.width = boost::lexical_cast<int>(&argv[i][2]);
+      else if (!strcmp(argv[i], "-w")) opts.width = boost::lexical_cast<int>(argv[++i]);
+      else if (!strcmp(argv[i], "+H")) opts.height = boost::lexical_cast<int>(&argv[i][2]);
+      else if (!strcmp(argv[i], "-h")) opts.height = boost::lexical_cast<int>(argv[++i]);
       else if (!strcmp(argv[i], "-aa")) {
-         int subSamples = lexical_cast<int>(argv[++i]);
+         int subSamples = boost::lexical_cast<int>(argv[++i]);
          float f_sqrt = sqrtf((float)subSamples);
          int i_sqrt = (int)f_sqrt;
          if (f_sqrt != i_sqrt) {
-            cerr << "Anti-Aliasing sub-samples must be a perfect square.\n";
+            std::cerr << "Anti-Aliasing sub-samples must be a perfect square.\n";
             exit(EXIT_FAILURE);
          }
+         opts.enableAA = true;
          opts.sqrtSS = i_sqrt;
       }
       else if (!strcmp(argv[i], "+I")) {
-         opts.povRayFile = string(&argv[i][2]);
+         opts.povRayFile = std::string(&argv[i][2]);
          opts.imgname = opts.povRayFile.substr(0,opts.povRayFile.find(".pov")); //erase .pov extension if it exists
       }
       else if (!strcmp(argv[i], "-f")) {
-         opts.povRayFile = string(argv[++i]);
+         opts.povRayFile = std::string(argv[++i]);
          opts.imgname = opts.povRayFile.substr(0,opts.povRayFile.find(".pov")); //erase .pov extension if it exists
       }
       else if (!strcmp(argv[i], "--help")) {
@@ -74,9 +72,12 @@ int main(int argc, char** argv)
    //Create big buffer
    RDST::Image img(opts.width*opts.sqrtSS, opts.height*opts.sqrtSS);
    RDST::SceneDescription desc(RDST::POVRayParser::ParseFile(opts.povRayFile));
-   RDST::Tracer::RayTrace(desc, img);
+   RDST::Tracer::RayTrace(desc, img, opts.enableAA);
    //Anti-Alias by downsampling the big buffer
-   img.downSample(opts.sqrtSS,opts.sqrtSS).writeToDisk(opts.imgname);
+   if (opts.enableAA)
+      img.downSample(opts.sqrtSS,opts.sqrtSS).writeToDisk(opts.imgname);
+   else
+      img.writeToDisk(opts.imgname);
 
-   cout << "\nRuntime: " << float(clock() - start) / CLOCKS_PER_SEC << " seconds\n";
+   std::cout << "\nRuntime: " << float(clock() - start) / CLOCKS_PER_SEC << " seconds\n";
 }

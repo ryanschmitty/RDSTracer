@@ -6,19 +6,23 @@
 * Author: Ryan Schmitt
 */
 
-#include "RDSTracer.h"
-#include "ProgressBar.h"
 #include <iostream>
 #include <ctime>
+#include "RDSTracer.h"
+#include "ProgressBar.h"
+#include "RDSbvh.h"
 
-#define MAX_RECURSION_DEPTH 50
+#define MAX_RECURSION_DEPTH 5
 
 namespace RDST
 {
-   void Tracer::RayTrace(const SceneDescription& scene, Image& image)
+   void Tracer::RayTrace(const SceneDescription& scene, Image& image, bool jittered)
    {
       //Create rays
-      std::vector<RayPtr> rays(GenerateRays(scene.cam(), image));
+      std::vector<RayPtr> rays(GenerateRays(scene.cam(), image, jittered));
+      //Create BVH
+      //BVH bvh = BVH(scene.objs());
+      //Trace Rays
       std::cout << "\nTracing Rays\n";
       for (unsigned int rayi=0; rayi < rays.size(); ++rayi) {
          //Get color
@@ -35,7 +39,7 @@ namespace RDST
       std::cout << "\n";
    }
 
-   std::vector<RayPtr> Tracer::GenerateRays(const Camera& cam, const Image& image)
+   std::vector<RayPtr> Tracer::GenerateRays(const Camera& cam, const Image& image, bool jittered)
    {
       std::cout << "Generating Rays\n";
       std::vector<RayPtr> rays;
@@ -48,9 +52,13 @@ namespace RDST
       srand((unsigned int)time(NULL));
       for (int y=0; y<h; y++) {
          for (int x=0; x<w; x++) {
-            //Randomize AA samples
-            float xOffset = (float)rand() / RAND_MAX;
-            float yOffset = (float)rand() / RAND_MAX;
+            //Jitter samples
+            float xOffset = 0.5;
+            float yOffset = 0.5;
+            if (jittered) {
+               float xOffset = (float)rand() / RAND_MAX;
+               float yOffset = (float)rand() / RAND_MAX;
+            }
             //Get view coords
             float u = l+((r-l)*(x+xOffset)/w);
             float v = b+((t-b)*(y+yOffset)/h);
@@ -185,58 +193,9 @@ namespace RDST
             eta = 1.f/eta; //air-to-material
          }
          Ray refractionRay = Ray(glm::refract(intrs.incDir, normal, eta), intrs.p-(0.01f*normal));
-         if (glm::length(refractionRay.d) == 0.f) return refraction;
+         if (glm::length(refractionRay.d) == 0.f) return refraction; //TIR
          refraction = TraceRay(refractionRay, scene, recursionsLeft-1);
       }
       return refraction;
-      /*
-      glm::vec3 refraction(0.f);
-      if (intrs.surf.finish.getRefraction() > 0.f) {
-         //Calc needed vars
-         float matToAir = intrs.surf.finish.getIndexOfRefraction();
-         float airToMat = 1.f / matToAir;
-         //First refraction into the object
-         //Ray refractionRay = Ray(refract(intrs.n, intrs.incDir, 1.f, intrs.surf.finish.getIndexOfRefraction()), intrs.p-(0.001f*intrs.n));
-         Ray refractionRay = Ray(glm::refract(intrs.incDir, intrs.n, airToMat), intrs.p-(0.001f*intrs.n));
-         if (glm::length(refractionRay.d) == 0.f) {
-            return refraction;
-         }
-         Intersection* pRefractionIntrs = RayObjectsIntersect(refractionRay, scene.objs()); //TODO: perhaps store the actual object hit in the Intersection type.
-         if (!pRefractionIntrs->hit) { //ERROR
-            delete pRefractionIntrs;
-            return glm::vec3(5.f, 0.f, 0.f);
-         }
-         //Second refraction out of the object
-         //refractionRay = Ray(refract(-pRefractionIntrs->n, pRefractionIntrs->incDir, intrs.surf.finish.getIndexOfRefraction(), 1.f), pRefractionIntrs->p, 0.1f);
-         refractionRay = Ray(glm::refract(pRefractionIntrs->incDir, -pRefractionIntrs->n, matToAir), pRefractionIntrs->p, 0.1f);
-         delete pRefractionIntrs;
-         if (glm::length(refractionRay.d) == 0.f) {
-            return refraction;
-         }
-         pRefractionIntrs = RayObjectsIntersect(refractionRay, scene.objs());
-         if (pRefractionIntrs->hit) {
-            refraction = ShadePoint(*pRefractionIntrs, scene, 5);
-         }
-         delete pRefractionIntrs;
-      }
-      */
-      return refraction;
-   }
-
-
-
-
-   
-
-   glm::vec3 Tracer::refract(const glm::vec3& normal, const glm::vec3& incident, float n1, float n2)
-   {
-      float n = n1 / n2;
-      float cosI = -glm::dot(normal, incident);
-      float sinT2 = n * n * (1.f - cosI * cosI);
-      if (sinT2 > 1.0) {
-         return glm::vec3(0.f); //TIR
-      }
-      float cosT = sqrtf(1.f - sinT2);
-      return n * incident + (n * cosI - cosT) * normal;
    }
 }
