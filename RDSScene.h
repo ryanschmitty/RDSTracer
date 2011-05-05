@@ -65,10 +65,26 @@ namespace RDST
                       const glm::vec3& right = glm::vec3(1.333f, 0.f, 0.f),
                       const glm::vec3& dir = glm::vec3(0.f, 0.f, -1.f))
       : _position(position),
-        _up(glm::normalize(up)),
+        _up(up),
         _right(right),
         _dir(glm::normalize(dir))
       {}
+      /*
+      {
+         _position = position;
+         _dir = glm::normalize(dir);
+         if (fabsf(dir.x) > fabsf(dir.y)) {
+            float invLen = 1.f / sqrtf(dir.x*dir.x + dir.z+dir.z);
+            _up = glm::vec3(-dir.z*invLen, 0.f, dir.x*invLen);
+         }
+         else {
+            float invLen = 1.f / sqrtf(dir.y*dir.y + dir.z*dir.z);
+            _up = glm::vec3(0.f, dir.z*invLen, -dir.y*invLen);
+         }
+         _right = -glm::cross(_dir, _up);
+         _right *= glm::length(right);
+      }
+      */
 
       //Position
       const glm::vec3& getPos() const
@@ -126,6 +142,7 @@ namespace RDST
    };
    typedef boost::shared_ptr<PointLight> PointLightPtr;
    typedef boost::shared_ptr<const PointLight> ConstPointLightPtr;
+   typedef boost::shared_ptr<std::vector<PointLightPtr>> PointLightPtrListPtr;
 
    //---------------------------------------------------------------------------
    //
@@ -236,6 +253,7 @@ namespace RDST
    };
    typedef boost::shared_ptr<Ray> RayPtr;
    typedef boost::shared_ptr<const Ray> ConstRayPtr;
+   typedef boost::shared_ptr<std::vector<RayPtr>> RayPtrListPtr;
 
    /**
     * Surface storage helper class
@@ -285,6 +303,7 @@ namespace RDST
    };
    typedef boost::shared_ptr<Intersection> IntersectionPtr;
    typedef boost::shared_ptr<const Intersection> ConstIntersectionPtr;
+   typedef boost::shared_ptr<std::vector<IntersectionPtr>> IntersectionPtrListPtr;
 
    //---------------------------------------------------------------------------
    //
@@ -352,6 +371,7 @@ namespace RDST
    };
    typedef boost::shared_ptr<GeomObject> GeomObjectPtr;
    typedef boost::shared_ptr<const GeomObject> ConstGeomObjectPtr;
+   typedef boost::shared_ptr<std::vector<GeomObjectPtr>> GeomObjectPtrListPtr;
 
    /**
     * Box Geometric Object Storage Class
@@ -471,6 +491,7 @@ namespace RDST
    };
    typedef boost::shared_ptr<Plane> PlanePtr;
    typedef boost::shared_ptr<const Plane> ConstPlanePtr;
+   typedef boost::shared_ptr<std::vector<PlanePtr>> PlanePtrListPtr;
 
    /**
     * Sphere Geometric Object Storage Class
@@ -566,25 +587,34 @@ namespace RDST
    {
    public:
       explicit SceneDescription()
-      : _pCam(boost::shared_ptr<Camera>()),
-        _pLights(boost::shared_ptr<std::vector<PointLightPtr>>()),
-        _pObjs(boost::shared_ptr<std::vector<GeomObjectPtr>>())
+      : _pCam(CameraPtr()),
+        _pLights(PointLightPtrListPtr()),
+        _pObjs(GeomObjectPtrListPtr()),
+        _pPlanes(PlanePtrListPtr())
       {}
       explicit SceneDescription(CameraPtr pCamera,
-                                boost::shared_ptr<std::vector<PointLightPtr>> lights,
-                                boost::shared_ptr<std::vector<GeomObjectPtr>> geometryObjects)
+                                PointLightPtrListPtr lights,
+                                GeomObjectPtrListPtr geometryObjects,
+                                PlanePtrListPtr planes)
       : _pCam(pCamera),
         _pLights(lights),
-        _pObjs(geometryObjects)
+        _pObjs(geometryObjects),
+        _pPlanes(planes)
       {}
 
       //Mutable
       void setCam(CameraPtr pCamera)
       { _pCam = pCamera; }
-      void setLights(boost::shared_ptr<std::vector<PointLightPtr>> lights)
+      void setLights(PointLightPtrListPtr lights)
       { _pLights = lights; }
-      void setObjs(boost::shared_ptr<std::vector<GeomObjectPtr>> objs)
+      GeomObjectPtrListPtr getObjectList()
+      { return _pObjs; }
+      void setObjs(GeomObjectPtrListPtr objs)
       { _pObjs = objs; }
+      PlanePtrListPtr getPlaneList()
+      { return _pPlanes; }
+      void setPlanes(PlanePtrListPtr planes)
+      { _pPlanes = planes; }
 
       //Non-mutable
       const Camera& cam() const
@@ -593,11 +623,14 @@ namespace RDST
       { return *_pLights; }
       const std::vector<GeomObjectPtr>& objs() const
       { return *_pObjs; }
+      const std::vector<PlanePtr>& planes() const
+      { return *_pPlanes; }
 
    private:
-      CameraPtr _pCam;
-      boost::shared_ptr<std::vector<PointLightPtr>> _pLights;
-      boost::shared_ptr<std::vector<GeomObjectPtr>> _pObjs;
+      CameraPtr            _pCam;
+      PointLightPtrListPtr _pLights;
+      GeomObjectPtrListPtr _pObjs;
+      PlanePtrListPtr      _pPlanes;
    };
 } // end namespace RDST
 

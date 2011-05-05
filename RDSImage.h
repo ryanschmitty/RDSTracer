@@ -142,9 +142,10 @@ namespace RDST
                float green = glm::clamp(get(x,h-1-y).g(), 0.f, 1.f);
                float blue = glm::clamp(get(x,h-1-y).b(), 0.f, 1.f);
                //Gamma Correction it
-               red = powf(red, 1.f / 2.2f); // 1/gamma
-               green = powf(green, 1.f / 2.2f); // 1/gamma
-               blue = powf(blue, 1.f / 2.2f); // 1/gamma
+               float inverseGamma = 1.f / 2.2f;
+               red = powf(red, inverseGamma);
+               green = powf(green, inverseGamma);
+               blue = powf(blue, inverseGamma);
                //Write it
                file.put((int)(red*255));
                file.put((int)(green*255));

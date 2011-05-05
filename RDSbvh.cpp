@@ -8,11 +8,11 @@
 #include "RDSbvh.h"
 
 namespace RDST {
-   void BVH::initBuildData(const std::vector<GeomObjectPtr>& objs)
+   void BVH::initBuildData()
    {
-      buildData.reserve(objs.size());
-      for (unsigned int i=0; i<objs.size(); ++i) {
-         BBox bbox = objs[i]->getWorldBounds();
+      buildData.reserve(pObjs->size());
+      for (unsigned int i=0; i<pObjs->size(); ++i) {
+         BBox bbox = (*pObjs)[i]->getWorldBounds();
          buildData.push_back(BVHObjectInfo(i, bbox));
       }
    }

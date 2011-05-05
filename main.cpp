@@ -72,6 +72,7 @@ int main(int argc, char** argv)
    //Create big buffer
    RDST::Image img(opts.width*opts.sqrtSS, opts.height*opts.sqrtSS);
    RDST::SceneDescription desc(RDST::POVRayParser::ParseFile(opts.povRayFile));
+   RDST::BVH bvh(desc.getObjectList());
    RDST::Tracer::RayTrace(desc, img, opts.enableAA);
    //Anti-Alias by downsampling the big buffer
    if (opts.enableAA)

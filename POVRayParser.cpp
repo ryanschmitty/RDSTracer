@@ -23,6 +23,7 @@ namespace RDST
       CameraPtr pCam;
       boost::shared_ptr<std::vector<PointLightPtr>> lights(new std::vector<PointLightPtr>());
       boost::shared_ptr<std::vector<GeomObjectPtr>> objs(new std::vector<GeomObjectPtr>());
+      boost::shared_ptr<std::vector<PlanePtr>> planes(new std::vector<PlanePtr>());
 
       std::string line;
       std::ifstream file(fileToParse.c_str());
@@ -60,7 +61,7 @@ namespace RDST
          if (pos != std::string::npos) {
             line = line.substr(pos);
             GetWholeObject(line, file);
-            objs->push_back(ParsePlane(line));
+            planes->push_back(ParsePlane(line));
          }
          pos = line.find("sphere");
          if (pos != std::string::npos) {
@@ -75,7 +76,7 @@ namespace RDST
             objs->push_back(ParseTriangle(line));
          }
       }
-      return SceneDescription(pCam, lights, objs);
+      return SceneDescription(pCam, lights, objs, planes);
    }
 
    std::string&

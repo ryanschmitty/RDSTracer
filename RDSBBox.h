@@ -48,7 +48,7 @@ namespace RDST
       static BBox Union(const BBox& b, const BBox& b2) {
          BBox ret = b;
          ret.min = glm::min(b.min, b2.min);
-         ret.min = glm::max(b.max, b2.max);
+         ret.max = glm::max(b.max, b2.max);
          return ret;
       }
 
