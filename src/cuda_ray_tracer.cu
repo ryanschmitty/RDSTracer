@@ -118,7 +118,7 @@ __global__ void TriangleIntersectKernel(cuda_triangle_t triangles[], int triangl
 
     int rayPos = threadIdx.y * gridDim.x * blockDim.x + threadIdx.x + blockIdx.x * blockDim.x + blockIdx.y * blockDim.y * gridDim.x * blockDim.x;
 
-    cuda_intersection_t inter = inters[rayPos];
+    cuda_intersection_t inter = intrs[rayPos];
 
     int shPos = threadIdx.y * blockDim.x + threadIdx.x;
 
