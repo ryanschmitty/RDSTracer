@@ -29,15 +29,10 @@ __device__ float intersect(cuda_sphere_t &sp, cuda_ray_t &r) {
     float s = dot(l, r.d);
     float ll = dot(l, l);
     float rr = sp.rr;
-    if (s < 0.f && ll > rr) return -1; //sphere is behind us and we're not inside
     float mm = ll-(s*s); //dist from sphere center projected onto ray to sphere center
     if (mm > rr) return -1; //ray misses (sphere center projected onto ray - sphere center > radius)
     float q = sqrtf(rr-mm);
-    float t = 0.f;
-    if (ll > rr) t = s-q; //we're outside the sphere so return first point
-    else t = s+q;
-
-    return t;
+    return s-q; //we're outside the sphere so return first point
 }
 
 __global__ void SphereIntersectKernel(cuda_sphere_t spheres[], int spheresSize,
