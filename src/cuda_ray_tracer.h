@@ -45,6 +45,7 @@ namespace RDST
     };
 
     enum ObjType {
+        _NONE,
         _SPHERE,
         _TRIANGLE
     };

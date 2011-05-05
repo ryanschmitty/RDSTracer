@@ -3,6 +3,7 @@
 #include <cfloat>
 #include <thrust/device_vector.h>
 #include <thrust/copy.h>
+#include <thrust/fill.h>
 #include "cuda_ray_tracer.h"
 
 using namespace RDST;
@@ -45,8 +46,8 @@ __global__ void SphereIntersectKernel(cuda_sphere_t spheres[], int spheresSize,
     int rayPos = threadIdx.y * gridDim.x * blockDim.x + threadIdx.x + blockIdx.x * blockDim.x + blockIdx.y * blockDim.y * gridDim.x * blockDim.x;
 
     cuda_intersection_t inter;
-    inter.objIndx = -1;
-    inter.t = FLT_MAX;
+    if (rayPos < rayCount)
+        inter = intrs[rayPos];
 
     int shPos = threadIdx.y * blockDim.x + threadIdx.x;
 
@@ -75,6 +76,7 @@ __global__ void SphereIntersectKernel(cuda_sphere_t spheres[], int spheresSize,
         if (newT >= 0 && newT < inter.t) {
             inter.t = newT;
             inter.objIndx = i * blockDim.x * blockDim.y + k;
+            inter.type = _SPHERE;
         }
     }
 
@@ -149,6 +151,7 @@ __global__ void TriangleIntersectKernel(cuda_triangle_t triangles[], int triangl
         if (newT >= 0 && newT < inter.t) {
             inter.t = newT;
             inter.objIndx = i * blockDim.x * blockDim.y + k;
+            inter.type = _TRIANGLE;
         }
     }
 
@@ -165,6 +168,11 @@ __host__ intersection_vec RDST::cuda_intersect(const sphere_vec &spheres,
     int spill = (width * height) % batchSize;
     intersection_vec iVec(rays.size());
 
+    cuda_intersection_t inter;
+    inter.objIndx = -1;
+    inter.t = FLT_MAX;
+    inter.type = _NONE;
+
     thrust::device_vector<cuda_sphere_t> dSpheres(spheres.begin(), spheres.end());
     cuda_sphere_t *sPtr = thrust::raw_pointer_cast(&(*dSpheres.begin()));
 
@@ -177,13 +185,17 @@ __host__ intersection_vec RDST::cuda_intersect(const sphere_vec &spheres,
         thrust::device_vector<cuda_ray_t> dRays(rVecI, rVecI + batchSize);
 
         thrust::device_vector<cuda_intersection_t> dIntersects(batchSize);
+        thrust::fill(dIntersects.begin(), dIntersects.end(), inter);
+
         cuda_ray_t *rPtr = thrust::raw_pointer_cast(&(*dRays.begin()));
         cuda_intersection_t *iPtr = thrust::raw_pointer_cast(&(*dIntersects.begin()));
 
-        SphereIntersectKernel<<<dimGrid, dimBlock, sizeof(cuda_sphere_t) * dimBlock.x * dimBlock.y>>>(sPtr,
-                spheres.size(), rPtr, iPtr, batchSize);
-        TriangleIntersectKernel<<<dimGrid, dimBlock, sizeof(cuda_triangle_t) * dimBlock.x * dimBlock.y>>>(tPtr,
-                triangles.size(), rPtr, iPtr, batchSize);
+        if (spheres.size())
+            SphereIntersectKernel<<<dimGrid, dimBlock, sizeof(cuda_sphere_t) * dimBlock.x * dimBlock.y>>>(sPtr,
+                    spheres.size(), rPtr, iPtr, batchSize);
+        if (triangles.size())
+            TriangleIntersectKernel<<<dimGrid, dimBlock, sizeof(cuda_triangle_t) * dimBlock.x * dimBlock.y>>>(tPtr,
+                    triangles.size(), rPtr, iPtr, batchSize);
 
         thrust::copy(dIntersects.begin(), dIntersects.end(), iVecI);
         rVecI += batchSize;
@@ -194,13 +206,17 @@ __host__ intersection_vec RDST::cuda_intersect(const sphere_vec &spheres,
         thrust::device_vector<cuda_ray_t> dRays(rVecI, rVecI + spill);
 
         thrust::device_vector<cuda_intersection_t> dIntersects(spill);
+        thrust::fill(dIntersects.begin(), dIntersects.end(), inter);
+
         cuda_ray_t *rPtr = thrust::raw_pointer_cast(&(*dRays.begin()));
         cuda_intersection_t *iPtr = thrust::raw_pointer_cast(&(*dIntersects.begin()));
 
-        SphereIntersectKernel<<<dimGrid, dimBlock, sizeof(cuda_sphere_t) * dimBlock.x * dimBlock.y>>>(sPtr,
-                spheres.size(), rPtr, iPtr, spill);
-        TriangleIntersectKernel<<<dimGrid, dimBlock, sizeof(cuda_triangle_t) * dimBlock.x * dimBlock.y>>>(tPtr,
-                triangles.size(), rPtr, iPtr, spill);
+        if (spheres.size())
+            SphereIntersectKernel<<<dimGrid, dimBlock, sizeof(cuda_sphere_t) * dimBlock.x * dimBlock.y>>>(sPtr,
+                    spheres.size(), rPtr, iPtr, spill);
+        if (triangles.size())
+            TriangleIntersectKernel<<<dimGrid, dimBlock, sizeof(cuda_triangle_t) * dimBlock.x * dimBlock.y>>>(tPtr,
+                    triangles.size(), rPtr, iPtr, spill);
 
         thrust::copy(dIntersects.begin(), dIntersects.end(), iVecI);
     }
