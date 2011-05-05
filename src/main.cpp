@@ -62,7 +62,7 @@ void parseParameters(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
-   clock_t start = clock();
+   //clock_t start = clock();
 
    parseParameters(argc, argv);
    RDST::Image img(w, h);
@@ -70,5 +70,5 @@ int main(int argc, char** argv)
    RDST::Tracer::RayTrace(desc, img);
    img.writeToDisk(imgname);
 
-   std::cout << "\nRuntime: " << float(clock() - start) / CLOCKS_PER_SEC << " seconds\n";
+   //std::cout << "\nRuntime: " << float(clock() - start) / CLOCKS_PER_SEC << " seconds\n";
 }

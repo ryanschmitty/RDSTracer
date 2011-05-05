@@ -61,7 +61,7 @@ namespace RDST
       std::vector<RayPtr> rays(GenerateRays(scene.cam(), image));
 
       //Run CUDA
-      std::cout << "\nRunning CUDA Intersections..." << flush;
+      //std::cout << "\nRunning CUDA Intersections..." << flush;
       ray_vec cRays(rays.size());
       transform(rays.begin(), rays.end(), cRays.begin(),
               toCUDARay);
@@ -75,10 +75,10 @@ namespace RDST
       intersection_vec iVec = cuda_intersect(cSpheres, cTriangles, cRays,
               image.getWidth(), image.getHeight());
 
-      std::cout << "Done!\n";
+      //std::cout << "Done!\n";
 
       //Trace non-CUDA obects and shade
-      std::cout << "Tracing Rays\n";
+      //std::cout << "Tracing Rays\n";
       for (unsigned int rayi=0; rayi < rays.size(); ++rayi) {
          //Intersect each ray against all objects
          Intersection* pIntrs = RayObjectsIntersect(*rays[rayi], scene.objs());
@@ -112,12 +112,12 @@ namespace RDST
       }
 
       UpdateProgress(100);
-      std::cout << "\n";
+      //std::cout << "\n";
    }
 
    std::vector<RayPtr> Tracer::GenerateRays(const Camera& cam, const Image& image)
    {
-      std::cout << "Generating Rays\n";
+      //std::cout << "Generating Rays\n";
       std::vector<RayPtr> rays;
       float h = image.getHeight();
       float w = image.getWidth();
@@ -144,7 +144,7 @@ namespace RDST
          }
       }
       UpdateProgress(100);
-      std::cout << "\n";
+      //std::cout << "\n";
       return rays;
    }
 
