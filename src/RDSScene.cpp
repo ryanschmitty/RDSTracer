@@ -15,8 +15,6 @@ namespace RDST
    {}
    Colored::~Colored()
    {}
-   GeomObject::~GeomObject()
-   {}
 
    //Adjoint function
    glm::mat3

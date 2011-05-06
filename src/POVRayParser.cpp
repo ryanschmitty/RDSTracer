@@ -21,10 +21,10 @@ namespace RDST
    {
       //Scene description vars
       CameraPtr pCam;
-      std::vector<PointLightPtr> lights;
-      std::vector<GeomObjectPtr> objs;
-      std::vector<SpherePtr> spheres;
-      std::vector<TrianglePtr> triangles;
+      boost::shared_ptr<std::vector<PointLightPtr> > lights(new std::vector<PointLightPtr>());
+      boost::shared_ptr<std::vector<GeomObjectPtr> > objs(new std::vector<GeomObjectPtr>());
+      boost::shared_ptr<std::vector<SpherePtr> > spheres(new std::vector<SpherePtr>());
+      boost::shared_ptr<std::vector<TrianglePtr> > triangles(new std::vector<TrianglePtr>());
 
       std::string line;
       std::ifstream file(fileToParse.c_str());
@@ -44,37 +44,37 @@ namespace RDST
          if (pos != std::string::npos) {
             line = line.substr(pos);
             GetWholeObject(line, file);
-            lights.push_back(ParseLight(line));
+            lights->push_back(ParseLight(line));
          }
          pos = line.find("box");
          if (pos != std::string::npos) {
             line = line.substr(pos);
             GetWholeObject(line, file);
-            objs.push_back(ParseBox(line));
+            objs->push_back(ParseBox(line));
          }
          pos = line.find("cone");
          if (pos != std::string::npos) {
             line = line.substr(pos);
             GetWholeObject(line, file);
-            objs.push_back(ParseCone(line));
+            objs->push_back(ParseCone(line));
          }
          pos = line.find("plane");
          if (pos != std::string::npos) {
             line = line.substr(pos);
             GetWholeObject(line, file);
-            objs.push_back(ParsePlane(line));
+            objs->push_back(ParsePlane(line));
          }
          pos = line.find("sphere");
          if (pos != std::string::npos) {
             line = line.substr(pos);
             GetWholeObject(line, file);
-            spheres.push_back(ParseSphere(line));
+            spheres->push_back(ParseSphere(line));
          }
          pos = line.find("triangle");
          if (pos != std::string::npos) {
             line = line.substr(pos);
             GetWholeObject(line, file);
-            triangles.push_back(ParseTriangle(line));
+            triangles->push_back(ParseTriangle(line));
          }
       }
       return SceneDescription(pCam, lights, objs, spheres, triangles);
@@ -182,7 +182,7 @@ namespace RDST
    }
 
    CameraPtr
-      POVRayParser::ParseCamera(const std::string& inputText)
+   POVRayParser::ParseCamera(const std::string& inputText)
    {
       glm::vec3 posVec, upVec, rightVec, lookAtVec;
       std::string token;
