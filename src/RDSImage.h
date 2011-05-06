@@ -69,15 +69,6 @@ namespace RDST
    class Image
    {
    public:
-      explicit Image(const Image& inputBuffer, int superSamples)
-         : w(inputBuffer.getWidth()/(superSamples/2)),
-           h(inputBuffer.getHeight()/(superSamples/2))
-      {
-         BOOST_ASSERT(superSamples%2==0); //assert we've got an even number
-         image.resize(0);
-         image.resize(w*h);
-         downSample(inputBuffer, superSamples);
-      }
       explicit Image(short width, short height)
       : w(width),
         h(height)
@@ -108,6 +99,29 @@ namespace RDST
       void set(int i, const Pixel& pixel)
       { image.at(i) = pixel; }
 
+      Image downSample(int samplesInX, int samplesInY)
+      {
+         BOOST_ASSERT(w%samplesInX == 0);
+         BOOST_ASSERT(h%samplesInY == 0);
+         Image output(w/samplesInX, h/samplesInY);
+         //Loop over the output buffer
+         for (int y = 0; y < output.getHeight(); y++) {
+            for (int x = 0; x < output.getWidth(); x++) {
+               int superY = y*samplesInY;
+               int superX = x*samplesInX;
+               glm::vec4 finalColor(0.f);
+               //Box filter all sub-samples
+               for (int i=0; i<samplesInX; ++i) {
+                  for (int j=0; j<samplesInY; ++j) {
+                     finalColor += get(superX+i,superY+j).rgba() / float(samplesInX+samplesInY);
+                  }
+               }
+               output.get(x,y).set(finalColor);
+            }
+         }
+         return output;
+      }
+
       void writeToDisk(std::string& fname)
       {
          /* Write an uncompressed PPM, ADAPTED FROM: http://rosettacode.org/wiki/Bitmap/Write_a_PPM_file#C */
@@ -128,9 +142,10 @@ namespace RDST
                float green = glm::clamp(get(x,h-1-y).g(), 0.f, 1.f);
                float blue = glm::clamp(get(x,h-1-y).b(), 0.f, 1.f);
                //Gamma Correction it
-               red = powf(red, 1.f / 2.2f); // 1/gamma
-               green = powf(green, 1.f / 2.2f); // 1/gamma
-               blue = powf(blue, 1.f / 2.2f); // 1/gamma
+               float inverseGamma = 1.f / 2.2f;
+               red = powf(red, inverseGamma);
+               green = powf(green, inverseGamma);
+               blue = powf(blue, inverseGamma);
                //Write it
                file.put((int)(red*255));
                file.put((int)(green*255));
@@ -175,27 +190,6 @@ namespace RDST
       }
 
    private:
-      void downSample(const Image& inputBuffer, int superSamples)
-      {
-         BOOST_ASSERT(superSamples%2==0);
-         int halfSS = superSamples/2;
-         int ibMaxY = inputBuffer.getHeight()-1;
-         for (int y = 0; y < h; y++) {
-            for (int x = 0; x < w; x++) {
-               int inputBufY = y*halfSS;
-               int inputBufX = x*halfSS;
-               glm::vec4 finalColor(0.f);
-               //Box filter
-               for (int i=0; i<superSamples/2; ++i) {
-                  for (int j=0; j<superSamples/2; ++j) {
-                     finalColor += inputBuffer.get(inputBufX+i,(ibMaxY)-(inputBufY+j)).rgba() / float(superSamples);
-                  }
-               }
-               get(x,h-1-y).set(finalColor);
-            }
-         }
-      }
-
       short w, h;
       std::vector<Pixel> image;
    };
