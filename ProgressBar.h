@@ -7,21 +7,20 @@
  */
 
 #ifndef _RDS_PROGRESS_BAR_H_
-#define _RDS_PRORESS_BAR_H_
+#define _RDS_PROGRESS_BAR_H_
 
 #define GLM_FORCE_INLINE
-
+#include <glm/glm.hpp>
 #include <sstream>
 #include <iostream>
 #include <iomanip>
-#include <glm/glm.hpp>
 
 namespace RDST
 {
    /**
     * Draws the progress bar output, percentage is [0, 100].
     */
-   void UpdateProgress(int percent)
+   static void UpdateProgress(int percent)
    {
       percent = glm::clamp(percent, 0, 100);
       std::ostringstream ss;

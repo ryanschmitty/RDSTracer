@@ -2,23 +2,38 @@
  * File: RDSbvh.h
  * --------------------
  * Bounding Volume Hierarchy
+ * from "PBR: from theory to implementation" second edition
  * Author: Ryan Schmitt
  */
 
 #ifndef _RDS_BVH_H_
 #define _RDS_BVH_H_
 
+#if defined(_WIN32) || defined(_WIN64)
+#define IS_WINDOWS
+#elif defined(__linux__)
+#define IS_LINUX
+#endif
+
+#if defined(IS_WINDOWS)
+#define uint8_t unsigned __int8
+#define uint32_t unsigned __int32
+#elif defined(IS_LINUX)
+#include <stdint.h>
+#endif
+
 #define GLM_FORCE_INLINE
 #include <glm/glm.hpp>
 #include <vector>
 #include <boost/shared_ptr.hpp>
+#include <boost/shared_array.hpp>
+#include <boost/assert.hpp>
 #include "RDSBBox.h"
 #include "RDSScene.h"
+#include "ProgressBar.h"
 
 namespace RDST
 {
-   typedef unsigned int uint_t;
-
    //---------------------------------------------------------------------------
    // Object Info class for BVH
    //---------------------------------------------------------------------------
@@ -42,12 +57,12 @@ namespace RDST
       explicit BVHNode()
       { children[0] = children[1] = boost::shared_ptr<BVHNode>(); }
 
-      void initLeaf(uint_t first, uint_t n, const BBox& b) {
+      void initLeaf(uint32_t first, uint32_t n, const BBox& b) {
          firstPrimOffset = first;
          nPrimitives = n;
          bounds = b;
       }
-      void initInterior(uint_t axis, boost::shared_ptr<BVHNode> c0, boost::shared_ptr<BVHNode> c1) {
+      void initInterior(uint32_t axis, boost::shared_ptr<BVHNode> c0, boost::shared_ptr<BVHNode> c1) {
          children[0] = c0;
          children[1] = c1;
          bounds = BBox::Union(c0->bounds, c1->bounds);
@@ -57,9 +72,12 @@ namespace RDST
 
       BBox bounds;
       boost::shared_ptr<BVHNode> children[2];
-      uint_t splitAxis, firstPrimOffset, nPrimitives;
+      uint32_t splitAxis, firstPrimOffset, nPrimitives;
    };
 
+   //---------------------------------------------------------------------------
+   // Functor for BVHObjectInfo comparison (sorting)
+   //---------------------------------------------------------------------------
    struct CompareToMid
    {
       CompareToMid(int d, float m) { dim = d; mid = m; }
@@ -71,82 +89,38 @@ namespace RDST
    };
 
    //---------------------------------------------------------------------------
+   // A BVH Node for Linear Storage
+   //---------------------------------------------------------------------------
+   struct LinearBVHNode
+   {
+      BBox bounds;
+      union {
+         uint32_t primitivesOffset; //used for leaf
+         uint32_t secondChildOffset; //used for interior
+      };
+      uint8_t nPrimitives; // 0 means interior node
+      uint8_t axis; // which axis was used for splitting
+      uint8_t pad[2]; //ensure 32 byte total size for SPEEED
+   };
+
+   //---------------------------------------------------------------------------
    // BVH Functionality class
    //---------------------------------------------------------------------------
    class BVH
    {
    public:
-      explicit BVH(boost::shared_ptr<std::vector<GeomObjectPtr>> pObjects)
-      : totalNodes(0),
-        root(boost::shared_ptr<BVHNode>()),
-        buildData(std::vector<BVHObjectInfo>()),
-        pObjs(pObjects)
-      {
-         initBuildData();
-         buildBVH();
-      }
+      explicit BVH(boost::shared_ptr<std::vector<GeomObjectPtr>> pObjects);
+      Intersection* intersect(Ray& ray) const;
 
-      void initBuildData();
-      void buildBVH() {
-         totalNodes = 0;
-         std::vector<GeomObjectPtr> orderedPrims;
-         orderedPrims.reserve(pObjs->size());
-         root = recursiveBuild(0, pObjs->size(), &totalNodes, orderedPrims);
-         pObjs->swap(orderedPrims);
-      }
+   private:
+      //HELPER FUNCTIONS
+      boost::shared_ptr<BVHNode> recursiveBuild(std::vector<BVHObjectInfo>& buildData, uint32_t start, uint32_t end,
+                                                uint32_t* totalNodes, std::vector<GeomObjectPtr>& orderedPrims);
+      uint32_t flattenBVHTree(boost::shared_ptr<BVHNode> node, uint32_t* offset);
 
-      boost::shared_ptr<BVHNode> recursiveBuild(uint_t start, uint_t end, uint_t* totalNodes, std::vector<GeomObjectPtr>& orderedPrims) {
-         (*totalNodes)++;
-         boost::shared_ptr<BVHNode> node(new BVHNode());
-         //Compute bounds of all primitives in BVH node
-         BBox bbox;
-         for (uint_t i=start; i<end; ++i) {
-            bbox = BBox::Union(bbox, buildData[i].bounds);
-         }
-         uint_t nPrimitives = end - start;
-         if (nPrimitives == 1) {
-            //create leaf
-            uint_t firstPrimOffset = orderedPrims.size();
-            for (uint_t i=start; i<end; ++i) {
-               uint_t primNum = buildData[i].primitiveNumber;
-               orderedPrims.push_back((*pObjs)[primNum]);
-            }
-            node->initLeaf(firstPrimOffset, nPrimitives, bbox);
-         }
-         else {
-            //Compute bound of primitive centroids, choose split dimension
-            BBox centroidBounds;
-            for (uint_t i=start; i<end; ++i) {
-               centroidBounds = BBox::Union(centroidBounds, buildData[i].centroid);
-            }
-            int dim = centroidBounds.maximumExtent();
-            //Partition primitives into two sets and build children
-            uint_t mid = (start + end) / 2;
-            if (centroidBounds.max[dim] == centroidBounds.min[dim]) {
-               //create leaf
-               uint_t firstPrimOffset = orderedPrims.size();
-               for (uint_t i=start; i<end; ++i) {
-                  uint_t primNum = buildData[i].primitiveNumber;
-                  orderedPrims.push_back((*pObjs)[primNum]);
-               }
-               node->initLeaf(firstPrimOffset, nPrimitives, bbox);
-               return node;
-            }
-            //partition primitives based on splitMethod
-            float midPoint = .5f * (centroidBounds.min[dim] + centroidBounds.max[dim]);
-            BVHObjectInfo* pMid = std::partition(&buildData[start], &buildData[end-1]+1, CompareToMid(dim, midPoint));
-            mid = pMid - &buildData[0];
-            node->initInterior(dim,
-                               recursiveBuild(start, mid, totalNodes, orderedPrims),
-                               recursiveBuild(mid, end, totalNodes, orderedPrims));
-         }
-         return node;
-      }
-
-      uint_t totalNodes;
-      boost::shared_ptr<BVHNode> root;
+      //DATA
       boost::shared_ptr<std::vector<GeomObjectPtr>> pObjs;
-      std::vector<BVHObjectInfo> buildData;
+      boost::shared_array<LinearBVHNode> nodes;
    };
 }
 

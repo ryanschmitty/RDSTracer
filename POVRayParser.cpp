@@ -6,9 +6,11 @@
 */
 
 #include "POVRayParser.h"
+#include "RDSbvh.h"
 #include <iostream>
 #include <sstream>
 #include <cctype>
+#include <ctime>
 #include <glm/gtc/matrix_transform.hpp>
 #include <boost/assert.hpp>
 #include <boost/lexical_cast.hpp>
@@ -23,7 +25,7 @@ namespace RDST
       CameraPtr pCam;
       boost::shared_ptr<std::vector<PointLightPtr>> lights(new std::vector<PointLightPtr>());
       boost::shared_ptr<std::vector<GeomObjectPtr>> objs(new std::vector<GeomObjectPtr>());
-      boost::shared_ptr<std::vector<PlanePtr>> planes(new std::vector<PlanePtr>());
+      boost::shared_ptr<std::vector<GeomObjectPtr>> planes(new std::vector<GeomObjectPtr>());
 
       std::string line;
       std::ifstream file(fileToParse.c_str());
@@ -31,7 +33,14 @@ namespace RDST
          std::cerr << "***Error: failed to open file: " << fileToParse << std::endl;
          exit(EXIT_FAILURE);
       }
+      std::cout << "Parsing File...";
+      clock_t prevTime = clock();
       while (std::getline(file, line)) {
+         clock_t now = clock();
+         if (float(now - prevTime) / CLOCKS_PER_SEC > 1.f) {
+            std::cout << ".";
+            prevTime = now;
+         }
          RemoveComment(line);
          std::string::size_type pos = line.find("camera");
          if (pos != std::string::npos) {
@@ -77,7 +86,8 @@ namespace RDST
             objs->push_back(ParseTriangle(line));
          }
       }
-      return SceneDescription(pCam, lights, objs, planes);
+      std::cout << "Done." << std::endl;
+      return SceneDescription(pCam, lights, objs, planes, BVH(objs));
    }
 
    std::string&

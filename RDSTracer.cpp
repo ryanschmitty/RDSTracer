@@ -104,12 +104,31 @@ namespace RDST
    glm::vec3 Tracer::TraceRay(Ray& ray, const SceneDescription& scene, unsigned int recursionsLeft)
    {
       glm::vec3 color(0.f);
-      Intersection* pIntrs = RayObjectsIntersect(ray, scene.objs());
+      Intersection* pIntrs = RaySceneIntersect(ray, scene);
       if (pIntrs->hit) {
          color = ShadePoint(*pIntrs, scene, recursionsLeft);
       }
       delete pIntrs;
       return color;
+   }
+
+   Intersection* Tracer::RaySceneIntersect(Ray& ray, const SceneDescription& scene)
+   {
+      Intersection* pIsect = scene.bvh().intersect(ray);
+      Intersection* pIsectOther = RayObjectsIntersect(ray, scene.planes());
+      if (!pIsect->hit) {
+         delete pIsect;
+         return pIsectOther;
+      }
+      else if (!pIsectOther->hit) {
+         delete pIsectOther;
+         return pIsect;
+      }
+      if (pIsect->t > pIsectOther->t) {
+         delete pIsect;
+         pIsect = pIsectOther;
+      }
+      return pIsect;
    }
 
    Intersection* Tracer::RayObjectsIntersect(Ray& ray, const std::vector<GeomObjectPtr>& objs)
@@ -189,7 +208,7 @@ namespace RDST
 
          //Diffuse and Specular (Shadow Ray)
          Ray shadowRay = Ray(l, intrs.p+(0.01f*intrs.n), 0.f, pointToLightDist);
-         Intersection* pShadowIntrs = RayObjectsIntersect(shadowRay, scene.objs());
+         Intersection* pShadowIntrs = RaySceneIntersect(shadowRay, scene);
          if (!pShadowIntrs->hit) {
             //diffuse calcs
             diffuse += glm::vec3(glm::max(0.f, glm::dot(intrs.n, l)) * intrs.surf.finish.getDiffuse() * intrs.surf.color * light.getColor());

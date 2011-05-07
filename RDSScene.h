@@ -567,58 +567,6 @@ namespace RDST
    typedef boost::shared_ptr<Triangle> TrianglePtr;
    typedef boost::shared_ptr<const Triangle> ConstTrianglePtr;
 
-   /**
-    * Package class for all data required for a scene.
-    */
-   class SceneDescription
-   {
-   public:
-      explicit SceneDescription()
-      : _pCam(CameraPtr()),
-        _pLights(PointLightPtrListPtr()),
-        _pObjs(GeomObjectPtrListPtr()),
-        _pPlanes(PlanePtrListPtr())
-      {}
-      explicit SceneDescription(CameraPtr pCamera,
-                                PointLightPtrListPtr lights,
-                                GeomObjectPtrListPtr geometryObjects,
-                                PlanePtrListPtr planes)
-      : _pCam(pCamera),
-        _pLights(lights),
-        _pObjs(geometryObjects),
-        _pPlanes(planes)
-      {}
-
-      //Mutable
-      void setCam(CameraPtr pCamera)
-      { _pCam = pCamera; }
-      void setLights(PointLightPtrListPtr lights)
-      { _pLights = lights; }
-      GeomObjectPtrListPtr getObjectList()
-      { return _pObjs; }
-      void setObjs(GeomObjectPtrListPtr objs)
-      { _pObjs = objs; }
-      PlanePtrListPtr getPlaneList()
-      { return _pPlanes; }
-      void setPlanes(PlanePtrListPtr planes)
-      { _pPlanes = planes; }
-
-      //Non-mutable
-      const Camera& cam() const
-      { return *_pCam; }
-      const std::vector<PointLightPtr>& lights() const
-      { return *_pLights; }
-      const std::vector<GeomObjectPtr>& objs() const
-      { return *_pObjs; }
-      const std::vector<PlanePtr>& planes() const
-      { return *_pPlanes; }
-
-   private:
-      CameraPtr            _pCam;
-      PointLightPtrListPtr _pLights;
-      GeomObjectPtrListPtr _pObjs;
-      PlanePtrListPtr      _pPlanes;
-   };
 } // end namespace RDST
 
 #endif

@@ -15,6 +15,7 @@
 #include <fstream>
 #include <boost/shared_ptr.hpp>
 #include "RDSScene.h"
+#include "RDSSceneDesc.h"
 
 namespace RDST
 {

@@ -156,6 +156,11 @@ namespace RDST
                   green = powf(green, inverseGamma);
                   blue = powf(blue, inverseGamma);
                }
+               /*if (gammaCorrect) {
+                  red = srgbEncode(red);
+                  green = srgbEncode(green);
+                  blue = srgbEncode(blue);
+               }*/
                //Write it
                file.put((int)(red*255));
                file.put((int)(green*255));
@@ -197,6 +202,18 @@ namespace RDST
          //   file.put((int)(red*255));
          //}
          //file.close();
+      }
+
+      float srgbEncode(float c)
+      {
+         if (c <= 0.0031308f)
+         {
+            return 12.92f * c; 
+         }
+         else
+         {
+            return 1.055f * powf(c, 0.4166667f) - 0.055f; // Inverse gamma 2.4
+         }
       }
 
    private:

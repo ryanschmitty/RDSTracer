@@ -93,6 +93,17 @@ namespace RDST
             return 2; //z axis wins
       }
 
+      //Does this ray intersect this box?
+      bool intersect(const glm::vec3 o, const glm::vec3 d) {
+         glm::vec3 tmin = (min - o)/d;
+         glm::vec3 tmax = (max - o)/d;
+         glm::vec3 real_min = glm::min(tmin, tmax);
+         glm::vec3 real_max = glm::max(tmin, tmax);
+         float smallestMax = glm::min( glm::min(real_max.x, real_max.y), real_max.z);
+         float largestMin = glm::max( glm::max(real_min.x, real_min.y), real_min.z);
+         return smallestMax >= largestMin;
+      }
+
       //------------------------------------------------------------------------
       // Data Accessors
       //------------------------------------------------------------------------

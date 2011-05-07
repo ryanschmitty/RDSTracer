@@ -5,6 +5,7 @@
 #include <boost/lexical_cast.hpp>
 #include "POVRayParser.h"
 #include "RDSScene.h"
+#include "RDSSceneDesc.h"
 #include "RDSImage.h"
 #include "RDSTracer.h"
 #include "RDSbvh.h"
@@ -31,7 +32,7 @@ void printUsageAndExit(char* name)
 Options parseParameters(int argc, char** argv)
 {
    //Check for proper number of parameters
-   if (argc < 2 || argc > 9)
+   if (argc < 2)
       printUsageAndExit(argv[0]);
    //Process command line arguments
    Options opts;
@@ -70,7 +71,6 @@ int main(int argc, char** argv)
    Options opts = parseParameters(argc, argv);
    RDST::Image img(opts.width, opts.height, opts.enableGammaCorrection, opts.gamma);
    RDST::SceneDescription desc = RDST::POVRayParser::ParseFile(opts.povRayFile);
-   RDST::BVH bvh(desc.getObjectList());
    RDST::Tracer::RayTrace(desc, img, opts.enableAA, opts.subsamples);
    img.writeToDisk(opts.imgname);
 
