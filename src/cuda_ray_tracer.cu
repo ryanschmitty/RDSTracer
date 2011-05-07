@@ -46,7 +46,6 @@ __global__ void SphereIntersectKernel(cuda_sphere_t spheres[], int spheresSize,
     cuda_sphere_t *s2 = s1 + (blockDim.x * blockDim.y);
     cuda_sphere_t *s3 = s2 + (blockDim.x * blockDim.y);
 
-
     if ((blockIdx.x * blockDim.x + blockIdx.y * blockDim.y * gridDim.x * blockDim.x) > rayCount)
         return;
 
@@ -122,53 +121,53 @@ __device__ float intersect(cuda_triangle_t &tr, cuda_ray_t &r) {
 }
 #undef VEC_DIFF
 
+#define OBJNDX (blockDim.x * blockDim.y * i + shPos)
+#define OBJNDX2 (OBJNDX + blockDim.x * blockDim.y)
 __global__ void TriangleIntersectKernel(cuda_triangle_t triangles[], int triangleSize,
         cuda_ray_t rays[], cuda_intersection_t intrs[], int rayCount) {
     extern __shared__ cuda_triangle_t tShared[];
+    cuda_triangle_t *t1 = tShared;
+    cuda_triangle_t *t2 = t1 + (blockDim.x * blockDim.y);
 
     if ((blockIdx.x * blockDim.x + blockIdx.y * blockDim.y * gridDim.x * blockDim.x) > rayCount)
         return;
 
     int rayPos = threadIdx.y * gridDim.x * blockDim.x + threadIdx.x + blockIdx.x * blockDim.x + blockIdx.y * blockDim.y * gridDim.x * blockDim.x;
 
-    cuda_intersection_t inter;
-    if (rayPos < rayCount)
-        inter = intrs[rayPos];
+    cuda_intersection_t inter = intrs[rayPos * (rayPos < rayCount)];
+    cuda_ray_t ray = rays[rayPos * (rayPos < rayCount)];
 
     int shPos = threadIdx.y * blockDim.x + threadIdx.x;
 
     int count = triangleSize / (blockDim.x * blockDim.y);
     int i = 0;
-    for (; i < count; i++) {
-        tShared[shPos] = triangles[blockDim.x * blockDim.y * i + shPos];
+    for (; i < (count + 1); i += 2) {
+        t1[shPos] = triangles[OBJNDX * (OBJNDX < triangleSize)];
+        t2[shPos] = triangles[OBJNDX2 * (OBJNDX2 < triangleSize)];
+
         __syncthreads();
         for (int k = 0; k < blockDim.x * blockDim.y; k++) {
-            float newT = intersect(tShared[k], rays[rayPos]);
+            float newT = intersect(t1[k], ray);
             if (newT >= 0 && newT < inter.t) {
                 inter.t = newT;
                 inter.objIndx = i * blockDim.x * blockDim.y + k;
                 inter.type = _TRIANGLE;
             }
-        }
-        __syncthreads();
-    }
-
-    int spill = triangleSize % (blockDim.x * blockDim.y);
-    if (shPos < spill)
-        tShared[shPos] = triangles[blockDim.x * blockDim.y * i + shPos];
-    __syncthreads();
-    for (int k = 0; k < spill; k++) {
-        float newT = intersect(tShared[k], rays[rayPos]);
-        if (newT >= 0 && newT < inter.t) {
-            inter.t = newT;
-            inter.objIndx = i * blockDim.x * blockDim.y + k;
-            inter.type = _TRIANGLE;
+            newT = intersect(t2[k], ray);
+            if (newT >= 0 && newT < inter.t) {
+                inter.t = newT;
+                inter.objIndx = (i + 1) * blockDim.x * blockDim.y + k;
+                inter.type = _TRIANGLE;
+            }
+            __syncthreads();
         }
     }
 
     if (rayPos < rayCount)
         intrs[rayPos] = inter;
 }
+#undef OBJNDX
+#undef OBJNDX2
 
 __host__ intersection_vec RDST::cuda_intersect(const sphere_vec &spheres,
         const triangle_vec &triangles, const ray_vec &rays, int width, int height) {
@@ -205,7 +204,7 @@ __host__ intersection_vec RDST::cuda_intersect(const sphere_vec &spheres,
             SphereIntersectKernel<<<dimGrid, dimBlock, 3 * sizeof(cuda_sphere_t) * dimBlock.x * dimBlock.y>>>(sPtr,
                     spheres.size(), rPtr, iPtr, batchSize);
         if (triangles.size())
-            TriangleIntersectKernel<<<dimGrid, dimBlock, sizeof(cuda_triangle_t) * dimBlock.x * dimBlock.y>>>(tPtr,
+            TriangleIntersectKernel<<<dimGrid, dimBlock, 2 * sizeof(cuda_triangle_t) * dimBlock.x * dimBlock.y>>>(tPtr,
                     triangles.size(), rPtr, iPtr, batchSize);
 
         thrust::copy(dIntersects.begin(), dIntersects.end(), iVecI);
@@ -226,7 +225,7 @@ __host__ intersection_vec RDST::cuda_intersect(const sphere_vec &spheres,
             SphereIntersectKernel<<<dimGrid, dimBlock, 3 * sizeof(cuda_sphere_t) * dimBlock.x * dimBlock.y>>>(sPtr,
                     spheres.size(), rPtr, iPtr, spill);
         if (triangles.size())
-            TriangleIntersectKernel<<<dimGrid, dimBlock, sizeof(cuda_triangle_t) * dimBlock.x * dimBlock.y>>>(tPtr,
+            TriangleIntersectKernel<<<dimGrid, dimBlock, 2 * sizeof(cuda_triangle_t) * dimBlock.x * dimBlock.y>>>(tPtr,
                     triangles.size(), rPtr, iPtr, spill);
 
         thrust::copy(dIntersects.begin(), dIntersects.end(), iVecI);
