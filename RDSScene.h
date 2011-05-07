@@ -65,26 +65,13 @@ namespace RDST
                       const glm::vec3& right = glm::vec3(1.333f, 0.f, 0.f),
                       const glm::vec3& dir = glm::vec3(0.f, 0.f, -1.f))
       : _position(position),
-        _up(up),
-        _right(right),
         _dir(glm::normalize(dir))
-      {}
-      /*
       {
-         _position = position;
-         _dir = glm::normalize(dir);
-         if (fabsf(dir.x) > fabsf(dir.y)) {
-            float invLen = 1.f / sqrtf(dir.x*dir.x + dir.z+dir.z);
-            _up = glm::vec3(-dir.z*invLen, 0.f, dir.x*invLen);
-         }
-         else {
-            float invLen = 1.f / sqrtf(dir.y*dir.y + dir.z*dir.z);
-            _up = glm::vec3(0.f, dir.z*invLen, -dir.y*invLen);
-         }
-         _right = -glm::cross(_dir, _up);
-         _right *= glm::length(right);
+         //WARN: be wary of looking straight up or straight down, it will end in disaster!
+         glm::vec3 k(0.f, 1.f, 0.f);
+         _up = glm::normalize(k - ((glm::dot(k, _dir))*_dir)); //Gram-Schmidt Orthogonalization
+         _right = -glm::cross(_up, _dir)*glm::length(right);
       }
-      */
 
       //Position
       const glm::vec3& getPos() const

@@ -12,17 +12,19 @@
 struct Options
 {
    Options()
-   : povRayFile(""), imgname(""), height(480), width(640), enableAA(false), sqrtSS(1)
+   : povRayFile(""), imgname(""), height(480), width(640), enableGammaCorrection(false), gamma(2.2f), enableAA(false), subsamples(1)
    {}
    std::string povRayFile, imgname;
    int height, width;
+   bool enableGammaCorrection;
+   float gamma;
    bool enableAA;
-   int sqrtSS; //square root of the sub-samples
+   int subsamples;
 };
 
 void printUsageAndExit(char* name)
 {
-   std::cerr << "usage: " << name << " [-w <width> | +W<width>] [-h <height> | +H<height>] [-aa <#sub-samples>] (-f <pov_input> | +I<pov_input>)\n";
+   std::cerr << "usage: " << name << " [-w <width> | +W<width>] [-h <height> | +H<height>] [-aa <#sub-samples>] [-g <gamma>] (-f <pov_input> | +I<pov_input>)\n";
    exit(EXIT_SUCCESS);
 }
 
@@ -34,22 +36,19 @@ Options parseParameters(int argc, char** argv)
    //Process command line arguments
    Options opts;
    for (int i=1; i<argc; ++i) {
-      if (!strcmp(argv[i], "+W")) opts.width = boost::lexical_cast<int>(&argv[i][2]);
+      if (strstr(argv[i], "+W")) opts.width = boost::lexical_cast<int>(&argv[i][2]);
       else if (!strcmp(argv[i], "-w")) opts.width = boost::lexical_cast<int>(argv[++i]);
-      else if (!strcmp(argv[i], "+H")) opts.height = boost::lexical_cast<int>(&argv[i][2]);
+      else if (strstr(argv[i], "+H")) opts.height = boost::lexical_cast<int>(&argv[i][2]);
       else if (!strcmp(argv[i], "-h")) opts.height = boost::lexical_cast<int>(argv[++i]);
-      else if (!strcmp(argv[i], "-aa")) {
-         int subSamples = boost::lexical_cast<int>(argv[++i]);
-         float f_sqrt = sqrtf((float)subSamples);
-         int i_sqrt = (int)f_sqrt;
-         if (f_sqrt != i_sqrt) {
-            std::cerr << "Anti-Aliasing sub-samples must be a perfect square.\n";
-            exit(EXIT_FAILURE);
-         }
-         opts.enableAA = true;
-         opts.sqrtSS = i_sqrt;
+      else if (!strcmp(argv[i], "-g")) {
+         opts.enableGammaCorrection = true;
+         opts.gamma = boost::lexical_cast<float>(argv[++i]);
       }
-      else if (!strcmp(argv[i], "+I")) {
+      else if (!strcmp(argv[i], "-aa")) {
+         opts.enableAA = true;
+         opts.subsamples = boost::lexical_cast<int>(argv[++i]);
+      }
+      else if (strstr(argv[i], "+I")) {
          opts.povRayFile = std::string(&argv[i][2]);
          opts.imgname = opts.povRayFile.substr(0,opts.povRayFile.find(".pov")); //erase .pov extension if it exists
       }
@@ -69,16 +68,11 @@ int main(int argc, char** argv)
    clock_t start = clock();
 
    Options opts = parseParameters(argc, argv);
-   //Create big buffer
-   RDST::Image img(opts.width*opts.sqrtSS, opts.height*opts.sqrtSS);
-   RDST::SceneDescription desc(RDST::POVRayParser::ParseFile(opts.povRayFile));
+   RDST::Image img(opts.width, opts.height, opts.enableGammaCorrection, opts.gamma);
+   RDST::SceneDescription desc = RDST::POVRayParser::ParseFile(opts.povRayFile);
    RDST::BVH bvh(desc.getObjectList());
-   RDST::Tracer::RayTrace(desc, img, opts.enableAA);
-   //Anti-Alias by downsampling the big buffer
-   if (opts.enableAA)
-      img.downSample(opts.sqrtSS,opts.sqrtSS).writeToDisk(opts.imgname);
-   else
-      img.writeToDisk(opts.imgname);
+   RDST::Tracer::RayTrace(desc, img, opts.enableAA, opts.subsamples);
+   img.writeToDisk(opts.imgname);
 
    std::cout << "\nRuntime: " << float(clock() - start) / CLOCKS_PER_SEC << " seconds\n";
 }

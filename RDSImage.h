@@ -69,26 +69,30 @@ namespace RDST
    class Image
    {
    public:
-      explicit Image(short width, short height)
-      : w(width),
-        h(height)
+      explicit Image(int _width, int _height, bool _gammaCorrection=false, float _gamma=2.2f)
+      : w(_width),
+        h(_height),
+        gammaCorrect(_gammaCorrection),
+        gamma(_gamma)
       {
          image.resize(0); //force vector to clear
          image.resize(w*h); //Initialize all Pixels with default ctor
       }
 
       /* Dimension inquiries */
-      short getWidth() const
+      int getWidth() const
       { return w; }
-      short getHeight() const
+      int getHeight() const
       { return h; }
+      int getNumPixels() const
+      { return w*h; }
 
       /* 2D functions */
-      Pixel& get(short x, short y) //mutable
+      Pixel& get(int x, int y) //mutable
       { return image.at(y*w+x); }
-      const Pixel& get(short x, short y) const //non-mutable
+      const Pixel& get(int x, int y) const //non-mutable
       { return image.at(y*w+x); }
-      void set(short x, short y, const Pixel& pixel)
+      void set(int x, int y, const Pixel& pixel)
       { image.at(y*w+x) = pixel; }
 
       /* 1D functions */
@@ -99,21 +103,25 @@ namespace RDST
       void set(int i, const Pixel& pixel)
       { image.at(i) = pixel; }
 
-      Image downSample(int samplesInX, int samplesInY)
+      Image downSample(int samples)
       {
-         BOOST_ASSERT(w%samplesInX == 0);
-         BOOST_ASSERT(h%samplesInY == 0);
-         Image output(w/samplesInX, h/samplesInY);
+         float f_sqrt = sqrtf((float)samples);
+         int i_sqrt = (int)f_sqrt;
+         if (f_sqrt != i_sqrt) {
+            std::cerr << "Anti-Aliasing sub-samples must be a perfect square.\n";
+            exit(EXIT_FAILURE);
+         }
+         Image output(w/i_sqrt, h/i_sqrt);
          //Loop over the output buffer
          for (int y = 0; y < output.getHeight(); y++) {
             for (int x = 0; x < output.getWidth(); x++) {
-               int superY = y*samplesInY;
-               int superX = x*samplesInX;
+               int superY = y*i_sqrt;
+               int superX = x*i_sqrt;
                glm::vec4 finalColor(0.f);
                //Box filter all sub-samples
-               for (int i=0; i<samplesInX; ++i) {
-                  for (int j=0; j<samplesInY; ++j) {
-                     finalColor += get(superX+i,superY+j).rgba() / float(samplesInX+samplesInY);
+               for (int i=0; i<i_sqrt; ++i) {
+                  for (int j=0; j<i_sqrt; ++j) {
+                     finalColor += get(superX+i,superY+j).rgba() / float(samples);
                   }
                }
                output.get(x,y).set(finalColor);
@@ -142,10 +150,12 @@ namespace RDST
                float green = glm::clamp(get(x,h-1-y).g(), 0.f, 1.f);
                float blue = glm::clamp(get(x,h-1-y).b(), 0.f, 1.f);
                //Gamma Correction it
-               float inverseGamma = 1.f / 2.2f;
-               red = powf(red, inverseGamma);
-               green = powf(green, inverseGamma);
-               blue = powf(blue, inverseGamma);
+               if (gammaCorrect) {
+                  float inverseGamma = 1.f / gamma;
+                  red = powf(red, inverseGamma);
+                  green = powf(green, inverseGamma);
+                  blue = powf(blue, inverseGamma);
+               }
                //Write it
                file.put((int)(red*255));
                file.put((int)(green*255));
@@ -190,7 +200,9 @@ namespace RDST
       }
 
    private:
-      short w, h;
+      int w, h;
+      bool gammaCorrect;
+      float gamma;
       std::vector<Pixel> image;
    };
 } // end namespace RDST

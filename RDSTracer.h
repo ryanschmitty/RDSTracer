@@ -35,18 +35,17 @@ namespace RDST
       {}
    public:
       /* Ray tracing functions */
-      static void RayTrace(const SceneDescription& scene, Image& image, bool jittered);
+      static void RayTrace(const SceneDescription& scene, Image& image, bool antialias=false, int subsamples=1);
    private:
       /* Helper Functions */
-      static std::vector<RayPtr> GenerateRays(const Camera& cam, const Image& image, bool jittered);
-      static glm::vec3           TraceRay(Ray& ray, const SceneDescription& scene, unsigned int recursionsLeft);
-      static Intersection*       RayObjectsIntersect(Ray& ray, const std::vector<GeomObjectPtr>& objs);
-      static glm::vec3           ShadePoint(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft);
-      static glm::vec3           CalcDirectIllum(const Intersection& intrs, const SceneDescription& scene);
-      static glm::vec3           CalcReflection(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft);
-      static glm::vec3           CalcRefraction(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft);
-     
-      static glm::vec3           refract(const glm::vec3& normal, const glm::vec3& incident, float n1, float n2);
+      static RayPtrListPtr GenerateRays(const Camera& cam, int raysInX, int raysInY, bool jitter);
+      static glm::vec3     TraceRay(Ray& ray, const SceneDescription& scene, unsigned int recursionsLeft);
+      static Intersection* RayObjectsIntersect(Ray& ray, const std::vector<GeomObjectPtr>& objs);
+      static glm::vec3     ShadePoint(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft);
+      static glm::vec3     CalcDirectIllum(const Intersection& intrs, const SceneDescription& scene);
+      static glm::vec3     CalcReflection(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft);
+      static glm::vec3     CalcRefraction(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft);
+      static int           VerifyNumSubsamples(int subsamples);
    };
 }
 

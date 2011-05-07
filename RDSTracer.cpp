@@ -16,35 +16,56 @@
 
 namespace RDST
 {
-   void Tracer::RayTrace(const SceneDescription& scene, Image& image, bool jittered)
+   void Tracer::RayTrace(const SceneDescription& scene, Image& image, bool antialias, int subsamples)
    {
+      //Anti-aliasing stuff
+      if (!antialias) subsamples = 1;
+      int samplesPerD = VerifyNumSubsamples(subsamples);
       //Create rays
-      std::vector<RayPtr> rays(GenerateRays(scene.cam(), image, jittered));
-      //Create BVH
-      //BVH bvh = BVH(scene.objs());
+      int numRaysX = image.getWidth()*samplesPerD;
+      int numRaysY = image.getHeight()*samplesPerD;
+      RayPtrListPtr rays = GenerateRays(scene.cam(), numRaysX, numRaysY, antialias);
       //Trace Rays
       std::cout << "\nTracing Rays\n";
-      for (unsigned int rayi=0; rayi < rays.size(); ++rayi) {
-         //Get color
-         glm::vec3 color = TraceRay(*rays[rayi], scene, MAX_RECURSION_DEPTH);
-         //Blend color with existing and store it in the image
-         glm::vec4 src = glm::vec4(color, 1.f);
-         glm::vec4 dst = image.get(rayi).rgba();
-         dst = (src*src.a) + (dst*(1-src.a)); //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-         image.get(rayi).set(dst);
-         //Progress Bar: update every 10,000 rays
-         if (rayi % 10000 == 0) UpdateProgress(int(float(rayi)/rays.size()*100.f));
+      for (int y=0; y < image.getHeight(); ++y) {
+         for (int x=0; x < image.getWidth(); ++x) {
+            //Compute subsample start indices
+            int startX = x * samplesPerD;
+            int startY = y * samplesPerD;
+            //Iterate over all the subsamples and collect color
+            glm::vec3 color(0.f);
+            for (int i=0; i < samplesPerD; ++i) {
+               for (int j=0; j < samplesPerD; ++j) {
+                  int rayi = (startY+j) * numRaysX + (startX+i); //2D to 1D conversion
+                  color += TraceRay(*(*rays)[rayi], scene, MAX_RECURSION_DEPTH);
+                  if (rayi % 10000 == 0) UpdateProgress(int(float(rayi)/rays->size()*100.f));
+               }
+            }
+            //Apply box filter and write to image
+            image.get(x,y).set( glm::vec4(color/(float)subsamples, 1.f) );
+         }
       }
       UpdateProgress(100);
       std::cout << "\n";
    }
 
-   std::vector<RayPtr> Tracer::GenerateRays(const Camera& cam, const Image& image, bool jittered)
+   int Tracer::VerifyNumSubsamples(int subsamples)
+   {
+      float f_sqrt = sqrtf((float)subsamples);
+      int i_sqrt = (int)f_sqrt;
+      if (f_sqrt != i_sqrt) {
+         std::cerr << "ERROR***: Anti-Aliasing sub-samples must be a perfect square; you entered " << subsamples << ".\n";
+         exit(EXIT_FAILURE);
+      }
+      return i_sqrt;
+   }
+
+   RayPtrListPtr Tracer::GenerateRays(const Camera& cam, int raysInX, int raysInY, bool jitter)
    {
       std::cout << "Generating Rays\n";
-      std::vector<RayPtr> rays;
-      float h = image.getHeight();
-      float w = image.getWidth();
+      RayPtrListPtr rays = RayPtrListPtr(new std::vector<RayPtr>());
+      float h = (float)raysInY;
+      float w = (float)raysInX;
       float r = glm::length(cam.getRight())*0.5f;
       float l = -r;
       float t = glm::length(cam.getUp())*0.5f;
@@ -55,9 +76,9 @@ namespace RDST
             //Jitter samples
             float xOffset = 0.5;
             float yOffset = 0.5;
-            if (jittered) {
-               float xOffset = (float)rand() / RAND_MAX;
-               float yOffset = (float)rand() / RAND_MAX;
+            if (jitter) {
+               xOffset = (float)rand() / RAND_MAX;
+               yOffset = (float)rand() / RAND_MAX;
             }
             //Get view coords
             float u = l+((r-l)*(x+xOffset)/w);
@@ -68,7 +89,7 @@ namespace RDST
             glm::mat4 matViewWorld(glm::vec4(glm::normalize(cam.getRight()),0.f), glm::vec4(cam.getUp(),0.f), glm::vec4(cam.getDir(),0.f), glm::vec4(cam.getPos(),1.f));
             rayOrigin = glm::vec3(matViewWorld * glm::vec4(rayOrigin, 1.f)); //convert to world space
             rayDir = glm::normalize(glm::vec3(matViewWorld * glm::vec4(rayDir, 0.f)));
-            rays.push_back(RayPtr(new Ray(rayDir, rayOrigin)));
+            rays->push_back(RayPtr(new Ray(rayDir, rayOrigin)));
             //Progress Bar: update every 10,000 rays
             if ((int)(y*w+x) % 10000 == 0) {
                UpdateProgress(int((y*w+x)/(w*h)*100.f));
@@ -117,24 +138,36 @@ namespace RDST
    
    glm::vec3 Tracer::ShadePoint(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft)
    {
-      //Direct illumination
-      glm::vec3 finalColor = CalcDirectIllum(intrs, scene);
-
+      //return (intrs.n+1.f) * 0.5f;
       //Reflection
-      if (intrs.surf.finish.getReflection() > 0.f) {
-         glm::vec3 reflection = CalcReflection(intrs, scene, recursionsLeft);
-         float reflCoef = intrs.surf.finish.getReflection();
-         finalColor = ((1.f-reflCoef)*glm::vec3(finalColor)) + (reflCoef*reflection);
+      float reflAmt = intrs.surf.finish.getReflection();
+      glm::vec3 reflection(0.f);
+      if (reflAmt > 0.f) {
+         reflection = reflAmt * CalcReflection(intrs, scene, recursionsLeft);
+         reflection = glm::clamp(reflection, 0.f, FLT_MAX);
       }
 
       //Refraction
+      float refrAmt = 0.f;
+      glm::vec3 refraction(0.f);
       if (intrs.surf.finish.getRefraction() > 0.f) {
-         glm::vec3 refraction = CalcRefraction(intrs, scene, recursionsLeft);
-         float refrCoef = intrs.surf.finish.getRefraction();
-         finalColor = ((1.f-refrCoef)*glm::vec3(finalColor)) + (refrCoef*refraction);
+         refrAmt = intrs.surf.color.a;
+         refraction = CalcRefraction(intrs, scene, recursionsLeft);
+         if (glm::length(refraction) <= 0.f)
+            refrAmt = 0.f;
+         else
+            refraction = glm::clamp(refrAmt*refraction, 0.f, FLT_MAX);
       }
 
-      return finalColor;
+      //Direct illumination
+      float dirAmt = 1.f - reflAmt - refrAmt;
+      glm::vec3 direct(0.f);
+      if (dirAmt > 0.f) {
+         direct = dirAmt * CalcDirectIllum(intrs, scene);
+         direct = glm::clamp(direct, 0.f, FLT_MAX);
+      }
+
+      return direct + reflection + refraction;
    }
 
    glm::vec3 Tracer::CalcDirectIllum(const Intersection& intrs, const SceneDescription& scene)
@@ -155,7 +188,7 @@ namespace RDST
          ambient += glm::vec3(intrs.surf.finish.getAmbient() * intrs.surf.color * light.getColor());
 
          //Diffuse and Specular (Shadow Ray)
-         Ray shadowRay = Ray(l, intrs.p, 0.001f, pointToLightDist);
+         Ray shadowRay = Ray(l, intrs.p+(0.01f*intrs.n), 0.f, pointToLightDist);
          Intersection* pShadowIntrs = RayObjectsIntersect(shadowRay, scene.objs());
          if (!pShadowIntrs->hit) {
             //diffuse calcs
@@ -164,7 +197,7 @@ namespace RDST
             glm::vec3 v = -intrs.incDir;
             glm::vec3 h = glm::normalize(l+v);
             float spec = glm::max(0.f, glm::dot(intrs.n, h));
-            specular += glm::vec3(powf(spec,1.f/intrs.surf.finish.getRoughness()) * intrs.surf.color * intrs.surf.finish.getSpecular() * light.getColor());
+            specular += glm::vec3(powf(spec,1.f/intrs.surf.finish.getRoughness()) * intrs.surf.finish.getSpecular() * light.getColor());
          }
          delete pShadowIntrs;
       }
@@ -177,7 +210,8 @@ namespace RDST
    {
       glm::vec3 reflection(0.f);
       if (recursionsLeft > 0 && intrs.surf.finish.getReflection() > 0.f) {
-         Ray reflectionRay = Ray(glm::reflect(intrs.incDir, intrs.n), intrs.p, 0.001f);
+         Ray reflectionRay = Ray(glm::reflect(intrs.incDir, intrs.n), intrs.p);
+         reflectionRay.o += 0.01f * reflectionRay.d;
          reflection = TraceRay(reflectionRay, scene, recursionsLeft-1);
       }
       return reflection;
@@ -188,11 +222,11 @@ namespace RDST
       glm::vec3 refraction(0.f);
       if (recursionsLeft > 0 && intrs.surf.finish.getRefraction() > 0.f) {
          float eta = intrs.surf.finish.getIndexOfRefraction(); //material-to-air
-         glm::vec3 normal = intrs.n;
          if (!intrs.inside) {
             eta = 1.f/eta; //air-to-material
          }
-         Ray refractionRay = Ray(glm::refract(intrs.incDir, normal, eta), intrs.p-(0.01f*normal));
+         Ray refractionRay = Ray(glm::refract(intrs.incDir, intrs.n, eta), intrs.p);
+         refractionRay.o += 0.1f * refractionRay.d;
          if (glm::length(refractionRay.d) == 0.f) return refraction; //TIR
          refraction = TraceRay(refractionRay, scene, recursionsLeft-1);
       }

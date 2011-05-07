@@ -38,39 +38,6 @@ plane {<0, 0, -1>, 30
   rotate <0, -20, 0>
 }
 
-// pyramid of spheres
-sphere { <-2, -1.74305, -1.74305>, 2
-  pigment { color rgbf <1.0, 0.0, 1.0, 0.4>}
-  finish {ambient 0.2 diffuse 0.4 reflection 0.6}
-  translate <-4, -3, 2>
-}
-
-sphere { <2, -1.74305, -1.74305>, 2
-  pigment { color rgbf <1.0, 0.0, 1.0, 0.4>}
-  finish {ambient 0.2 diffuse 0.4 reflection 0.6}
-  translate <-4, -3, 2>
-}
-
-sphere { <0, -1.74305, 1.74305>, 2
-  pigment { color rgbf <1.0, 0.0, 1.0, 0.4>}
-  finish {ambient 0.2 diffuse 0.4 reflection 0.6}
-  translate <-4, -3, 2>
-}
-
-sphere { <0, 1.74305, 0>, 2
-  pigment { color rgbf <1.0, 0.0, 1.0, 0.4>}
-  finish {ambient 0.2 diffuse 0.4 reflection 0.6}
-  translate <-4, -3, 2>
-}
-
-
-// and a few assorted objects
-sphere { <0, 0, 0>, 2
-  pigment {color rgbf <1.0, 1.0, 1.0, 0.8>}
-  finish {ambient 0.2 diffuse 0.8 refraction 1.0 ior 1.333}
-  translate <5.5, -3, -1>
-}
-
 box { <-2, -5, -5>, <2, 5, 5>
   pigment { color rgbf <1.0, 0.2, 1.0, 0.6>}
   finish {ambient 0.2 diffuse 0.8 reflection 0.2 refraction 1.0 ior 1.9}

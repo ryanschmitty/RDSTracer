@@ -66,14 +66,14 @@ namespace RDST
       float smallestMax = glm::min( glm::min(real_max.x, real_max.y), real_max.z);
       float largestMin = glm::max( glm::max(real_min.x, real_min.y), real_min.z);
       if (smallestMax < largestMin) return NULL;
-      glm::vec3 n = largestMin == real_min.x ? xr.d.x >= 0 ? glm::vec3(-1,0,0) : glm::vec3(1,0,0) :
-                    largestMin == real_min.y ? xr.d.y >= 0 ? glm::vec3(0,-1,0) : glm::vec3(0,1,0) :
-                                               xr.d.z >= 0 ? glm::vec3(0,0,-1) : glm::vec3(0,0,1);
       bool inside = false;
       if (largestMin < 0.f) { // check for inside box
          inside = true;
          largestMin = smallestMax;
       }
+      glm::vec3 n = largestMin == real_min.x || largestMin == real_max.x ? xr.d.x >= 0 ? glm::vec3(-1,0,0) : glm::vec3(1,0,0) :
+                    largestMin == real_min.y || largestMin == real_max.y ? xr.d.y >= 0 ? glm::vec3(0,-1,0) : glm::vec3(0,1,0) :
+                                                                           xr.d.z >= 0 ? glm::vec3(0,0,-1) : glm::vec3(0,0,1);
       return new Intersection(true, largestMin, ray.d, ray.o+(ray.d*largestMin), glm::normalize(getNormalXform()*n), Surface(getColor(), getFinish()), inside);
       /*
       //LONG OBNOXIOUS BOX TESTING
