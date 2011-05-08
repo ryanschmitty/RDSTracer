@@ -32,10 +32,7 @@ namespace RDST
       boost::shared_ptr<BVHNode> root = recursiveBuild(buildData, 0, pObjs->size(), &totalNodes, orderedPrims);
       pObjs->swap(orderedPrims);
       //Flatten for depth-first traversal algorithm
-      nodes = boost::shared_array<LinearBVHNode>(new LinearBVHNode[totalNodes]);
-      for (uint32_t i=0; i<totalNodes; ++i) {
-         new (&nodes[i]) LinearBVHNode;
-      }
+      nodes = boost::shared_array<LinearBVHNode>(new LinearBVHNode[totalNodes]());
       uint32_t offset = 0;
       flattenBVHTree(root, &offset);
       std::cout << "Done." << std::endl;
@@ -48,7 +45,7 @@ namespace RDST
    boost::shared_ptr<BVHNode> BVH::recursiveBuild(std::vector<BVHObjectInfo>& buildData, uint32_t start, uint32_t end, uint32_t* totalNodes, std::vector<GeomObjectPtr>& orderedPrims) {
       (*totalNodes)++;
       boost::shared_ptr<BVHNode> node(new BVHNode());
-      //Compute bounds of all primitives in BVH node
+      //Compute bounds of all primitives for this call
       BBox bbox;
       for (uint32_t i=start; i<end; ++i) {
          bbox = BBox::Union(bbox, buildData[i].bounds);
@@ -64,7 +61,8 @@ namespace RDST
          node->initLeaf(firstPrimOffset, nPrimitives, bbox);
       }
       else {
-         //Compute bound of primitive centroids, choose split dimension
+         //create interior
+         //Compute bound of primitive centroids, choose split dimension as axis with largest extent
          BBox centroidBounds;
          for (uint32_t i=start; i<end; ++i) {
             centroidBounds = BBox::Union(centroidBounds, buildData[i].centroid);
