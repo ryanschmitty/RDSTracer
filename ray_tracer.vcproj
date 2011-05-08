@@ -175,23 +175,23 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\main.cpp"
+				RelativePath=".\src\main.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\POVRayParser.cpp"
+				RelativePath=".\src\POVRayParser.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\RDSbvh.cpp"
+				RelativePath=".\src\RDSbvh.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\RDSScene.cpp"
+				RelativePath=".\src\RDSScene.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\RDSTracer.cpp"
+				RelativePath=".\src\RDSTracer.cpp"
 				>
 			</File>
 		</Filter>
@@ -201,35 +201,35 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\POVRayParser.h"
+				RelativePath=".\src\POVRayParser.h"
 				>
 			</File>
 			<File
-				RelativePath=".\ProgressBar.h"
+				RelativePath=".\src\ProgressBar.h"
 				>
 			</File>
 			<File
-				RelativePath=".\RDSBBox.h"
+				RelativePath=".\src\RDSBBox.h"
 				>
 			</File>
 			<File
-				RelativePath=".\RDSbvh.h"
+				RelativePath=".\src\RDSbvh.h"
 				>
 			</File>
 			<File
-				RelativePath=".\RDSImage.h"
+				RelativePath=".\src\RDSImage.h"
 				>
 			</File>
 			<File
-				RelativePath=".\RDSScene.h"
+				RelativePath=".\src\RDSScene.h"
 				>
 			</File>
 			<File
-				RelativePath=".\RDSSceneDesc.h"
+				RelativePath=".\src\RDSSceneDesc.h"
 				>
 			</File>
 			<File
-				RelativePath=".\RDSTracer.h"
+				RelativePath=".\src\RDSTracer.h"
 				>
 			</File>
 		</Filter>
@@ -239,11 +239,127 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
-				RelativePath=".\simple.pov"
+				RelativePath=".\assets\bobcool.pov"
 				>
 			</File>
 			<File
-				RelativePath=".\ugly.pov"
+				RelativePath=".\assets\boxtest.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\bunny.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\bunny_jumbo.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\bunny_large.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\bunny_small.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\bunny_tasty.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\bvhtest.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\cool.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\dragon_huge.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\dragon_large.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\inside_boxtest.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\recurse_simp.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\recurse_simp2.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\recurses.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\recurses_boxtest.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\refraction.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\simp_cam.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\simple.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\simple_reflect.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\simple_reflect2.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\simple_refract.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\simple_tri.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\spherebox.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\spheretest.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\triangle.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\ugly.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\ugly_boxes.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\ugly_part.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\ugly_tris.pov"
+				>
+			</File>
+			<File
+				RelativePath=".\assets\valentine2.pov"
 				>
 			</File>
 		</Filter>
