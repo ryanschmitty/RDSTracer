@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
+#include <cstring>
 #include <string>
 #include <boost/lexical_cast.hpp>
 #include "POVRayParser.h"

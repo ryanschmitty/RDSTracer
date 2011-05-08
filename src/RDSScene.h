@@ -128,7 +128,7 @@ namespace RDST
    };
    typedef boost::shared_ptr<PointLight> PointLightPtr;
    typedef boost::shared_ptr<const PointLight> ConstPointLightPtr;
-   typedef boost::shared_ptr<std::vector<PointLightPtr>> PointLightPtrListPtr;
+   typedef boost::shared_ptr< std::vector<PointLightPtr> > PointLightPtrListPtr;
 
    //---------------------------------------------------------------------------
    //
@@ -239,7 +239,7 @@ namespace RDST
    };
    typedef boost::shared_ptr<Ray> RayPtr;
    typedef boost::shared_ptr<const Ray> ConstRayPtr;
-   typedef boost::shared_ptr<std::vector<RayPtr>> RayPtrListPtr;
+   typedef boost::shared_ptr< std::vector<RayPtr> > RayPtrListPtr;
 
    //---------------------------------------------------------------------------
    // Surface class combines Finish and Color
@@ -289,7 +289,7 @@ namespace RDST
    };
    typedef boost::shared_ptr<Intersection> IntersectionPtr;
    typedef boost::shared_ptr<const Intersection> ConstIntersectionPtr;
-   typedef boost::shared_ptr<std::vector<IntersectionPtr>> IntersectionPtrListPtr;
+   typedef boost::shared_ptr< std::vector<IntersectionPtr> > IntersectionPtrListPtr;
 
    //---------------------------------------------------------------------------
    //
@@ -357,7 +357,7 @@ namespace RDST
    };
    typedef boost::shared_ptr<GeomObject> GeomObjectPtr;
    typedef boost::shared_ptr<const GeomObject> ConstGeomObjectPtr;
-   typedef boost::shared_ptr<std::vector<GeomObjectPtr>> GeomObjectPtrListPtr;
+   typedef boost::shared_ptr< std::vector<GeomObjectPtr> > GeomObjectPtrListPtr;
 
    //---------------------------------------------------------------------------
    // Box class
@@ -497,7 +497,7 @@ namespace RDST
    };
    typedef boost::shared_ptr<Plane> PlanePtr;
    typedef boost::shared_ptr<const Plane> ConstPlanePtr;
-   typedef boost::shared_ptr<std::vector<PlanePtr>> PlanePtrListPtr;
+   typedef boost::shared_ptr< std::vector<PlanePtr> > PlanePtrListPtr;
 
    //---------------------------------------------------------------------------
    // Sphere class
