@@ -23,9 +23,9 @@ namespace RDST
    {
       //Scene description vars
       CameraPtr pCam;
-      boost::shared_ptr<std::vector<PointLightPtr>> lights(new std::vector<PointLightPtr>());
-      boost::shared_ptr<std::vector<GeomObjectPtr>> objs(new std::vector<GeomObjectPtr>());
-      boost::shared_ptr<std::vector<GeomObjectPtr>> planes(new std::vector<GeomObjectPtr>());
+      boost::shared_ptr< std::vector<PointLightPtr> > lights(new std::vector<PointLightPtr>());
+      boost::shared_ptr< std::vector<GeomObjectPtr> > objs(new std::vector<GeomObjectPtr>());
+      boost::shared_ptr< std::vector<GeomObjectPtr> > planes(new std::vector<GeomObjectPtr>());
 
       std::string line;
       std::ifstream file(fileToParse.c_str());

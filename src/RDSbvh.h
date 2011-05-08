@@ -109,7 +109,7 @@ namespace RDST
    class BVH
    {
    public:
-      explicit BVH(boost::shared_ptr<std::vector<GeomObjectPtr>> pObjects);
+      explicit BVH(boost::shared_ptr< std::vector<GeomObjectPtr> > pObjects);
       Intersection* intersect(Ray& ray) const;
 
    private:
@@ -119,7 +119,7 @@ namespace RDST
       uint32_t flattenBVHTree(boost::shared_ptr<BVHNode> node, uint32_t* offset);
 
       //DATA
-      boost::shared_ptr<std::vector<GeomObjectPtr>> pObjs;
+      boost::shared_ptr< std::vector<GeomObjectPtr> > pObjs;
       boost::shared_array<LinearBVHNode> nodes;
    };
 }

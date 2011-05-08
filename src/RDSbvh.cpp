@@ -13,7 +13,7 @@ namespace RDST
    //---------------------------------------------------------------------------
    // BVH Ctor
    //---------------------------------------------------------------------------
-   BVH::BVH(boost::shared_ptr<std::vector<GeomObjectPtr>> pObjects)
+   BVH::BVH(boost::shared_ptr< std::vector<GeomObjectPtr> > pObjects)
       : pObjs(pObjects)
    {
       if (!pObjs) return;
