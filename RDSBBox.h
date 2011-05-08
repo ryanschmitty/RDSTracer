@@ -60,6 +60,11 @@ namespace RDST
          min -= glm::vec3(delta);
          max += glm::vec3(delta);
       }
+      //grow the box
+      void include(const glm::vec3& p) {
+         min = glm::min(min, p);
+         max = glm::max(max, p);
+      }
       //do boxes overlap?
       bool overlaps(const BBox& b) const {
          return (max.x >= b.min.x && min.x <= b.max.x &&

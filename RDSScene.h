@@ -24,9 +24,9 @@ namespace RDST
    //
    //---------------------------------------------------------------------------
 
-   /**
-    * Abstract Base Colored Object class
-    */
+   //---------------------------------------------------------------------------
+   // Class the provides color
+   //---------------------------------------------------------------------------
    class Colored
    {
    public:
@@ -53,10 +53,9 @@ namespace RDST
    //
    //---------------------------------------------------------------------------
 
-   /**
-    * Camera Storage Class.
-    * Note: Normalizes on set for Up and LookAt vectors.
-    */
+   //---------------------------------------------------------------------------
+   // Camera class
+   //---------------------------------------------------------------------------
    class Camera
    {
    public:
@@ -106,9 +105,9 @@ namespace RDST
    typedef boost::shared_ptr<Camera> CameraPtr;
    typedef boost::shared_ptr<const Camera> ConstCameraPtr;
 
-   /**
-    * Point Light Storage Class
-    */
+   //---------------------------------------------------------------------------
+   // Point Light class
+   //---------------------------------------------------------------------------
    class PointLight: public Colored
    {
    public:
@@ -137,9 +136,9 @@ namespace RDST
    //
    //---------------------------------------------------------------------------
 
-   /**
-    * Surface Finish Storage Class
-    */
+   //---------------------------------------------------------------------------
+   // Surface Finish class
+   //---------------------------------------------------------------------------
    class Finish
    {
    public:
@@ -217,9 +216,9 @@ namespace RDST
    //
    //---------------------------------------------------------------------------
    
-   /**
-    * A ray with origin o and direction d.
-    */
+   //---------------------------------------------------------------------------
+   // Ray class
+   //---------------------------------------------------------------------------
    class Ray
    {
    public:
@@ -242,9 +241,9 @@ namespace RDST
    typedef boost::shared_ptr<const Ray> ConstRayPtr;
    typedef boost::shared_ptr<std::vector<RayPtr>> RayPtrListPtr;
 
-   /**
-    * Surface storage helper class
-    */
+   //---------------------------------------------------------------------------
+   // Surface class combines Finish and Color
+   //---------------------------------------------------------------------------
    class Surface
    {
    public:
@@ -256,9 +255,9 @@ namespace RDST
       Finish finish;
    };
 
-   /**
-    * Intersection information.
-    */
+   //---------------------------------------------------------------------------
+   // Intersection information container class
+   //---------------------------------------------------------------------------
    class Intersection
    {
    public:
@@ -298,9 +297,9 @@ namespace RDST
    //
    //---------------------------------------------------------------------------
 
-   /**
-    * Abstract Base Geometric Object Storage Class
-    */
+   //---------------------------------------------------------------------------
+   // Abstract Geometric Object class
+   //---------------------------------------------------------------------------
    class GeomObject: public Colored
    {
    public:
@@ -360,9 +359,9 @@ namespace RDST
    typedef boost::shared_ptr<const GeomObject> ConstGeomObjectPtr;
    typedef boost::shared_ptr<std::vector<GeomObjectPtr>> GeomObjectPtrListPtr;
 
-   /**
-    * Box Geometric Object Storage Class
-    */
+   //---------------------------------------------------------------------------
+   // Box class
+   //---------------------------------------------------------------------------
    class Box: public GeomObject
    {
    public:
@@ -373,9 +372,26 @@ namespace RDST
                    const Finish& finish = Finish())
 
       : GeomObject(color, modelXform, finish),
-        _smCorner(smallCorner),
-        _lgCorner(largeCorner)
-      { _bbox = BBox(glm::vec3(modelXform*glm::vec4(smallCorner,1.f)), glm::vec3(modelXform*glm::vec4(largeCorner,1.f))); }
+        _smCorner(glm::min(smallCorner, largeCorner)),
+        _lgCorner(glm::max(smallCorner, largeCorner))
+      {
+         glm::vec4 corner1 = modelXform*glm::vec4(_smCorner,1.f);
+         glm::vec4 corner2 = modelXform*glm::vec4(_lgCorner.x, _smCorner.y, _smCorner.z, 1.f);
+         glm::vec4 corner3 = modelXform*glm::vec4(_lgCorner.x, _smCorner.y, _lgCorner.z, 1.f);
+         glm::vec4 corner4 = modelXform*glm::vec4(_smCorner.x, _smCorner.y, _smCorner.z, 1.f);
+         glm::vec4 corner5 = modelXform*glm::vec4(_smCorner.x, _lgCorner.y, _lgCorner.z, 1.f);
+         glm::vec4 corner6 = modelXform*glm::vec4(_smCorner.x, _lgCorner.y, _smCorner.z, 1.f);
+         glm::vec4 corner7 = modelXform*glm::vec4(_lgCorner.x, _lgCorner.y, _smCorner.z, 1.f);
+         glm::vec4 corner8 = modelXform*glm::vec4(_lgCorner.x, _lgCorner.y, _lgCorner.z, 1.f);
+         _bbox = BBox(glm::vec3(corner1));
+         _bbox.include(glm::vec3(corner2));
+         _bbox.include(glm::vec3(corner3));
+         _bbox.include(glm::vec3(corner4));
+         _bbox.include(glm::vec3(corner5));
+         _bbox.include(glm::vec3(corner6));
+         _bbox.include(glm::vec3(corner7));
+         _bbox.include(glm::vec3(corner8));
+      }
 
       //Corners of a box (corner 1 must be less than corner 2 in all elements)
       const glm::vec3& getSmallCorner() const
@@ -384,7 +400,10 @@ namespace RDST
       { return _lgCorner; }
 
       void setDimensions(const glm::vec3& smallCorner, const glm::vec3& largeCorner)
-      { _smCorner = smallCorner; _lgCorner = largeCorner; }
+      {
+         _smCorner = smallCorner; _lgCorner = largeCorner;
+         _bbox = BBox(glm::vec3(getModelXform()*glm::vec4(smallCorner,1.f)), glm::vec3(getModelXform()*glm::vec4(largeCorner,1.f)));
+      }
 
       //Intersection
       Intersection* intersect(const Ray& ray) const;
@@ -396,9 +415,9 @@ namespace RDST
    typedef boost::shared_ptr<Box> BoxPtr;
    typedef boost::shared_ptr<const Box> ConstBoxPtr;
 
-   /**
-    * Cone Geometric Object Storage Class
-    */
+   //---------------------------------------------------------------------------
+   // Cone class
+   //---------------------------------------------------------------------------
    class Cone: public GeomObject
    {
    public:
@@ -444,9 +463,9 @@ namespace RDST
    typedef boost::shared_ptr<Cone> ConePtr;
    typedef boost::shared_ptr<const Cone> ConstConePtr;
 
-   /**
-    * Plane Geometric Object Storage Class
-    */
+   //---------------------------------------------------------------------------
+   // Plane class
+   //---------------------------------------------------------------------------
    class Plane: public GeomObject
    {
    public:
@@ -480,9 +499,9 @@ namespace RDST
    typedef boost::shared_ptr<const Plane> ConstPlanePtr;
    typedef boost::shared_ptr<std::vector<PlanePtr>> PlanePtrListPtr;
 
-   /**
-    * Sphere Geometric Object Storage Class
-    */
+   //---------------------------------------------------------------------------
+   // Sphere class
+   //---------------------------------------------------------------------------
    class Sphere: public GeomObject
    {
    public:
@@ -495,7 +514,10 @@ namespace RDST
         _center(center),
         _radius(radius),
         _radiusSquared(radius*radius)
-      { _bbox = BBox(glm::vec3(modelXform*glm::vec4(center,1.f))); _bbox.expand(radius); }
+      {
+         Box b = Box(center+glm::vec3(-radius), center+glm::vec3(radius), glm::vec4(1.f), modelXform);
+         _bbox = b.getWorldBounds();
+      }
 
       //Center and radius define a sphere
       const glm::vec3& getCenter() const
@@ -506,7 +528,10 @@ namespace RDST
       { return _radiusSquared; }
 
       void setDimensions(const glm::vec3& center, float radius)
-      { _center = center; _radius = radius; _radiusSquared = radius*radius; }
+      {
+         _center = center; _radius = radius; _radiusSquared = radius*radius;
+        _bbox = BBox(glm::vec3(getModelXform()*glm::vec4(center,1.f))); _bbox.expand(radius);
+      }
 
       //Intersection
       Intersection* intersect(const Ray& ray) const;
@@ -518,9 +543,9 @@ namespace RDST
    typedef boost::shared_ptr<Sphere> SpherePtr;
    typedef boost::shared_ptr<const Sphere> ConstSpherePtr;
 
-   /**
-    * Triangle Geometric Object Storage Class
-    */
+   //---------------------------------------------------------------------------
+   // Triangle class
+   //---------------------------------------------------------------------------
    class Triangle: public GeomObject
    {
    public:
@@ -536,9 +561,9 @@ namespace RDST
         _vert2(vertex2),
         _normal(glm::normalize(glm::cross(vertex1-vertex0, vertex2-vertex0)))
       {
-         glm::vec3 max = glm::max(glm::max(vertex0, vertex1), vertex2);
-         glm::vec3 min = glm::min(glm::min(vertex0, vertex1), vertex2);
-         _bbox = BBox(glm::vec3(modelXform*glm::vec4(min,1.f)), glm::vec3(modelXform*glm::vec4(max,1.f)));
+         glm::vec4 max = glm::max(glm::max(modelXform*glm::vec4(vertex0, 1.f), modelXform*glm::vec4(vertex1,1.f)), modelXform*glm::vec4(vertex2,1.f));
+         glm::vec4 min = glm::min(glm::min(modelXform*glm::vec4(vertex0, 1.f), modelXform*glm::vec4(vertex1,1.f)), modelXform*glm::vec4(vertex2,1.f));
+         _bbox = BBox(glm::vec3(min), glm::vec3(max));
       }
 
       //Vertices
@@ -553,7 +578,12 @@ namespace RDST
       { return _normal; }
 
       void setDimensions(const glm::vec3& vertex0, const glm::vec3& vertex1, const glm::vec3& vertex2)
-      { _vert0 = vertex0; _vert1 = vertex1; _vert2 = vertex2; _normal = glm::normalize(glm::cross(_vert1-_vert0, _vert2-_vert0)); }
+      {
+         _vert0 = vertex0; _vert1 = vertex1; _vert2 = vertex2; _normal = glm::normalize(glm::cross(_vert1-_vert0, _vert2-_vert0));
+         glm::vec3 max = glm::max(glm::max(vertex0, vertex1), vertex2);
+         glm::vec3 min = glm::min(glm::min(vertex0, vertex1), vertex2);
+         _bbox = BBox(glm::vec3(getModelXform()*glm::vec4(min,1.f)), glm::vec3(getModelXform()*glm::vec4(max,1.f)));
+      }
 
       //Intersection
       Intersection* intersect(const Ray& ray) const;

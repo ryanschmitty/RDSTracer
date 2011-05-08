@@ -116,7 +116,7 @@ namespace RDST
    //---------------------------------------------------------------------------
    // Fast Ray/BBox intersection for BVH traversal
    //---------------------------------------------------------------------------
-   static inline bool Intersect(const BBox& bounds, const Ray& ray, const glm::vec3& invDir, const uint32_t dirIsNeg[3]) {
+   static inline bool FastRayBoxIntersection(const BBox& bounds, const Ray& ray, const glm::vec3& invDir, const uint32_t dirIsNeg[3]) {
       //check for ray intersection against x and y slabs
       float tmin =  (bounds[  dirIsNeg[0]].x - ray.o.x) * invDir.x;
       float tmax =  (bounds[1-dirIsNeg[0]].x - ray.o.x) * invDir.x;
@@ -151,7 +151,7 @@ namespace RDST
       while (true) {
          const LinearBVHNode* node = &nodes[nodeNum];
          //Check ray against BVH node
-         if (RDST::Intersect(node->bounds, ray, invDir, dirIsNeg)) {
+         if (RDST::FastRayBoxIntersection(node->bounds, ray, invDir, dirIsNeg)) {
             if (node->nPrimitives > 0) {
                //intersect ray with primitives in leaf BVH node
                for (uint32_t i=0; i < node->nPrimitives; ++i) {
