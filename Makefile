@@ -15,5 +15,8 @@ gprof: ${FILES}
 gproffast: ${FILES}
 	${C} ${FILES} ${INCLS} -o ${OUTNAME} -O3 -ffast-math -pg
 
+debug: ${FILES}
+	${C} ${FILES} ${INCLS} -o ${OUTNAME} -ggdb
+
 clean:
 	rm ${OUTNAME}
