@@ -140,7 +140,8 @@ namespace RDST
    {
       //Setup transformed ray
       Ray xr = transformRay(ray);
-      //Intersection Code
+      ///*
+      //Awesome Geometric Intersection Code
       glm::vec3 l = getCenter() - xr.o;
       float s = glm::dot(l, glm::normalize(xr.d));
       float ll = glm::dot(l, l);
@@ -153,15 +154,43 @@ namespace RDST
       float flipNormal = 1.f;
       bool inside = false;
       if (ll > rr) {
-         t = s-q; //we're outside the sphere so return first point
+         t = (s-q) / glm::length(xr.d); //we're outside the sphere so return first point
       }
       else {
-         t = s+q; //we're inside the sphere to return the second point
+         t = (s+q) / glm::length(xr.d); //we're inside the sphere to return the second point
          flipNormal = -1.f; //and flip the normal;
          inside = true;
       }
+
+      glm::vec3 n = flipNormal * glm::normalize(getNormalXform() * ((xr.o + xr.d*t)-getCenter()));
+      return new Intersection(true, t, ray.d, ray.o + ray.d*t, n, Surface(getColor(), getFinish()), inside);
+      //*/
+      /*
+      //Lame regular sphere intersection method (but it's correct)
+      glm::vec3 centerToOrigin = xr.o-getCenter();
+      float a = glm::dot(xr.d, xr.d);
+      float b = glm::dot(xr.d, centerToOrigin);
+      float c = glm::dot(centerToOrigin, centerToOrigin) - getRadiusSquared();
+      float radicand = b*b - a*c;
+      if (radicand < 0.f) return NULL;
+      float t = 0.f;
+      bool inside = false;
+      float flipNormal = 1.f;
+      if (radicand == 0.f) {
+         t = -b / a;
+      }
+      else if (glm::length(centerToOrigin) > getRadius()) { //outside
+         t = (-b - sqrtf(radicand)) / a;
+      }
+      else { //inside
+         inside = true;
+         flipNormal = -1.f;
+         t = (-b + sqrtf(radicand)) / a;
+      }
       glm::vec3 n = flipNormal * glm::normalize(getNormalXform() * ((xr.o+(xr.d*t))-getCenter()));
-      return new Intersection(true, t, ray.d, ray.o + (ray.d*t), n, Surface(getColor(), getFinish()), inside);
+      glm::vec3 p1 = ray.o + ray.d*t;
+      return new Intersection(true, t, ray.d, ray.o + ray.d*t, n, Surface(getColor(), getFinish()), inside);
+      */
    }
 
    //Plane Intersection

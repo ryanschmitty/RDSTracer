@@ -1,9 +1,5 @@
 # Ignored files
-*.ncb
-*.suo
-*.user
 *.ppm
 *.png
 *.tga
-Debug/*
-Release/*
+vs2008/*

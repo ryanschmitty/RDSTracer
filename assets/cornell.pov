@@ -1,196 +1,239 @@
-// Persistence Of Vision Ray Tracer Scene Description File
-// File: cornell.pov
-// Vers: 3.5
-// Desc: Radiosity demo scene. See also http://www.Graphics.Cornell.EDU/online/box/
-// Date: August 2001
-// Auth: Kari Kivisalo
+// Cornell Box
+// Adapted from original
+// Author: Ryan Schmitt
 
-// +w300 +h300
-
-   //location  <27.8, 27.3,-80.0>
 camera {
-   location  <30, 33, -71>
-   up        <0, 1, 0>
-   right     <-1.3333, 0, 0>
-   look_at   <30, 32, -57>
+  location  <0, 5, 15.5>
+  up        <0,  1,  0>
+  right     <1, 0,  0>
+  look_at   <0, 5, 0>
 }
 
-light_source { <30, 52, 28> color rgb <1.0, 1.0, 1.0> }
+light_source {<0, 5, 15> color rgb <0.1, 0.1, 0.1>}
+light_source {<0, 9.5, 0> color rgb <0.5, 0.5, 0.5>}
+
+//Sphere on top of short box
+sphere { <0,0,0>, 1
+   scale 1.5
+   translate <1.5, 4.4, 1.5>
+   pigment { color rgbf <1, 1, 1, 0.8> }
+   finish { ambient 0 diffuse 0.5 refraction 1.0 ior 1.3333 }
+}
+
+//Sphere on the ground
+sphere { <0,0,0>, 1
+   scale 1.5
+   translate <-2.5, 1.5, 2.5>
+   pigment { color rgb <1,1,1> }
+   finish { ambient 0 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.8 }
+}
+
+//Short box
+box { <-1,-1,-1>, <1,1,1>
+   rotate <0, -20, 0>
+   scale 1.5
+   translate <1.5, 1.5, 1.5>
+   pigment { color rgb <1,1,1> }
+   finish { ambient 0 diffuse 0.5 }
+}
+
+//Tall box
+box { <-1,-1,-1>, <1,1,1>
+   rotate <0, 20, 0>
+   scale <1.5, 3, 1.5>
+   translate <-2, 3, -2>
+   pigment { color rgb <1,1,1> }
+   finish { ambient 0 diffuse 0.5 }
+}
 
 
-// ------------------------ OBJECTS ----------------------------
+// SPHERES ON BACK WALL
+//row1
+sphere { <-4, 9, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+sphere { <-2, 9, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+sphere { <0, 9, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+sphere { <2, 9, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+sphere { <4, 9, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+//row2
+sphere { <-4, 7, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+sphere { <-2, 7, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+sphere { <0, 7, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+sphere { <2, 7, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+sphere { <4, 7, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+//row3
+sphere { <-4, 5, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+sphere { <-2, 5, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+sphere { <0, 5, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+sphere { <2, 5, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+sphere { <4, 5, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+//row4
+sphere { <-4, 3, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+sphere { <-2, 3, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+sphere { <0, 3, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+sphere { <2, 3, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+sphere { <4, 3, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+//row5
+sphere { <-4, 1, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+sphere { <-2, 1, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+sphere { <0, 1, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+sphere { <2, 1, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
+sphere { <4, 1, -4.5>, 0.5
+   pigment { color rgb <0.05,0,0.7> }
+   finish { ambient 0.2 diffuse 0.5 specular 1.0 roughness 0.005 reflection 0.1 }
+}
 
-// Light Patch
 
-box {
-   <21.3,54.87,33.2>, <34.3,54.88,22.7> 
+// THE ROOM
+
+// floor @ y=0
+triangle { <-5,0,5>, <5,0,-5>, <-5,0,-5>
+   pigment { color rgb <1,1,1> }
+   finish { ambient 0 diffuse 0.5 }
+}
+triangle { <-5,0,5>, <5,0,5>, <5,0,-5>
+   pigment { color rgb <1,1,1> }
+   finish { ambient 0 diffuse 0.5 }
+}
+
+// right wall
+triangle { <5,0,5>, <5,10,5>, <5,0,-5>
    pigment { color rgb <1,0,0> }
-   finish { ambient 0.2 diffuse 0.8 }
+   finish { ambient 0 diffuse 0.5 }
 }
-
-// Floor
-triangle {
-   <55.28, 0.0, 0.0>, <0.0, 0.0, 0.0>, <0.0, 0.0, 55.92>
-   pigment { color rgb <1,1,1> }
-   finish { ambient 0.2 diffuse 0.8 }
-}
-triangle {
-   <55.28, 0.0, 0.0>, <0.0, 0.0, 55.92>, <54.96, 0.0, 55.92>
-   pigment { color rgb <1,1,1> }
-   finish { ambient 0.2 diffuse 0.8 }
-}
-// Ceiling
-triangle {
-   <55.60, 54.88, 0.0>, <55.60, 54.88, 55.92>, <0.0, 54.88, 55.92>
-   pigment { color rgb <1,1,1> }
-   finish { ambient 0.2 diffuse 0.8 }
-}
-triangle {
-   <55.60, 54.88, 0.0>, <0.0, 54.88, 55.92>, <0.0, 54.88, 0.0>
-   pigment { color rgb <1,1,1> }
-   finish { ambient 0.2 diffuse 0.8 }
-}
-// Back wall
-triangle {
-   <0.0, 54.88, 55.92>, <55.60, 54.88, 55.92>, <54.96, 0.0, 55.92>
-   pigment { color rgb <1,1,1> }
-   finish { ambient 0.2 diffuse 0.8 }
-}
-triangle {
-   <0.0, 54.88, 55.92>, <54.96, 0.0, 55.92>, <0.0, 0.0, 55.92>
-   pigment { color rgb <1,1,1> }
-   finish { ambient 0.2 diffuse 0.8 }
-}
-
-// Right wall
-triangle {
-   <0.0, 54.88, 0.0>, <0.0, 54.88, 55.92>, <0.0, 0.0, 55.92>
+triangle { <5,10,5>, <5,10,-5>, <5,0,-5>
    pigment { color rgb <1,0,0> }
-   finish { ambient 0.2 diffuse 0.8 }
+   finish { ambient 0 diffuse 0.5 }
 }
-triangle {
-   <0.0, 54.88, 0.0>, <0.0, 0.0, 55.92>, <0.0, 0.0, 0.0>
-   pigment { color rgb <1,0,0> }
-   finish { ambient 0.2 diffuse 0.8 }
-}
-//texture {Green}
 
-// Left wall
-triangle {
-   <55.28, 0.0, 0.0>, <54.96, 0.0, 55.92>, <55.60, 54.88, 55.92>
+// left wall
+triangle { <-5,0,5>, <-5,0,-5>, <-5,10,-5>
    pigment { color rgb <0,1,0> }
-   finish { ambient 0.2 diffuse 0.8 }
+   finish { ambient 0 diffuse 0.5 }
 }
-triangle {
-   <55.28, 0.0, 0.0>, <55.60, 54.88, 55.92>, <55.60, 54.88, 0.0>
+triangle { <-5,10,5>, <-5,0,5>, <-5,10,-5>
    pigment { color rgb <0,1,0> }
-   finish { ambient 0.2 diffuse 0.8 }
+   finish { ambient 0 diffuse 0.5 }
 }
-//texture {Red}
 
-// Short block
-triangle {
-   <13.00, 16.50, 6.50>, <8.20, 16.50, 22.50>, <24.00, 16.50, 27.20>
+// back wall
+triangle { <5,10,-5>, <-5,10,-5>, <5,0,-5>
    pigment { color rgb <1,1,1> }
-   finish { ambient 0.2 diffuse 0.8 }
+   finish { ambient 0 diffuse 0.5 }
 }
-triangle {
-   <13.00, 16.50, 6.50>, <24.00, 16.50, 27.20>, <29.00, 16.50, 11.40>
+triangle { <5,0,-5>, <-5,10,-5>, <-5,0,-5>
    pigment { color rgb <1,1,1> }
-   finish { ambient 0.2 diffuse 0.8 }
+   finish { ambient 0 diffuse 0.5 }
 }
-triangle {
-   <29.00, 0.0, 11.40>, <29.00, 16.50, 11.40>, <24.00, 16.50, 27.20>
-   pigment { color rgb <1,1,1> }
-   finish { ambient 0.2 diffuse 0.8 }
-}
-triangle {
-   <29.00, 0.0, 11.40>, <24.00, 16.50, 27.20>, <24.00, 0.0, 27.20>
-   pigment { color rgb <1,1,1> }
-   finish { ambient 0.2 diffuse 0.8 }
-}
-triangle {
-   <13.00, 0.0, 6.50>, <13.00, 16.50, 6.50>, <29.00, 16.50, 11.40>
-   pigment { color rgb <1,1,1> }
-   finish { ambient 0.2 diffuse 0.8 }
-}
-triangle {
-   <13.00, 0.0, 6.50>, <29.00, 16.50, 11.40>, <29.00, 0.0, 11.40>
-   pigment { color rgb <1,1,1> }
-   finish { ambient 0.2 diffuse 0.8 }
-}
-triangle {
-   <8.20, 0.0, 22.50>, <8.20, 16.50, 22.50>, <13.00, 16.50, 6.50>
-   pigment { color rgb <1,1,1> }
-   finish { ambient 0.2 diffuse 0.8 }
-}
-triangle {
-   <8.20, 0.0, 22.50>, <13.00, 16.50, 6.50>, <13.00, 0.0, 6.50>
-   pigment { color rgb <1,1,1> }
-   finish { ambient 0.2 diffuse 0.8 }
-}
-triangle {
-   <24.00, 0.0, 27.20>, <24.00, 16.50, 27.20>, <8.20, 16.50, 22.50>
-   pigment { color rgb <1,1,1> }
-   finish { ambient 0.2 diffuse 0.8 }
-}
-triangle {
-   <24.00, 0.0, 27.20>, <8.20, 16.50, 22.50>, <8.20, 0.0, 22.50>
-   pigment { color rgb <1,1,1> }
-   finish { ambient 0.2 diffuse 0.8 }
-}
-//texture { White }
 
-// Tall block
-triangle {
-   <42.30, 33.00, 24.70>, <26.50, 33.00, 29.60>, <31.40, 33.00, 45.60>
-   pigment { color rgb <0,1,1> }
-   finish { ambient 0.2 diffuse 0.8 }
+// ceiling @ y=10, w/ a 1x1 hole in the middle
+//big left part
+triangle { <-5,10,5>, <-5,10,-5>, <-1,10,5>
+   pigment { color rgb <1,1,1> }
+   finish { ambient 0 diffuse 0.5 }
 }
-triangle {
-   <42.30, 33.00, 24.70>, <31.40, 33.00, 45.60>, <47.20, 33.00, 40.60>
-   pigment { color rgb <0,0,1> }
-   finish { ambient 0.2 diffuse 0.8 }
+triangle { <-1,10,5>, <-5,10,-5>, <-1,10,-5>
+   pigment { color rgb <1,1,1> }
+   finish { ambient 0 diffuse 0.5 }
 }
-triangle {
-   <42.30, 0.0, 24.70>, <42.30, 33.00, 24.70>, <47.20, 33.00, 40.60>
-   pigment { color rgb <0,0,1> }
-   finish { ambient 0.2 diffuse 0.8 }
+//big right part
+triangle { <5,10,5>, <1,10,5>, <1,10,-5>
+   pigment { color rgb <1,1,1> }
+   finish { ambient 0 diffuse 0.5 }
 }
-triangle {
-   <42.30, 0.0, 24.70>, <47.20, 33.00, 40.60>, <47.20, 0.0, 40.60>
-   pigment { color rgb <0,0,1> }
-   finish { ambient 0.2 diffuse 0.8 }
+triangle { <5,10,5>, <1,10,-5>, <5,10,-5>
+   pigment { color rgb <1,1,1> }
+   finish { ambient 0 diffuse 0.5 }
 }
-triangle {
-   <47.20, 0.0, 40.60>, <47.20, 33.00, 40.60>, <31.40, 33.00, 45.60>
-   pigment { color rgb <0,0,1> }
-   finish { ambient 0.2 diffuse 0.8 }
+//little front part
+triangle { <-1,10,5>, <1,10,1>, <1,10,5>
+   pigment { color rgb <1,1,1> }
+   finish { ambient 0 diffuse 0.5 }
 }
-triangle {
-   <47.20, 0.0, 40.60>, <31.40, 33.00, 45.60>, <31.40, 0.0, 45.60>
-   pigment { color rgb <0,0,1> }
-   finish { ambient 0.2 diffuse 0.8 }
+triangle { <-1,10,5>, <-1,10,1>, <1,10,1>
+   pigment { color rgb <1,1,1> }
+   finish { ambient 0 diffuse 0.5 }
 }
-triangle {
-   <31.40, 0.0, 45.60>, <31.40, 33.00, 45.60>, <26.50, 33.00, 29.60>
-   pigment { color rgb <0,0,1> }
-   finish { ambient 0.2 diffuse 0.8 }
+//little back part
+triangle { <-1,10,-1>, <1,10,-5>, <1,10,-1>
+   pigment { color rgb <1,1,1> }
+   finish { ambient 0 diffuse 0.5 }
 }
-triangle {
-   <31.40, 0.0, 45.60>, <26.50, 33.00, 29.60>, <26.50, 0.0, 29.60>
-   pigment { color rgb <0,0,1> }
-   finish { ambient 0.2 diffuse 0.8 }
+triangle { <-1,10,-1>, <-1,10,-5>, <1,10,-5>
+   pigment { color rgb <1,1,1> }
+   finish { ambient 0 diffuse 0.5 }
 }
-triangle {
-   <26.50, 0.0, 29.60>, <26.50, 33.00, 29.60>, <42.30, 33.00, 24.70>
-   pigment { color rgb <0,0,1> }
-   finish { ambient 0.2 diffuse 0.8 }
-}
-triangle {
-   <26.50, 0.0, 29.60>, <42.30, 33.00, 24.70>, <42.30, 0.0, 24.70>
-   pigment { color rgb <0,0,1> }
-   finish { ambient 0.2 diffuse 0.8 }
-}
-//texture {White}
+
+
 
