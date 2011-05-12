@@ -188,7 +188,6 @@ namespace RDST
          t = (-b + sqrtf(radicand)) / a;
       }
       glm::vec3 n = flipNormal * glm::normalize(getNormalXform() * ((xr.o+(xr.d*t))-getCenter()));
-      glm::vec3 p1 = ray.o + ray.d*t;
       return new Intersection(true, t, ray.d, ray.o + ray.d*t, n, Surface(getColor(), getFinish()), inside);
       */
    }

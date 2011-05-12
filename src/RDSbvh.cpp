@@ -13,8 +13,8 @@ namespace RDST
    //---------------------------------------------------------------------------
    // BVH Ctor
    //---------------------------------------------------------------------------
-   BVH::BVH(boost::shared_ptr< std::vector<GeomObjectPtr> > pObjects)
-      : pObjs(pObjects)
+   BVH::BVH(boost::shared_ptr< std::vector<GeomObjectPtr> > pObjects, int maxInNode)
+   : pObjs(pObjects), maxObjsInNode(maxInNode)
    {
       if (!pObjs) return;
       std::cout << "Building BVH...";
@@ -26,14 +26,14 @@ namespace RDST
          buildData.push_back(BVHObjectInfo(i, bbox));
       }
       //Recursively build BVH
-      uint32_t totalNodes = 0;
-      std::vector<GeomObjectPtr> orderedPrims;
-      orderedPrims.reserve(pObjs->size());
-      boost::shared_ptr<BVHNode> root = recursiveBuild(buildData, 0, pObjs->size(), &totalNodes, orderedPrims);
-      pObjs->swap(orderedPrims);
+      int totalNodes = 0;
+      std::vector<GeomObjectPtr> orderedObjs;
+      orderedObjs.reserve(pObjs->size());
+      boost::shared_ptr<BVHNode> root = recursiveBuild(buildData, 0, pObjs->size(), &totalNodes, orderedObjs);
+      pObjs->swap(orderedObjs);
       //Flatten for depth-first traversal algorithm
       nodes = boost::shared_array<LinearBVHNode>(new LinearBVHNode[totalNodes]());
-      uint32_t offset = 0;
+      int offset = 0;
       flattenBVHTree(root, &offset);
       std::cout << "Done." << std::endl;
       BOOST_ASSERT(offset == totalNodes);
@@ -42,51 +42,108 @@ namespace RDST
    //---------------------------------------------------------------------------
    // Build a BVH tree recursively
    //---------------------------------------------------------------------------
-   boost::shared_ptr<BVHNode> BVH::recursiveBuild(std::vector<BVHObjectInfo>& buildData, uint32_t start, uint32_t end, uint32_t* totalNodes, std::vector<GeomObjectPtr>& orderedPrims) {
+   boost::shared_ptr<BVHNode> BVH::recursiveBuild(std::vector<BVHObjectInfo>& buildData, int start, int end, int* totalNodes, std::vector<GeomObjectPtr>& orderedObjs) {
       (*totalNodes)++;
       boost::shared_ptr<BVHNode> node(new BVHNode());
       //Compute bounds of all primitives for this call
       BBox bbox;
-      for (uint32_t i=start; i<end; ++i) {
+      for (int i=start; i<end; ++i) {
          bbox = BBox::Union(bbox, buildData[i].bounds);
       }
-      uint32_t nPrimitives = end - start;
-      if (nPrimitives == 1) {
-         //create leaf
-         uint32_t firstPrimOffset = orderedPrims.size();
-         for (uint32_t i=start; i<end; ++i) {
-            uint32_t primNum = buildData[i].primitiveNumber;
-            orderedPrims.push_back((*pObjs)[primNum]);
-         }
-         node->initLeaf(firstPrimOffset, nPrimitives, bbox);
+      int nObjects = end - start;
+      if (nObjects == 1) {
+         //create leaf with the only object
+         int firstObjOffset = orderedObjs.size();
+         int primNum = buildData[start].objectNumber;
+         orderedObjs.push_back((*pObjs)[primNum]);
+         node->initLeaf(firstObjOffset, nObjects, bbox);
       }
       else {
          //create interior
          //Compute bound of primitive centroids, choose split dimension as axis with largest extent
          BBox centroidBounds;
-         for (uint32_t i=start; i<end; ++i) {
+         for (int i=start; i<end; ++i) {
             centroidBounds = BBox::Union(centroidBounds, buildData[i].centroid);
          }
          int dim = centroidBounds.maximumExtent();
-         //Partition primitives into two sets and build children
-         uint32_t mid = (start + end) / 2;
+         // if centroidBounds has zero volume, create a leaf
          if (centroidBounds.max[dim] == centroidBounds.min[dim]) {
-            //create leaf
-            uint32_t firstPrimOffset = orderedPrims.size();
-            for (uint32_t i=start; i<end; ++i) {
-               uint32_t primNum = buildData[i].primitiveNumber;
-               orderedPrims.push_back((*pObjs)[primNum]);
+            //create leaf for all objects that have same centroid
+            int firstObjOffset = orderedObjs.size();
+            for (int i=start; i<end; ++i) {
+               int primNum = buildData[i].objectNumber;
+               orderedObjs.push_back((*pObjs)[primNum]);
             }
-            node->initLeaf(firstPrimOffset, nPrimitives, bbox);
+            node->initLeaf(firstObjOffset, nObjects, bbox);
             return node;
          }
-         //partition primitives based on splitMethod
-         float midPoint = .5f * (centroidBounds.min[dim] + centroidBounds.max[dim]);
-         BVHObjectInfo* pMid = std::partition(&buildData[start], &buildData[end-1]+1, CompareToMid(dim, midPoint));
-         mid = pMid - &buildData[0];
+         //Partition primitives into two sets and build children
+         int mid = (start + end) / 2;
+         if (nObjects <= 4) {
+            //Partition objects into equal subsets
+            mid = (start + end) / 2;
+            std::nth_element(&buildData[start], &buildData[mid], &buildData[end-1]+1, ComparePoints(dim));
+         }
+         else {
+            //Allocate BucketInfo structs for SAH partition buckets
+            const int nBuckets = 12;
+            struct BucketInfo {
+               BucketInfo() {count = 0;}
+               int count;
+               BBox bounds;
+            };
+            BucketInfo buckets[nBuckets];
+            //Init BucketInfo stucts
+            for (int i=start; i<end; ++i) {
+               int b = (int)(nBuckets * ((buildData[i].centroid[dim] - centroidBounds.min[dim]) / (centroidBounds.max[dim] - centroidBounds.min[dim])));
+               if (b == nBuckets) b = nBuckets-1;
+               buckets[b].count++;
+               buckets[b].bounds = BBox::Union(buckets[b].bounds, buildData[i].bounds);
+            }
+            //Compute costs for splitting after each bucket (i.e. after bucket 0, after bucket 1, ..., after bucket n-1) (can't split after last bucket, that's not splitting...)
+            float cost[nBuckets-1];
+            for (int i=0; i<nBuckets-1; ++i) {
+               BBox b0, b1;
+               int count0 = 0, count1 = 0;
+               for (int j=0; j<=i; ++j) {
+                  b0 = BBox::Union(b0, buckets[j].bounds);
+                  count0 += buckets[j].count;
+               }
+               for (int j=i+1; j<nBuckets; ++j) {
+                  b1 = BBox::Union(b1, buckets[j].bounds);
+                  count1 += buckets[j].count;
+               }
+               //cost = traverse_cost + (count*isect_cost*Pa) + (count*isect_cost*Pb), where Px is the surface area ratio (i.e. probability a ray will hit child)
+               cost[i] = 0.125f + (count0*b0.surfaceArea() + count1*b1.surfaceArea()) / bbox.surfaceArea();
+            }
+            //Find minimum cost split by bucket #
+            float minCost = cost[0];;
+            int minCostSplit = 0;
+            for (int i=0; i<nBuckets-1; ++i) {
+               if (cost[i] < minCost) {
+                  minCost = cost[i];
+                  minCostSplit = i;
+               }
+            }
+            //Either split after selected min cost bucket, or create a leaf (if it's cheaper)
+            if (nObjects > maxObjsInNode || minCost < nObjects) {
+               BVHObjectInfo* pMid = std::partition(&buildData[start], &buildData[end-1]+1, CompareToBucket(minCostSplit, nBuckets, dim, centroidBounds));
+               mid = pMid - &buildData[0];
+            }
+            else {
+               //create a leaf, since it's cheaper
+               int firstObjOffset = orderedObjs.size();
+               for (int i=start; i<end; ++i) {
+                  int primNum = buildData[i].objectNumber;
+                  orderedObjs.push_back((*pObjs)[primNum]);
+               }
+               node->initLeaf(firstObjOffset, nObjects, bbox);
+               return node;
+            }
+         }
          node->initInterior(dim,
-            recursiveBuild(buildData, start, mid, totalNodes, orderedPrims),
-            recursiveBuild(buildData, mid, end, totalNodes, orderedPrims));
+            recursiveBuild(buildData, start, mid, totalNodes, orderedObjs),
+            recursiveBuild(buildData, mid, end, totalNodes, orderedObjs));
       }
       return node;
    }
@@ -94,17 +151,20 @@ namespace RDST
    //---------------------------------------------------------------------------
    // Turn BVH Tree into a Linear Array suitable for Depth-first traversal
    //---------------------------------------------------------------------------
-   uint32_t BVH::flattenBVHTree(boost::shared_ptr<BVHNode> node, uint32_t* offset) {
+   int BVH::flattenBVHTree(boost::shared_ptr<BVHNode> node, int* offset) {
       LinearBVHNode* linearNode = &nodes[*offset];
       linearNode->bounds = node->bounds;
-      uint32_t myOffset = (*offset)++;
-      if (node->nPrimitives > 0) {
-         linearNode->primitivesOffset = node->firstPrimOffset;
-         linearNode->nPrimitives = node->nPrimitives;
+      int myOffset = (*offset)++;
+      if (node->nObjects > 0) {
+         //create leaf linear node
+         linearNode->primitivesOffset = node->firstObjOffset;
+         linearNode->nObjects = node->nObjects;
       }
       else {
+         //create interior linear node
          linearNode->axis = node->splitAxis;
-         linearNode->nPrimitives = 0;
+         linearNode->nObjects = 0;
+         //immediately push first child, delay second child until first child tree is done.
          flattenBVHTree(node->children[0], offset);
          linearNode->secondChildOffset = flattenBVHTree(node->children[1], offset);
       }
@@ -114,7 +174,7 @@ namespace RDST
    //---------------------------------------------------------------------------
    // Fast Ray/BBox intersection for BVH traversal
    //---------------------------------------------------------------------------
-   static inline bool FastRayBoxIntersection(const BBox& bounds, const Ray& ray, const glm::vec3& invDir, const uint32_t dirIsNeg[3]) {
+   static inline bool FastRayBoxIntersection(const BBox& bounds, const Ray& ray, const glm::vec3& invDir, const int dirIsNeg[3]) {
       //check for ray intersection against x and y slabs
       float tmin =  (bounds[  dirIsNeg[0]].x - ray.o.x) * invDir.x;
       float tmax =  (bounds[1-dirIsNeg[0]].x - ray.o.x) * invDir.x;
@@ -142,17 +202,17 @@ namespace RDST
       if (!nodes) return pIsect;
       glm::vec3 origin = ray.o + (ray.tMin * ray.d);
       glm::vec3 invDir(1.f / ray.d.x, 1.f / ray.d.y, 1.f / ray.d.z);
-      uint32_t dirIsNeg[3] = { invDir.x < 0, invDir.y < 0, invDir.z < 0 };
+      int dirIsNeg[3] = { invDir.x < 0, invDir.y < 0, invDir.z < 0 };
       //follow ray through BVH nodes to find primitive intersections
-      uint32_t todoOffset = 0, nodeNum = 0;
-      uint32_t todo[64];
+      int todoOffset = 0, nodeNum = 0;
+      int todo[64]; //todo stack w/ todoOffset as the next free element in the stack (above the top)
       while (true) {
          const LinearBVHNode* node = &nodes[nodeNum];
          //Check ray against BVH node
          if (RDST::FastRayBoxIntersection(node->bounds, ray, invDir, dirIsNeg)) {
-            if (node->nPrimitives > 0) {
+            if (node->nObjects > 0) { //leaf! Do actual intersections
                //intersect ray with primitives in leaf BVH node
-               for (uint32_t i=0; i < node->nPrimitives; ++i) {
+               for (int i=0; i < node->nObjects; ++i) {
                   Intersection* pIntrs = (*pObjs)[node->primitivesOffset+i]->intersect(ray);
                   if (pIntrs != NULL) {
                      if ((pIntrs->t < ray.tCur) && (pIntrs->t < ray.tMax) && (pIntrs->t > ray.tMin)) {
@@ -168,19 +228,21 @@ namespace RDST
                if (todoOffset == 0) break;
                nodeNum = todo[--todoOffset];
             }
-            else {
+            else { //interior, just process children
                //put far BVH node on todo stack, advance to near node
                if (dirIsNeg[node->axis]) {
+                  //if dir is neg, then 1st child is far
                   todo[todoOffset++] = nodeNum + 1;
                   nodeNum = node->secondChildOffset;
                }
                else {
+                  //if dir is pos, then 2nd child is far
                   todo[todoOffset++] = node->secondChildOffset;
                   nodeNum = nodeNum + 1;
                }
             }
          }
-         else {
+         else { //Did not hit current BBox; pop one off the stack to process, unless the stack is empty (then stop instead)
             if (todoOffset == 0) break;
             nodeNum = todo[--todoOffset];
          }
