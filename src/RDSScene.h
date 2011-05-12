@@ -557,12 +557,12 @@ namespace RDST
 
       //Uniform Sample Point
       glm::vec3 uniformSample(float rand1, float rand2) {
-         float z = _radius - 2.f*_radius*rand1;
-         float r = sqrtf(glm::max(0.f, _radius - z*z));
+         float z = 1.f - 2.f*rand1;
+         float r = sqrtf(glm::max(0.f, 1.f - z*z));
          float phi = 2.f * PI * rand2;
          float x = r * cosf(phi);
          float y = r * sinf(phi);
-         glm::vec4 actualPoint = glm::vec4(glm::vec3(x,y,z) + _center, 1.f);
+         glm::vec4 actualPoint = glm::vec4((glm::vec3(x,y,z)*_radius) + _center, 1.f);
          return glm::vec3(getModelXform()*actualPoint);
       }
 
