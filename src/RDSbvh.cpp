@@ -13,8 +13,8 @@ namespace RDST
    //---------------------------------------------------------------------------
    // BVH Ctor
    //---------------------------------------------------------------------------
-   BVH::BVH(boost::shared_ptr< std::vector<GeomObjectPtr> > pObjects, int maxInNode)
-   : pObjs(pObjects), maxObjsInNode(maxInNode)
+   BVH::BVH(boost::shared_ptr< std::vector<GeomObjectPtr> > pObjects)
+   : pObjs(pObjects)
    {
       if (!pObjs) return;
       std::cout << "Building BVH...";
@@ -51,15 +51,12 @@ namespace RDST
          bbox = BBox::Union(bbox, buildData[i].bounds);
       }
       int nObjects = end - start;
+      //Create Leaf Node
       if (nObjects == 1) {
-         //create leaf with the only object
-         int firstObjOffset = orderedObjs.size();
-         int primNum = buildData[start].objectNumber;
-         orderedObjs.push_back((*pObjs)[primNum]);
-         node->initLeaf(firstObjOffset, nObjects, bbox);
+         createLeaf(node, buildData, start, end, bbox, orderedObjs);
       }
+      //Create Interior Node
       else {
-         //create interior
          //Compute bound of primitive centroids, choose split dimension as axis with largest extent
          BBox centroidBounds;
          for (int i=start; i<end; ++i) {
@@ -68,30 +65,18 @@ namespace RDST
          int dim = centroidBounds.maximumExtent();
          // if centroidBounds has zero volume, create a leaf
          if (centroidBounds.max[dim] == centroidBounds.min[dim]) {
-            //create leaf for all objects that have same centroid
-            int firstObjOffset = orderedObjs.size();
-            for (int i=start; i<end; ++i) {
-               int primNum = buildData[i].objectNumber;
-               orderedObjs.push_back((*pObjs)[primNum]);
-            }
-            node->initLeaf(firstObjOffset, nObjects, bbox);
+            createLeaf(node, buildData, start, end, bbox, orderedObjs);
             return node;
          }
-         //Partition primitives into two sets and build children
-         int mid = (start + end) / 2;
+         //Build children using SAH, unless there's <= 4 objects, then just split in half
+         int mid;
          if (nObjects <= 4) {
-            //Partition objects into equal subsets
             mid = (start + end) / 2;
             std::nth_element(&buildData[start], &buildData[mid], &buildData[end-1]+1, ComparePoints(dim));
          }
          else {
             //Allocate BucketInfo structs for SAH partition buckets
             const int nBuckets = 12;
-            struct BucketInfo {
-               BucketInfo() {count = 0;}
-               int count;
-               BBox bounds;
-            };
             BucketInfo buckets[nBuckets];
             //Init BucketInfo stucts
             for (int i=start; i<end; ++i) {
@@ -131,13 +116,7 @@ namespace RDST
                mid = pMid - &buildData[0];
             }
             else {
-               //create a leaf, since it's cheaper
-               int firstObjOffset = orderedObjs.size();
-               for (int i=start; i<end; ++i) {
-                  int primNum = buildData[i].objectNumber;
-                  orderedObjs.push_back((*pObjs)[primNum]);
-               }
-               node->initLeaf(firstObjOffset, nObjects, bbox);
+               createLeaf(node, buildData, start, end, bbox, orderedObjs);
                return node;
             }
          }
@@ -146,6 +125,18 @@ namespace RDST
             recursiveBuild(buildData, mid, end, totalNodes, orderedObjs));
       }
       return node;
+   }
+
+   //---------------------------------------------------------------------------
+   // Utility for creating a Leaf BVHNode
+   //---------------------------------------------------------------------------
+   inline void BVH::createLeaf(boost::shared_ptr<BVHNode> node, std::vector<BVHObjectInfo>& buildData, int start, int end, const BBox& bbox, std::vector<GeomObjectPtr>& orderedObjs) {
+      int firstObjOffset = orderedObjs.size();
+      for (int i=start; i<end; ++i) {
+         int objNdx = buildData[i].objectNumber;
+         orderedObjs.push_back((*pObjs)[objNdx]);
+      }
+      node->initLeaf(firstObjOffset, end-start, bbox);
    }
 
    //---------------------------------------------------------------------------

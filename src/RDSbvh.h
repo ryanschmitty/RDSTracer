@@ -73,7 +73,9 @@ namespace RDST
    //---------------------------------------------------------------------------
    struct CompareToMid
    {
-      CompareToMid(int d, float m) { dim = d; mid = m; }
+      CompareToMid(int d, float m)
+      : dim(d), mid(m)
+      {}
       int dim;
       float mid;
       bool operator()(const BVHObjectInfo& a) const {
@@ -83,7 +85,9 @@ namespace RDST
 
    struct ComparePoints
    {
-      ComparePoints(int d) { dim = d; }
+      ComparePoints(int d)
+      : dim(d)
+      {}
       int dim;
       bool operator()(const BVHObjectInfo &a, const BVHObjectInfo &b) const {
          return a.centroid[dim] < b.centroid[dim];
@@ -93,15 +97,15 @@ namespace RDST
    struct CompareToBucket
    {
       CompareToBucket(int split, int num, int d, const BBox& b)
-         : centroidBounds(b)
-      { splitBucket = split; nBuckets = num; dim = d; }
+      : splitBucket(split), nBuckets(num), dim(d), centroidBounds(b)
+      {}
+      int splitBucket, nBuckets, dim;
+      const BBox& centroidBounds;
       bool operator()(const BVHObjectInfo& p) const {
          int b = (int)(nBuckets * ((p.centroid[dim] - centroidBounds.min[dim]) / (centroidBounds.max[dim] - centroidBounds.min[dim])));
          if (b == nBuckets) b = nBuckets-1;
          return b <= splitBucket;
       }
-      int splitBucket, nBuckets, dim;
-      const BBox& centroidBounds;
    };
 
    //---------------------------------------------------------------------------
@@ -125,19 +129,29 @@ namespace RDST
    class BVH
    {
    public:
-      explicit BVH(boost::shared_ptr< std::vector<GeomObjectPtr> > pObjects, int maxInNode=10);
+      explicit BVH(boost::shared_ptr< std::vector<GeomObjectPtr> > pObjects);
       Intersection* intersect(Ray& ray) const;
 
    private:
+      //INTERNAL TYPES
+      struct BucketInfo {
+         BucketInfo() {count = 0;}
+         int count;
+         BBox bounds;
+      };
+
       //HELPER FUNCTIONS
       boost::shared_ptr<BVHNode> recursiveBuild(std::vector<BVHObjectInfo>& buildData, int start, int end,
                                                 int* totalNodes, std::vector<GeomObjectPtr>& orderedObjs);
       int flattenBVHTree(boost::shared_ptr<BVHNode> node, int* offset);
+      void createLeaf(boost::shared_ptr<BVHNode> node, std::vector<BVHObjectInfo>& buildData,
+                      int start, int end, const BBox& bbox, std::vector<GeomObjectPtr>& orderedObjs);
+      
 
       //DATA
       boost::shared_ptr< std::vector<GeomObjectPtr> > pObjs;
       boost::shared_array<LinearBVHNode> nodes;
-      int maxObjsInNode;
+      static const int maxObjsInNode = 10; //Forces a split if objects in node > max
    };
 }
 
