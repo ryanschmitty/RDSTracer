@@ -11,13 +11,14 @@
 
 #define GLM_FORCE_INLINE
 
-#include <vector>
 #include <glm/glm.hpp>
 #include <boost/shared_ptr.hpp>
+#include <vector>
 #include "RDSBBox.h"
 
 namespace RDST
 {
+   static const float PI = 3.14159265f;
    //---------------------------------------------------------------------------
    //
    // PARENT CLASSES
@@ -344,6 +345,9 @@ namespace RDST
       BBox& getWorldBounds()
       { return _bbox; }
 
+      //Surface Area
+      virtual float getSurfaceArea() const = 0;
+
    private:
       //functions
       glm::mat3 adjoint(const glm::mat3& m) const;
@@ -399,14 +403,19 @@ namespace RDST
       const glm::vec3& getLargeCorner() const
       { return _lgCorner; }
 
-      void setDimensions(const glm::vec3& smallCorner, const glm::vec3& largeCorner)
-      {
+      void setDimensions(const glm::vec3& smallCorner, const glm::vec3& largeCorner) {
          _smCorner = smallCorner; _lgCorner = largeCorner;
          _bbox = BBox(glm::vec3(getModelXform()*glm::vec4(smallCorner,1.f)), glm::vec3(getModelXform()*glm::vec4(largeCorner,1.f)));
       }
 
       //Intersection
       Intersection* intersect(const Ray& ray) const;
+
+      //Surface Area
+      float getSurfaceArea() const {
+         glm::vec3 d = _lgCorner - _smCorner;
+         return 2.f * (d.x * d.y + d.x * d.z + d.y * d.z);
+      }
 
    private:
       glm::vec3 _smCorner;
@@ -454,6 +463,10 @@ namespace RDST
       Intersection* intersect(const Ray& ray) const
       { return NULL; }
 
+      //Surface Area
+      float getSurfaceArea() const
+      { return 0.f; }
+
    private:
       glm::vec3 _end1; //center for end 1
       glm::vec3 _end2; //center for end 2
@@ -491,6 +504,9 @@ namespace RDST
       //Intersection
       Intersection* intersect(const Ray& ray) const;
 
+      float getSurfaceArea() const
+      { return FLT_MAX; }
+
    private:
       glm::vec3 _normal;
       float     _distance;
@@ -527,14 +543,28 @@ namespace RDST
       float getRadiusSquared() const
       { return _radiusSquared; }
 
-      void setDimensions(const glm::vec3& center, float radius)
-      {
+      void setDimensions(const glm::vec3& center, float radius) {
          _center = center; _radius = radius; _radiusSquared = radius*radius;
         _bbox = BBox(glm::vec3(getModelXform()*glm::vec4(center,1.f))); _bbox.expand(radius);
       }
 
       //Intersection
       Intersection* intersect(const Ray& ray) const;
+
+      //Surface Area
+      float getSurfaceArea() const
+      { return 4.f * PI * _radiusSquared; }
+
+      //Uniform Sample Point
+      glm::vec3 uniformSample(float rand1, float rand2) {
+         float z = _radius - 2.f*_radius*rand1;
+         float r = sqrtf(glm::max(0.f, _radius - z*z));
+         float phi = 2.f * PI * rand2;
+         float x = r * cosf(phi);
+         float y = r * sinf(phi);
+         glm::vec4 actualPoint = glm::vec4(glm::vec3(x,y,z) + _center, 1.f);
+         return glm::vec3(getModelXform()*actualPoint);
+      }
 
    private:
       glm::vec3 _center;
@@ -587,6 +617,10 @@ namespace RDST
 
       //Intersection
       Intersection* intersect(const Ray& ray) const;
+
+      //Surface Area
+      float getSurfaceArea() const
+      { return 0.5f * glm::length(glm::cross(_vert1-_vert0, _vert2-_vert0)); }
 
    private:
       glm::vec3 _vert0;

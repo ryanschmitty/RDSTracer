@@ -87,7 +87,9 @@ namespace RDST
          }
       }
       std::cout << "Done." << std::endl;
-      return SceneDescription(pCam, lights, objs, planes, BVH(objs));
+      SceneDescription desc(pCam, lights, objs, planes, BVH(objs));
+      desc.areaLight = Sphere(glm::vec3(0.f, 5.f, 0.f), 1.f, glm::vec4(1.f, 1.f, 1.f, 1.f), glm::mat4(1.f), Finish());
+      return desc;
    }
 
    std::string&

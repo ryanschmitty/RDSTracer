@@ -66,6 +66,8 @@ namespace RDST
       const BVH& bvh() const
       { return _bvh; }
 
+      Sphere areaLight;
+
    private:
       CameraPtr            _pCam;
       PointLightPtrListPtr _pLights;

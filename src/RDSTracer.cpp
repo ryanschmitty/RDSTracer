@@ -196,6 +196,24 @@ namespace RDST
       glm::vec3 diffuse(0.f);
       glm::vec3 specular(0.f);
 
+      Sphere light = scene.areaLight;
+
+      ambient += glm::vec3(intrs.surf.finish.getAmbient() * intrs.surf.color * light.getColor());
+      int numSamples = 0;
+      for (int i=0; i<256; ++i) {
+         glm::vec3 l = light.uniformSample((float)rand() / RAND_MAX, (float)rand() / RAND_MAX)-intrs.p;
+         float pointToLightSampleDist = glm::length(l);
+         l = glm::normalize(l);
+         Ray shadowRay = Ray(l, intrs.p+(0.01f*intrs.n), 0.f, pointToLightSampleDist);
+         Intersection* pShadowIntrs = RaySceneIntersect(shadowRay, scene);
+         if (!pShadowIntrs->hit) {
+            numSamples++;
+            diffuse += 0.00390625f * glm::vec3(glm::max(0.f, glm::dot(intrs.n, l)) * intrs.surf.finish.getDiffuse() * intrs.surf.color * light.getColor());
+         }
+         delete pShadowIntrs;
+      }
+
+      /*
       //For each light do Phong Shading & additively blend
       std::vector<PointLightPtr>::const_iterator cit = scene.lights().begin();
       for (; cit != scene.lights().end(); ++cit) {
@@ -220,6 +238,7 @@ namespace RDST
          }
          delete pShadowIntrs;
       }
+      */
 
       //Additively blend all components and return
       return ambient + diffuse + specular;
