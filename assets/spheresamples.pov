@@ -3,7 +3,7 @@
 // Author: Ryan Schmitt
 
 camera {
-  location  <-5, 5, 0>
+  location  <0, 0, 5>
   up        <0,  1,  0>
   right     <1, 0,  0>
   look_at   <0, 0, 0>

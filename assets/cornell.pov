@@ -10,7 +10,7 @@ camera {
 }
 
 light_source {<0, 5, 15> color rgb <0.1, 0.1, 0.1>}
-light_source {<0, 9.5, 0> color rgb <0.5, 0.5, 0.5>}
+//light_source {<0, 9.5, 0> color rgb <0.5, 0.5, 0.5>}
 
 //Sphere on top of short box
 sphere { <0,0,0>, 1

@@ -197,14 +197,14 @@ namespace RDST
       glm::vec3 specular(0.f);
 
       //For each area light
-      /*
       Sphere light = scene.areaLight;
       ambient += glm::vec3(intrs.surf.finish.getAmbient() * intrs.surf.color * light.getColor());
 
       { //scope
-      float contribution = 1.f / light.pSamplePointList->size();
-      std::vector<glm::vec3>::const_iterator cit = light.pSamplePointList->begin();
-      for (; cit != light.pSamplePointList->end(); ++cit) {
+      boost::shared_ptr< std::vector<glm::vec3> > pALPoints = light.gridSamples(64);
+      float contribution = 1.f / pALPoints->size();
+      std::vector<glm::vec3>::const_iterator cit = pALPoints->begin();
+      for (; cit != pALPoints->end(); ++cit) {
          glm::vec3 l = *cit - intrs.p;
          float pointToLightSampleDist = glm::length(l);
          l = glm::normalize(l);
@@ -216,7 +216,6 @@ namespace RDST
          delete pShadowIntrs;
       }
       }
-      */
 
       /*
       int maxSamples = 32;

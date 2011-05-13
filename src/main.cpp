@@ -68,6 +68,7 @@ Options parseParameters(int argc, char** argv)
 int main(int argc, char** argv)
 {
    clock_t start = clock();
+   srand48((unsigned int)time(NULL));
 
    Options opts = parseParameters(argc, argv);
    RDST::Image img(opts.width, opts.height, opts.enableGammaCorrection, opts.gamma);
