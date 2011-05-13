@@ -14,6 +14,7 @@
 #include <glm/glm.hpp>
 #include <boost/shared_ptr.hpp>
 #include <vector>
+#include <iostream>
 #include "RDSBBox.h"
 
 namespace RDST
@@ -533,6 +534,7 @@ namespace RDST
       {
          Box b = Box(center+glm::vec3(-radius), center+glm::vec3(radius), glm::vec4(1.f), modelXform);
          _bbox = b.getWorldBounds();
+         pSamplePointList = gridSamples(32);
       }
 
       //Center and radius define a sphere
@@ -566,6 +568,44 @@ namespace RDST
          return glm::vec3(getModelXform()*actualPoint);
       }
 
+      //Grid sample points
+      boost::shared_ptr< std::vector<glm::vec3> > gridSamples(int numSamples) {
+         if (numSamples < 2) {
+            std::cerr << "Too few grid samples requested, must be >= 2." << std::endl;
+            exit(EXIT_FAILURE);
+         }
+         //Allocate memory
+         boost::shared_ptr< std::vector<glm::vec3> > pPointList = boost::shared_ptr< std::vector<glm::vec3> >(new std::vector<glm::vec3>());
+         pPointList->reserve(numSamples);
+         //Calculate points
+         float beta = 0.5f * PI / numSamples; //0.39 radians 22.5 deg
+         float a = 2.f * sinf(beta/2.f); //0.39 radians 22.35 deg
+         //poles
+         pPointList->push_back(glm::vec3(0, 0, 1));
+         pPointList->push_back(glm::vec3(0, 0, -1));
+         //rings
+         for (int i=0; i<numSamples; ++i) {
+            float r = sinf(beta*i);
+            float z = cosf(beta*i);
+            int m = (int)glm::round(r * 2.f * PI / a);
+            for (int j=0; j<m; ++j) {
+               float alpha = float(j)/m * 2.f * PI;
+               float x = cos(alpha) * r;
+               float y = sin(alpha) * r;
+               pPointList->push_back(glm::vec3(x,y,z));
+               if (i < numSamples-1) pPointList->push_back(glm::vec3(x,y,-z));
+            }
+         }
+         //Transform into world space
+         std::vector<glm::vec3>::iterator it = pPointList->begin();
+         for (; it != pPointList->end(); ++it) {
+            *it *= _radius;
+            *it = glm::vec3(getModelXform()*glm::vec4(*it,1.f));
+         }
+         return pPointList;
+      }
+
+      boost::shared_ptr< std::vector<glm::vec3> > pSamplePointList;
    private:
       glm::vec3 _center;
       float     _radius, _radiusSquared;

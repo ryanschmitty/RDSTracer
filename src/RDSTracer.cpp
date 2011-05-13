@@ -196,20 +196,36 @@ namespace RDST
       glm::vec3 diffuse(0.f);
       glm::vec3 specular(0.f);
 
+      //For each area light
+      /*
       Sphere light = scene.areaLight;
-
       ambient += glm::vec3(intrs.surf.finish.getAmbient() * intrs.surf.color * light.getColor());
 
-      /*
-      // STATIC POINTS IMPL
-      float contribution = 1.f / 6.f;
-      for (int i=0; i<6; ++i) {
-         glm::vec3 p = light.getCenter();
-         p[i%3] += i%2 == 0 ? light.getRadius() : -light.getRadius();
-         glm::vec3 l = p - intrs.p;
-         float pointToLightDist = glm::length(l);
+      { //scope
+      float contribution = 1.f / light.pSamplePointList->size();
+      std::vector<glm::vec3>::const_iterator cit = light.pSamplePointList->begin();
+      for (; cit != light.pSamplePointList->end(); ++cit) {
+         glm::vec3 l = *cit - intrs.p;
+         float pointToLightSampleDist = glm::length(l);
          l = glm::normalize(l);
-         Ray shadowRay = Ray(l, intrs.p+(0.01f*intrs.n), 0.f, pointToLightDist);
+         Ray shadowRay = Ray(l, intrs.p+(0.01f*intrs.n), 0.f, pointToLightSampleDist);
+         Intersection* pShadowIntrs = RaySceneIntersect(shadowRay, scene);
+         if (!pShadowIntrs->hit) {
+            diffuse += contribution * glm::vec3(glm::max(0.f, glm::dot(intrs.n, l)) * intrs.surf.finish.getDiffuse() * intrs.surf.color * light.getColor());
+         }
+         delete pShadowIntrs;
+      }
+      }
+      */
+
+      /*
+      int maxSamples = 32;
+      float contribution = 1.f / maxSamples;
+      for (int i=0; i<maxSamples; ++i) {
+         glm::vec3 l = light.uniformSample((float)rand() / RAND_MAX, (float)rand() / RAND_MAX)-intrs.p;
+         float pointToLightSampleDist = glm::length(l);
+         l = glm::normalize(l);
+         Ray shadowRay = Ray(l, intrs.p+(0.01f*intrs.n), 0.f, pointToLightSampleDist);
          Intersection* pShadowIntrs = RaySceneIntersect(shadowRay, scene);
          if (!pShadowIntrs->hit) {
             diffuse += contribution * glm::vec3(glm::max(0.f, glm::dot(intrs.n, l)) * intrs.surf.finish.getDiffuse() * intrs.surf.color * light.getColor());
@@ -218,23 +234,7 @@ namespace RDST
       }
       */
 
-      
-      int maxSamples = 32;
-      for (int i=0; i<maxSamples; ++i) {
-         glm::vec3 l = light.uniformSample((float)rand() / RAND_MAX, (float)rand() / RAND_MAX)-intrs.p;
-         float pointToLightSampleDist = glm::length(l);
-         l = glm::normalize(l);
-         Ray shadowRay = Ray(l, intrs.p+(0.01f*intrs.n), 0.f, pointToLightSampleDist);
-         Intersection* pShadowIntrs = RaySceneIntersect(shadowRay, scene);
-         if (!pShadowIntrs->hit) {
-            diffuse += glm::vec3(glm::max(0.f, glm::dot(intrs.n, l)) * intrs.surf.finish.getDiffuse() * intrs.surf.color * light.getColor());
-         }
-         delete pShadowIntrs;
-      }
-      diffuse *= (1.f / maxSamples);
-
-      /*
-      //For each light do Phong Shading & additively blend
+      //For each point light do Phong shading
       std::vector<PointLightPtr>::const_iterator cit = scene.lights().begin();
       for (; cit != scene.lights().end(); ++cit) {
          const PointLight& light = **cit;
@@ -258,7 +258,6 @@ namespace RDST
          }
          delete pShadowIntrs;
       }
-      */
 
       //Additively blend all components and return
       return ambient + diffuse + specular;

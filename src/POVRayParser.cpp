@@ -71,7 +71,6 @@ namespace RDST
             line = line.substr(pos);
             GetWholeObject(line, file);
             planes->push_back(ParsePlane(line));
-            objs->push_back(planes->back());
          }
          pos = line.find("sphere");
          if (pos != std::string::npos) {
@@ -87,8 +86,14 @@ namespace RDST
          }
       }
       std::cout << "Done." << std::endl;
+      Sphere areaLight = Sphere(glm::vec3(0.f, 8.f, 0.f), 2.f, glm::vec4(1.f, 1.f, 1.f, 1.f), glm::mat4(1.f), Finish());
+      std::vector<glm::vec3>::const_iterator cit = areaLight.pSamplePointList->begin();
+      for (; cit != areaLight.pSamplePointList->end(); ++cit) {
+         Finish f = Finish(0.2f, 0.6f);
+         objs->push_back(SpherePtr(new Sphere(*cit, 0.05f, glm::vec4(1.f), glm::mat4(1.f), f)));
+      }
       SceneDescription desc(pCam, lights, objs, planes, BVH(objs));
-      desc.areaLight = Sphere(glm::vec3(0.f, 8.f, 0.f), 2.f, glm::vec4(1.f, 1.f, 1.f, 1.f), glm::mat4(1.f), Finish());
+      desc.areaLight = areaLight;
       return desc;
    }
 
