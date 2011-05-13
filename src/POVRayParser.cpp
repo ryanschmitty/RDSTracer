@@ -71,7 +71,6 @@ namespace RDST
             line = line.substr(pos);
             GetWholeObject(line, file);
             planes->push_back(ParsePlane(line));
-            objs->push_back(planes->back());
          }
          pos = line.find("sphere");
          if (pos != std::string::npos) {
