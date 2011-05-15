@@ -9,8 +9,22 @@ camera {
   look_at   <0, 5, 0>
 }
 
-light_source {<0, 5, 15> color rgb <0.1, 0.1, 0.1>}
-light_source {<0, 9.5, 0> color rgb <0.5, 0.5, 0.5>}
+light_source {<0, 5, 15.5> color rgb <0.1, 0.1, 0.1>}
+
+//sphere { <0,12,0>, 1
+//   pigment { color rgb <0.5,0.5,0.4> }
+//   finish { emissive 2 }
+//}
+
+//TOP LIGHT
+triangle { <-1,10,1>, <-1,10,-1>, <1,10,-1>
+   pigment { color rgb <0.5, 0.5, 0.45> }
+   finish { emissive 2 }
+}
+triangle { <1,10,1>, <-1,10,1>, <1,10,-1>
+   pigment { color rgb <0.5, 0.5, 0.45> }
+   finish { emissive 2 }
+}
 
 //Sphere on top of short box
 sphere { <0,0,0>, 1
@@ -201,38 +215,38 @@ triangle { <5,0,-5>, <-5,10,-5>, <-5,0,-5>
 //big left part
 triangle { <-5,10,5>, <-5,10,-5>, <-1,10,5>
    pigment { color rgb <1,1,1> }
-   finish { ambient 0 diffuse 0.5 }
+   finish { ambient 0.05 diffuse 0.5 }
 }
 triangle { <-1,10,5>, <-5,10,-5>, <-1,10,-5>
    pigment { color rgb <1,1,1> }
-   finish { ambient 0 diffuse 0.5 }
+   finish { ambient 0.05 diffuse 0.5 }
 }
 //big right part
 triangle { <5,10,5>, <1,10,5>, <1,10,-5>
    pigment { color rgb <1,1,1> }
-   finish { ambient 0 diffuse 0.5 }
+   finish { ambient 0.05 diffuse 0.5 }
 }
 triangle { <5,10,5>, <1,10,-5>, <5,10,-5>
    pigment { color rgb <1,1,1> }
-   finish { ambient 0 diffuse 0.5 }
+   finish { ambient 0.05 diffuse 0.5 }
 }
 //little front part
 triangle { <-1,10,5>, <1,10,1>, <1,10,5>
    pigment { color rgb <1,1,1> }
-   finish { ambient 0 diffuse 0.5 }
+   finish { ambient 0.05 diffuse 0.5 }
 }
 triangle { <-1,10,5>, <-1,10,1>, <1,10,1>
    pigment { color rgb <1,1,1> }
-   finish { ambient 0 diffuse 0.5 }
+   finish { ambient 0.05 diffuse 0.5 }
 }
 //little back part
 triangle { <-1,10,-1>, <1,10,-5>, <1,10,-1>
    pigment { color rgb <1,1,1> }
-   finish { ambient 0 diffuse 0.5 }
+   finish { ambient 0.05 diffuse 0.5 }
 }
 triangle { <-1,10,-1>, <-1,10,-5>, <1,10,-5>
    pigment { color rgb <1,1,1> }
-   finish { ambient 0 diffuse 0.5 }
+   finish { ambient 0.05 diffuse 0.5 }
 }
 
 
