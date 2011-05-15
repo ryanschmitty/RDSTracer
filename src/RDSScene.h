@@ -17,6 +17,7 @@
 #include <iostream>
 #include <ctime>
 #include "RDSBBox.h"
+#include "RandUtil.h"
 
 namespace RDST
 {
@@ -147,6 +148,7 @@ namespace RDST
    public:
       explicit Finish(float ambient = 0.f,
                       float diffuse = 0.f,
+                      float emissive = 0.f,
                       float specular = 0.f,
                       float roughness = 0.f,
                       float reflection = 0.f,
@@ -154,6 +156,7 @@ namespace RDST
                       float indexOfRefraction = 0.f)
       : _ambient(ambient),
         _diffuse(diffuse),
+        _emissive(emissive),
         _specular(specular),
         _roughness(roughness),
         _reflection(reflection),
@@ -172,6 +175,12 @@ namespace RDST
       { return _diffuse; }
       void setDiffuse(float diffuse)
       { _diffuse = diffuse; }
+
+      //Emissive
+      float getEmissive() const
+      { return _emissive; }
+      void setEmissive(float emissive)
+      { _emissive = emissive; }
 
       //Specular
       float getSpecular() const
@@ -206,6 +215,7 @@ namespace RDST
    private:
       float _ambient;
       float _diffuse;
+      float _emissive;
       float _specular;
       float _roughness; //size of specular highlight
       float _reflection;
@@ -349,6 +359,13 @@ namespace RDST
 
       //Surface Area
       virtual float getSurfaceArea() const = 0;
+
+      //Uniform Sample Point
+      virtual glm::vec3 uniformSample(float u1, float u2) const
+      { return glm::vec3(0.f); }
+      
+      //Stratefied Sample Points
+      boost::shared_ptr< std::vector<glm::vec3> > stratefiedSamples(int numSamples) const;
 
    private:
       //functions
@@ -558,62 +575,10 @@ namespace RDST
       { return 4.f * PI * _radiusSquared; }
 
       //Uniform Sample Point
-      glm::vec3 uniformSample(float rand1, float rand2) {
-         float z = 1.f - 2.f*rand1;
-         float r = sqrtf(glm::max(0.f, 1.f - z*z));
-         float phi = 2.f * PI * rand2;
-         float x = r * cosf(phi);
-         float y = r * sinf(phi);
-         glm::vec4 actualPoint = glm::vec4((glm::vec3(x,y,z)*_radius) + _center, 1.f);
-         return glm::vec3(getModelXform()*actualPoint);
-      }
+      glm::vec3 uniformSample(float u1, float u2) const;
 
-      //Grid sample points
-      boost::shared_ptr< std::vector<glm::vec3> > gridSamples(int numSamples) {
-         numSamples = sqrtf(numSamples);
-         //Allocate memory
-         boost::shared_ptr< std::vector<glm::vec3> > pPointList = boost::shared_ptr< std::vector<glm::vec3> >(new std::vector<glm::vec3>());
-         pPointList->reserve(numSamples);
-         for (int i=0; i<numSamples; ++i) {
-            for (int j=0; j<numSamples; ++j) {
-               float u1 = (float)i/numSamples;
-               float u2 = (float)j/numSamples;
-               u1 += drand48() / numSamples;
-               u2 += drand48() / numSamples;
-
-               ///*
-               float z = 1.f - 2.f*u1;
-               float r = sqrtf(1.f - z*z);
-               float phi = 2.f * PI * u2;
-               glm::vec3 v = glm::vec3(cosf(phi)*r, sinf(phi)*r, z);
-               pPointList->push_back(glm::normalize(v));
-               //*/
-
-               /*
-               float r = sqrtf(u1);
-               float theta = 2.f * PI * u2;
-               float x = r * cosf(theta);
-               float y = r * sinf(theta);
-               glm::vec3 v = glm::vec3(x,y,sqrtf(1-u1));
-               pPointList->push_back(glm::normalize(v));
-               */
-            }
-         }
-         pPointList->push_back(glm::normalize(glm::vec3((1.f-2.f*drand48())/numSamples, (1.f-2.f*drand48())/numSamples, 1.f)));
-         pPointList->push_back(glm::normalize(glm::vec3((1.f-2.f*drand48())/numSamples, (1.f-2.f*drand48())/numSamples, -1.f)));
-
-         //Transform into world space
-         std::vector<glm::vec3>::iterator it = pPointList->begin();
-         for (; it != pPointList->end(); ++it) {
-            *it *= _radius;
-            *it += _center;
-            *it = glm::vec3(getModelXform()*glm::vec4(*it,1.f));
-         }
-         return pPointList;
-      }
-
-      boost::shared_ptr< std::vector<glm::vec3> > pSamplePointList;
    private:
+      glm::vec3 unifUnitSample(float u1, float u2) const;
       glm::vec3 _center;
       float     _radius, _radiusSquared;
    };
@@ -668,6 +633,9 @@ namespace RDST
       //Surface Area
       float getSurfaceArea() const
       { return 0.5f * glm::length(glm::cross(_vert1-_vert0, _vert2-_vert0)); }
+
+      //Uniform Sample Point
+      glm::vec3 uniformSample(float rand1, float rand2) const;
 
    private:
       glm::vec3 _vert0;

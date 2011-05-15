@@ -11,20 +11,23 @@
 #include "RDSTracer.h"
 #include "ProgressBar.h"
 #include "RDSbvh.h"
+#include "RandUtil.h"
 
 #define MAX_RECURSION_DEPTH 5
+#define RAY_EPSILON 0.0001f
 
 namespace RDST
 {
-   void Tracer::RayTrace(const SceneDescription& scene, Image& image, bool antialias, int subsamples)
+   void Tracer::RayTrace(const SceneDescription& scene, Image& image)
    {
       //Anti-aliasing stuff
-      if (!antialias) subsamples = 1;
+      int subsamples = scene.opts().subsamples;
+      if (!scene.opts().enableAA) subsamples = 1;
       int samplesPerD = VerifyNumSubsamples(subsamples);
       //Create rays
       int numRaysX = image.getWidth()*samplesPerD;
       int numRaysY = image.getHeight()*samplesPerD;
-      RayPtrListPtr rays = GenerateRays(scene.cam(), numRaysX, numRaysY, antialias);
+      RayPtrListPtr rays = GenerateRays(scene.cam(), numRaysX, numRaysY, scene.opts().jitter);
       //Trace Rays
       std::cout << "\nTracing Rays\n";
       for (int y=0; y < image.getHeight(); ++y) {
@@ -70,15 +73,14 @@ namespace RDST
       float l = -r;
       float t = glm::length(cam.getUp())*0.5f;
       float b = -t;
-      srand((unsigned int)time(NULL));
       for (int y=0; y<h; y++) {
          for (int x=0; x<w; x++) {
             //Jitter samples
             float xOffset = 0.5;
             float yOffset = 0.5;
             if (jitter) {
-               xOffset = (float)rand() / RAND_MAX;
-               yOffset = (float)rand() / RAND_MAX;
+               xOffset = unifRand();
+               yOffset = unifRand();
             }
             //Get view coords
             float u = l+((r-l)*(x+xOffset)/w);
@@ -189,67 +191,75 @@ namespace RDST
       return direct + reflection + refraction;
    }
 
-   glm::vec3 Tracer::CalcDirectIllum(const Intersection& intrs, const SceneDescription& scene)
+   void Tracer::DoAreaLights(glm::vec3& ambient, glm::vec3& diffuse, glm::vec3& specular, const Intersection& intrs, const SceneDescription& scene)
    {
-      //Parts
-      glm::vec3 ambient(0.f);
-      glm::vec3 diffuse(0.f);
-      glm::vec3 specular(0.f);
+      //For each light
+      std::vector<GeomObjectPtr>::const_iterator calit = scene.areaLights().begin();
+      for (; calit != scene.areaLights().end(); ++calit) {
+         const GeomObject& light = **calit;
 
-      //For each area light
-      Sphere light = scene.areaLight;
-      ambient += glm::vec3(intrs.surf.finish.getAmbient() * intrs.surf.color * light.getColor());
-
-      { //scope
-      boost::shared_ptr< std::vector<glm::vec3> > pALPoints = light.gridSamples(64);
-      float contribution = 1.f / pALPoints->size();
-      std::vector<glm::vec3>::const_iterator cit = pALPoints->begin();
-      for (; cit != pALPoints->end(); ++cit) {
-         glm::vec3 l = *cit - intrs.p;
-         float pointToLightSampleDist = glm::length(l);
-         l = glm::normalize(l);
-         Ray shadowRay = Ray(l, intrs.p+(0.01f*intrs.n), 0.f, pointToLightSampleDist);
-         Intersection* pShadowIntrs = RaySceneIntersect(shadowRay, scene);
-         if (!pShadowIntrs->hit) {
-            diffuse += contribution * glm::vec3(glm::max(0.f, glm::dot(intrs.n, l)) * intrs.surf.finish.getDiffuse() * intrs.surf.color * light.getColor());
-         }
-         delete pShadowIntrs;
-      }
-      }
-
-      /*
-      int maxSamples = 32;
-      float contribution = 1.f / maxSamples;
-      for (int i=0; i<maxSamples; ++i) {
-         glm::vec3 l = light.uniformSample((float)rand() / RAND_MAX, (float)rand() / RAND_MAX)-intrs.p;
-         float pointToLightSampleDist = glm::length(l);
-         l = glm::normalize(l);
-         Ray shadowRay = Ray(l, intrs.p+(0.01f*intrs.n), 0.f, pointToLightSampleDist);
-         Intersection* pShadowIntrs = RaySceneIntersect(shadowRay, scene);
-         if (!pShadowIntrs->hit) {
-            diffuse += contribution * glm::vec3(glm::max(0.f, glm::dot(intrs.n, l)) * intrs.surf.finish.getDiffuse() * intrs.surf.color * light.getColor());
-         }
-         delete pShadowIntrs;
-      }
-      */
-
-      //For each point light do Phong shading
-      std::vector<PointLightPtr>::const_iterator cit = scene.lights().begin();
-      for (; cit != scene.lights().end(); ++cit) {
-         const PointLight& light = **cit;
-         glm::vec3 l = light.getPos()-intrs.p;
-         float pointToLightDist = glm::length(l);
-         l = glm::normalize(l);
          //Ambient
          ambient += glm::vec3(intrs.surf.finish.getAmbient() * intrs.surf.color * light.getColor());
 
-         //Diffuse and Specular (Shadow Ray)
-         Ray shadowRay = Ray(l, intrs.p+(0.01f*intrs.n), 0.f, pointToLightDist);
+         //For each sample on light
+         boost::shared_ptr< std::vector<glm::vec3> > pLightSamples = light.stratefiedSamples(scene.opts().areaLightSamples);
+         std::vector<glm::vec3>::const_iterator clsit = pLightSamples->begin();
+         float contribution = 1.f / pLightSamples->size();
+         for (; clsit != pLightSamples->end(); ++clsit) {
+
+            //Create and process shadow ray
+            glm::vec3 l = *clsit - intrs.p;
+            float pointToLightSampleDist = glm::length(l);
+            l = glm::normalize(l);
+            Ray shadowRay = Ray(l, intrs.p+(RAY_EPSILON*intrs.n), 0.f, pointToLightSampleDist);
+            Intersection* pShadowIntrs = RaySceneIntersect(shadowRay, scene);
+            //If we hit, don't shade, unless we hit an emissive object
+            glm::vec3 lightColor = glm::vec3(light.getColor());
+            if (pShadowIntrs->hit) {
+               if (pShadowIntrs->surf.finish.getEmissive() > 0.f) {
+                  lightColor = glm::vec3(pShadowIntrs->surf.color);
+               }
+               else {
+                  delete pShadowIntrs;
+                  continue;
+               }
+            }
+            delete pShadowIntrs;
+
+            //Diffuse
+            diffuse += contribution * glm::max(0.f, glm::dot(intrs.n, l)) * intrs.surf.finish.getDiffuse() * glm::vec3(intrs.surf.color) * lightColor;
+
+            //Specular
+            glm::vec3 v = -intrs.incDir;
+            glm::vec3 h = glm::normalize(l+v);
+            float spec = glm::max(0.f, glm::dot(intrs.n, h));
+            specular += contribution * powf(spec,1.f/intrs.surf.finish.getRoughness()) * intrs.surf.finish.getSpecular() * lightColor;
+         }
+      }
+   }
+
+   void Tracer::DoPointLights(glm::vec3& ambient, glm::vec3& diffuse, glm::vec3& specular, const Intersection& intrs, const SceneDescription& scene)
+   {
+      //For each light
+      std::vector<PointLightPtr>::const_iterator cplit = scene.lights().begin();
+      for (; cplit != scene.lights().end(); ++cplit) {
+         const PointLight& light = **cplit;
+         
+         //Ambient
+         ambient += glm::vec3(intrs.surf.finish.getAmbient() * intrs.surf.color * light.getColor());
+
+         //Create and process shadow ray
+         glm::vec3 l = light.getPos()-intrs.p;
+         float pointToLightDist = glm::length(l);
+         l = glm::normalize(l);
+         Ray shadowRay = Ray(l, intrs.p+(RAY_EPSILON*intrs.n), 0.f, pointToLightDist);
          Intersection* pShadowIntrs = RaySceneIntersect(shadowRay, scene);
          if (!pShadowIntrs->hit) {
-            //diffuse calcs
+
+            //Diffuse
             diffuse += glm::vec3(glm::max(0.f, glm::dot(intrs.n, l)) * intrs.surf.finish.getDiffuse() * intrs.surf.color * light.getColor());
-            //specular calcs
+
+            //Specular
             glm::vec3 v = -intrs.incDir;
             glm::vec3 h = glm::normalize(l+v);
             float spec = glm::max(0.f, glm::dot(intrs.n, h));
@@ -257,9 +267,27 @@ namespace RDST
          }
          delete pShadowIntrs;
       }
+   }
+
+   glm::vec3 Tracer::CalcDirectIllum(const Intersection& intrs, const SceneDescription& scene)
+   {
+      //Parts
+      glm::vec3 ambient(0.f);
+      glm::vec3 diffuse(0.f);
+      glm::vec3 specular(0.f);
+      glm::vec3 emissive(0.f);
+
+      //Emissive easy-ness
+      emissive = intrs.surf.finish.getEmissive() * glm::vec3(intrs.surf.color);
+
+      //Area lights
+      DoAreaLights(ambient, diffuse, specular, intrs, scene);
+
+      //For each point light do Phong shading
+      DoPointLights(ambient, diffuse, specular, intrs, scene);
 
       //Additively blend all components and return
-      return ambient + diffuse + specular;
+      return ambient + diffuse + specular + emissive;
    }
 
    glm::vec3 Tracer::CalcReflection(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft)
@@ -267,7 +295,7 @@ namespace RDST
       glm::vec3 reflection(0.f);
       if (recursionsLeft > 0 && intrs.surf.finish.getReflection() > 0.f) {
          Ray reflectionRay = Ray(glm::reflect(intrs.incDir, intrs.n), intrs.p);
-         reflectionRay.o += 0.01f * reflectionRay.d;
+         reflectionRay.o += RAY_EPSILON * reflectionRay.d;
          reflection = TraceRay(reflectionRay, scene, recursionsLeft-1);
       }
       return reflection;
@@ -282,7 +310,7 @@ namespace RDST
             eta = 1.f/eta; //air-to-material
          }
          Ray refractionRay = Ray(glm::refract(intrs.incDir, intrs.n, eta), intrs.p);
-         refractionRay.o += 0.1f * refractionRay.d;
+         refractionRay.o += RAY_EPSILON * refractionRay.d;
          if (glm::length(refractionRay.d) == 0.f) return refraction; //TIR
          refraction = TraceRay(refractionRay, scene, recursionsLeft-1);
       }

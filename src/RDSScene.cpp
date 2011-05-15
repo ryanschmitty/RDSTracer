@@ -20,6 +20,27 @@ namespace RDST
    GeomObject::~GeomObject()
    {}
 
+   //Get stratefied samples
+   boost::shared_ptr< std::vector<glm::vec3> >
+   GeomObject::stratefiedSamples(int numSamples) const
+   {
+      //Allocate memory
+      boost::shared_ptr< std::vector<glm::vec3> > pPointList = boost::shared_ptr< std::vector<glm::vec3> >(new std::vector<glm::vec3>());
+      if (numSamples <= 0) return pPointList;
+      int numU1s = (int)sqrtf((float)numSamples);
+      int numU2s = numSamples / numU1s;
+      pPointList->reserve(numU1s * numU2s);
+      //Generate samples
+      for (int i=0; i<numU1s; ++i) {
+         for (int j=0; j<numU2s; ++j) {
+            float u1 = (float)i/numU1s + unifRand()/numU1s;
+            float u2 = (float)j/numU2s + unifRand()/numU2s;
+            pPointList->push_back(uniformSample(u1, u2));
+         }
+      }
+      return pPointList;
+   }
+
    //Adjoint function
    glm::mat3
    GeomObject::adjoint(const glm::mat3& m) const
@@ -192,6 +213,28 @@ namespace RDST
       */
    }
 
+   //Sphere uniform unit sample point
+   // from PBR v.2
+   glm::vec3
+   Sphere::unifUnitSample(float u1, float u2) const
+   {
+      float z = 1.f - 2.f*u1;
+      float r = sqrtf(glm::max(0.f, 1.f - z*z));
+      float phi = 2.f * PI * u2;
+      float x = r * cosf(phi);
+      float y = r * sinf(phi);
+      return glm::normalize(glm::vec3(x, y, z));
+   }
+
+   //Sphere uniform world space sample point
+   glm::vec3
+   Sphere::uniformSample(float rand1, float rand2) const
+   {
+      glm::vec3 unitSample = unifUnitSample(rand1, rand2);
+      glm::vec4 actualPoint = glm::vec4((unitSample*_radius) + _center, 1.f);
+      return glm::vec3(getModelXform()*actualPoint);
+   }
+
    //Plane Intersection
    Intersection*
    Plane::intersect(const Ray& ray) const
@@ -234,5 +277,17 @@ namespace RDST
       //compute line parameter
       float t = f*glm::dot(e2, q);
       return new Intersection(true, t, ray.d, ray.o+(ray.d*t), glm::normalize(getNormalXform()*getNormal()), Surface(getColor(), getFinish()), false);
+   }
+
+   //Triangle uniform world space sample point
+   // from PBR v.2
+   glm::vec3
+   Triangle::uniformSample(float u1, float u2) const
+   {
+      float su1 = sqrtf(u1);
+      float u = 1.f - su1;
+      float v = u2 * su1;
+      glm::vec3 p = u*_vert0 + v*_vert1 + (1-u-v)*_vert2;
+      return glm::vec3(getModelXform()*glm::vec4(p,1.f));
    }
 }

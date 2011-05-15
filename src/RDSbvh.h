@@ -115,7 +115,7 @@ namespace RDST
    {
       BBox bounds;
       union {
-         int primitivesOffset; //used for leaf
+         int objectOffset; //used for leaf
          int secondChildOffset; //used for interior
       };
       uint8_t nObjects; // 0 means interior node

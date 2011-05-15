@@ -24,6 +24,7 @@ namespace RDST
       //Scene description vars
       CameraPtr pCam;
       boost::shared_ptr< std::vector<PointLightPtr> > lights(new std::vector<PointLightPtr>());
+      boost::shared_ptr< std::vector<GeomObjectPtr> > areaLights(new std::vector<GeomObjectPtr>());
       boost::shared_ptr< std::vector<GeomObjectPtr> > objs(new std::vector<GeomObjectPtr>());
       boost::shared_ptr< std::vector<GeomObjectPtr> > planes(new std::vector<GeomObjectPtr>());
 
@@ -84,19 +85,12 @@ namespace RDST
             GetWholeObject(line, file);
             objs->push_back(ParseTriangle(line));
          }
+         if (objs->size() > 0 && objs->back()->getFinish().getEmissive() > 0.f) {
+            areaLights->push_back(objs->back());
+         }
       }
       std::cout << "Done." << std::endl;
-      Sphere areaLight = Sphere(glm::vec3(0.f, 8.f, 0.f), 2.f, glm::vec4(1.f, 1.f, 1.f, 1.f), glm::mat4(1.f), Finish());
-      /*
-      std::vector<glm::vec3>::const_iterator cit = areaLight.pSamplePointList->begin();
-      for (; cit != areaLight.pSamplePointList->end(); ++cit) {
-         Finish f = Finish(0.2f, 0.6f);
-         objs->push_back(SpherePtr(new Sphere(*cit, 0.05f, glm::vec4(1.f), glm::mat4(1.f), f)));
-      }
-      */
-      SceneDescription desc(pCam, lights, objs, planes, BVH(objs));
-      desc.areaLight = areaLight;
-      return desc;
+      return SceneDescription(pCam, lights, areaLights, objs, planes, BVH(objs));
    }
 
    std::string&
@@ -242,8 +236,8 @@ namespace RDST
    Finish
    POVRayParser::ParseFinish(std::istringstream& tokens)
    {
-      float ambient, diffuse, specular, roughness, reflection, refraction, ior;
-      ambient = diffuse = specular = roughness = reflection = refraction = ior = 0.f;
+      float ambient, diffuse, emissive, specular, roughness, reflection, refraction, ior;
+      ambient = diffuse = emissive = specular = roughness = reflection = refraction = ior = 0.f;
       std::string token;
       bool running(true);
       while (running && std::getline(tokens, token, ' ')) {
@@ -261,6 +255,12 @@ namespace RDST
             if (token.find("}") != std::string::npos) //Exit if we reach the closing '}'
             running = false;
             diffuse = ParseFloat(token);
+         }
+         else if (token.find("emissive") != std::string::npos) {
+            tokens >> token;
+            if (token.find("}") != std::string::npos) //Exit if we reach the closing '}'
+            running = false;
+            emissive = ParseFloat(token);
          }
          else if (token.find("specular") != std::string::npos) {
             tokens >> token;
@@ -293,7 +293,7 @@ namespace RDST
             ior = ParseFloat(token);
          }
       }
-      return Finish(ambient, diffuse, specular, roughness, reflection, refraction, ior);
+      return Finish(ambient, diffuse, emissive, specular, roughness, reflection, refraction, ior);
    }
 
    void
