@@ -24,6 +24,7 @@ namespace RDST
       //Scene description vars
       CameraPtr pCam;
       boost::shared_ptr< std::vector<PointLightPtr> > lights(new std::vector<PointLightPtr>());
+      boost::shared_ptr< std::vector<GeomObjectPtr> > areaLights(new std::vector<GeomObjectPtr>());
       boost::shared_ptr< std::vector<GeomObjectPtr> > objs(new std::vector<GeomObjectPtr>());
       boost::shared_ptr< std::vector<GeomObjectPtr> > planes(new std::vector<GeomObjectPtr>());
 
@@ -84,9 +85,12 @@ namespace RDST
             GetWholeObject(line, file);
             objs->push_back(ParseTriangle(line));
          }
+         if (objs->size() > 0 && objs->back()->getFinish().getEmissive() > 0.f) {
+            areaLights->push_back(objs->back());
+         }
       }
       std::cout << "Done." << std::endl;
-      return SceneDescription(pCam, lights, objs, planes, BVH(objs));
+      return SceneDescription(pCam, lights, areaLights, objs, planes, BVH(objs));
    }
 
    std::string&
@@ -232,8 +236,8 @@ namespace RDST
    Finish
    POVRayParser::ParseFinish(std::istringstream& tokens)
    {
-      float ambient, diffuse, specular, roughness, reflection, refraction, ior;
-      ambient = diffuse = specular = roughness = reflection = refraction = ior = 0.f;
+      float ambient, diffuse, emissive, specular, roughness, reflection, refraction, ior;
+      ambient = diffuse = emissive = specular = roughness = reflection = refraction = ior = 0.f;
       std::string token;
       bool running(true);
       while (running && std::getline(tokens, token, ' ')) {
@@ -251,6 +255,12 @@ namespace RDST
             if (token.find("}") != std::string::npos) //Exit if we reach the closing '}'
             running = false;
             diffuse = ParseFloat(token);
+         }
+         else if (token.find("emissive") != std::string::npos) {
+            tokens >> token;
+            if (token.find("}") != std::string::npos) //Exit if we reach the closing '}'
+            running = false;
+            emissive = ParseFloat(token);
          }
          else if (token.find("specular") != std::string::npos) {
             tokens >> token;
@@ -283,7 +293,7 @@ namespace RDST
             ior = ParseFloat(token);
          }
       }
-      return Finish(ambient, diffuse, specular, roughness, reflection, refraction, ior);
+      return Finish(ambient, diffuse, emissive, specular, roughness, reflection, refraction, ior);
    }
 
    void

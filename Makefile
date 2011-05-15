@@ -1,5 +1,5 @@
 C = g++
-INCLS = -I./glm -I/usr/include/boost
+INCLS = -I./glm -I/scratch/boost_1_46_1/
 OUTNAME = raytrace
 FILES = ./src/*.cpp
 

@@ -148,7 +148,7 @@ namespace RDST
       int myOffset = (*offset)++;
       if (node->nObjects > 0) {
          //create leaf linear node
-         linearNode->primitivesOffset = node->firstObjOffset;
+         linearNode->objectOffset = node->firstObjOffset;
          linearNode->nObjects = node->nObjects;
       }
       else {
@@ -204,7 +204,7 @@ namespace RDST
             if (node->nObjects > 0) { //leaf! Do actual intersections
                //intersect ray with primitives in leaf BVH node
                for (int i=0; i < node->nObjects; ++i) {
-                  Intersection* pIntrs = (*pObjs)[node->primitivesOffset+i]->intersect(ray);
+                  Intersection* pIntrs = (*pObjs)[node->objectOffset+i]->intersect(ray);
                   if (pIntrs != NULL) {
                      if ((pIntrs->t < ray.tCur) && (pIntrs->t < ray.tMax) && (pIntrs->t > ray.tMin)) {
                         ray.tCur = pIntrs->t;

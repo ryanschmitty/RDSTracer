@@ -11,13 +11,17 @@
 
 #define GLM_FORCE_INLINE
 
-#include <vector>
 #include <glm/glm.hpp>
 #include <boost/shared_ptr.hpp>
+#include <vector>
+#include <iostream>
+#include <ctime>
 #include "RDSBBox.h"
+#include "RandUtil.h"
 
 namespace RDST
 {
+   static const float PI = 3.14159265f;
    //---------------------------------------------------------------------------
    //
    // PARENT CLASSES
@@ -144,6 +148,7 @@ namespace RDST
    public:
       explicit Finish(float ambient = 0.f,
                       float diffuse = 0.f,
+                      float emissive = 0.f,
                       float specular = 0.f,
                       float roughness = 0.f,
                       float reflection = 0.f,
@@ -151,6 +156,7 @@ namespace RDST
                       float indexOfRefraction = 0.f)
       : _ambient(ambient),
         _diffuse(diffuse),
+        _emissive(emissive),
         _specular(specular),
         _roughness(roughness),
         _reflection(reflection),
@@ -169,6 +175,12 @@ namespace RDST
       { return _diffuse; }
       void setDiffuse(float diffuse)
       { _diffuse = diffuse; }
+
+      //Emissive
+      float getEmissive() const
+      { return _emissive; }
+      void setEmissive(float emissive)
+      { _emissive = emissive; }
 
       //Specular
       float getSpecular() const
@@ -203,6 +215,7 @@ namespace RDST
    private:
       float _ambient;
       float _diffuse;
+      float _emissive;
       float _specular;
       float _roughness; //size of specular highlight
       float _reflection;
@@ -344,6 +357,16 @@ namespace RDST
       BBox& getWorldBounds()
       { return _bbox; }
 
+      //Surface Area
+      virtual float getSurfaceArea() const = 0;
+
+      //Uniform Sample Point
+      virtual glm::vec3 uniformSample(float u1, float u2) const
+      { return glm::vec3(0.f); }
+      
+      //Stratefied Sample Points
+      boost::shared_ptr< std::vector<glm::vec3> > stratefiedSamples(int numSamples) const;
+
    private:
       //functions
       glm::mat3 adjoint(const glm::mat3& m) const;
@@ -399,14 +422,19 @@ namespace RDST
       const glm::vec3& getLargeCorner() const
       { return _lgCorner; }
 
-      void setDimensions(const glm::vec3& smallCorner, const glm::vec3& largeCorner)
-      {
+      void setDimensions(const glm::vec3& smallCorner, const glm::vec3& largeCorner) {
          _smCorner = smallCorner; _lgCorner = largeCorner;
          _bbox = BBox(glm::vec3(getModelXform()*glm::vec4(smallCorner,1.f)), glm::vec3(getModelXform()*glm::vec4(largeCorner,1.f)));
       }
 
       //Intersection
       Intersection* intersect(const Ray& ray) const;
+
+      //Surface Area
+      float getSurfaceArea() const {
+         glm::vec3 d = _lgCorner - _smCorner;
+         return 2.f * (d.x * d.y + d.x * d.z + d.y * d.z);
+      }
 
    private:
       glm::vec3 _smCorner;
@@ -454,6 +482,10 @@ namespace RDST
       Intersection* intersect(const Ray& ray) const
       { return NULL; }
 
+      //Surface Area
+      float getSurfaceArea() const
+      { return 0.f; }
+
    private:
       glm::vec3 _end1; //center for end 1
       glm::vec3 _end2; //center for end 2
@@ -491,6 +523,9 @@ namespace RDST
       //Intersection
       Intersection* intersect(const Ray& ray) const;
 
+      float getSurfaceArea() const
+      { return FLT_MAX; }
+
    private:
       glm::vec3 _normal;
       float     _distance;
@@ -527,8 +562,7 @@ namespace RDST
       float getRadiusSquared() const
       { return _radiusSquared; }
 
-      void setDimensions(const glm::vec3& center, float radius)
-      {
+      void setDimensions(const glm::vec3& center, float radius) {
          _center = center; _radius = radius; _radiusSquared = radius*radius;
         _bbox = BBox(glm::vec3(getModelXform()*glm::vec4(center,1.f))); _bbox.expand(radius);
       }
@@ -536,7 +570,15 @@ namespace RDST
       //Intersection
       Intersection* intersect(const Ray& ray) const;
 
+      //Surface Area
+      float getSurfaceArea() const
+      { return 4.f * PI * _radiusSquared; }
+
+      //Uniform Sample Point
+      glm::vec3 uniformSample(float u1, float u2) const;
+
    private:
+      glm::vec3 unifUnitSample(float u1, float u2) const;
       glm::vec3 _center;
       float     _radius, _radiusSquared;
    };
@@ -587,6 +629,13 @@ namespace RDST
 
       //Intersection
       Intersection* intersect(const Ray& ray) const;
+
+      //Surface Area
+      float getSurfaceArea() const
+      { return 0.5f * glm::length(glm::cross(_vert1-_vert0, _vert2-_vert0)); }
+
+      //Uniform Sample Point
+      glm::vec3 uniformSample(float rand1, float rand2) const;
 
    private:
       glm::vec3 _vert0;
