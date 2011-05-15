@@ -18,6 +18,7 @@ namespace RDST
     */
    struct Options
    {
+      enum FILTER_TYPE {BOX, GAUSSIAN, MITCHELL};
       Options()
          : povRayFile(""),
            imgname(""),
@@ -28,7 +29,9 @@ namespace RDST
            enableAA(false),
            jitter(false),
            subsamples(1),
-           areaLightSamples(16)
+           areaLightSamples(16),
+           filter(BOX),
+           gaussianAlpha(1.f)
       {}
       std::string povRayFile, imgname;
       int height, width;
@@ -38,6 +41,8 @@ namespace RDST
       bool jitter;
       int subsamples;
       int areaLightSamples;
+      FILTER_TYPE filter;
+      float gaussianAlpha;
    };
 
    /**

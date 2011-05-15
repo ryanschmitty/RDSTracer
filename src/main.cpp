@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <cstdlib>
 #include <ctime>
 #include <cstring>
@@ -14,7 +15,15 @@
 
 void printUsageAndExit(char* name)
 {
-   std::cerr << "usage: " << name << " [-w <width> | +W<width>] [-h <height> | +H<height>] [-aa <#sub-samples>] [--disablejitter] [-g <gamma>] [-als numAreaLightSamples](-f <pov_input> | +I<pov_input>)\n";
+   std::cerr << "usage: " << name << " (-f <pov_input> | +I<pov_input>)\n";
+   std::cerr << "optional options:\n";
+   std::cerr << std::left << std::setw(47) << "  -w <width> | +W<width>" << "image width (default: 640)\n";
+   std::cerr << std::left << std::setw(47) << "  -h <height> | +H<height>" << "image height (default: 480)\n";
+   std::cerr << std::left << std::setw(47) << "  -aa <subsamples>" << "number of Anti-Alias subsamples (default: 1)\n";
+   std::cerr << std::left << std::setw(47) << "  --disablejitter" << "disables jittered subsamples\n";
+   std::cerr << std::left << std::setw(47) << "  -g <gamma>" << "gamma correction for specified gamma\n";
+   std::cerr << std::left << std::setw(47) << "  -als <numAreaLightSamples>" << "number of samples per area light (default: 16)\n";
+   std::cerr << std::left << std::setw(47) << "  --filter <box | gaussian <alpha> | mitchell>" << "downsample filter for Anti-Aliasing (default: box)\n";
    exit(EXIT_SUCCESS);
 }
 
@@ -45,6 +54,18 @@ RDST::Options parseParameters(int argc, char** argv)
       else if (!strcmp(argv[i], "-als")) {
          opts.areaLightSamples = boost::lexical_cast<int>(argv[++i]);
       }
+      else if (!strcmp(argv[i], "--filter")) {
+         std::string filterType = std::string(argv[++i]);
+         std::transform(filterType.begin(), filterType.end(), filterType.begin(), tolower);
+         if (filterType == "mitchell")
+            opts.filter = RDST::Options::MITCHELL;
+         else if (filterType == "gaussian") {
+            opts.filter = RDST::Options::GAUSSIAN;
+            opts.gaussianAlpha = boost::lexical_cast<float>(argv[++i]);
+         }
+         else
+            opts.filter = RDST::Options::BOX;
+      }
       else if (strstr(argv[i], "+I")) {
          opts.povRayFile = std::string(&argv[i][2]);
          opts.imgname = opts.povRayFile.substr(0,opts.povRayFile.find(".pov")); //erase .pov extension if it exists
@@ -63,7 +84,7 @@ RDST::Options parseParameters(int argc, char** argv)
 int main(int argc, char** argv)
 {
    clock_t start = clock();
-   RDST::seed();
+   //RDST::seed();
 
    RDST::Options opts = parseParameters(argc, argv);
    RDST::Image img(opts.width, opts.height, opts.enableGammaCorrection, opts.gamma);

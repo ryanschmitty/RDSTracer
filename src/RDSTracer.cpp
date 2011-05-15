@@ -12,6 +12,7 @@
 #include "ProgressBar.h"
 #include "RDSbvh.h"
 #include "RandUtil.h"
+#include "RDSFilters.h"
 
 #define MAX_RECURSION_DEPTH 5
 #define RAY_EPSILON 0.0001f
@@ -22,31 +23,28 @@ namespace RDST
    {
       //Anti-aliasing stuff
       int subsamples = scene.opts().subsamples;
-      if (!scene.opts().enableAA) subsamples = 1;
       int samplesPerD = VerifyNumSubsamples(subsamples);
       //Create rays
       int numRaysX = image.getWidth()*samplesPerD;
       int numRaysY = image.getHeight()*samplesPerD;
-      RayPtrListPtr rays = GenerateRays(scene.cam(), numRaysX, numRaysY, scene.opts().jitter);
+      RayPtrListPtr rays = GenerateRays(scene.cam(), image.getWidth(), image.getHeight(), scene.opts());
       //Trace Rays
       std::cout << "\nTracing Rays\n";
-      for (int y=0; y < image.getHeight(); ++y) {
-         for (int x=0; x < image.getWidth(); ++x) {
-            //Compute subsample start indices
-            int startX = x * samplesPerD;
-            int startY = y * samplesPerD;
-            //Iterate over all the subsamples and collect color
-            glm::vec3 color(0.f);
-            for (int i=0; i < samplesPerD; ++i) {
-               for (int j=0; j < samplesPerD; ++j) {
-                  int rayi = (startY+j) * numRaysX + (startX+i); //2D to 1D conversion
-                  color += TraceRay(*(*rays)[rayi], scene, MAX_RECURSION_DEPTH);
-                  if (rayi % 10000 == 0) UpdateProgress(int(float(rayi)/rays->size()*100.f));
-               }
-            }
-            //Apply box filter and write to image
-            image.get(x,y).set( glm::vec4(color/(float)subsamples, 1.f) );
+      //For each pixel
+      for (int i=0; i < image.getHeight()*image.getWidth(); ++i) {
+         int rayistart = i * subsamples;
+         glm::vec3 color(0.f);
+         //Gather all subsamples
+         float sumWeights = 0.f;
+         for (int j=0; j < subsamples; ++j) {
+            int rayi = rayistart + j;
+            Ray& ray = *(*rays)[rayi];
+            color += ray.weight * TraceRay(ray, scene, MAX_RECURSION_DEPTH);
+            sumWeights += ray.weight;
+            if (rayi % 10000 == 0) UpdateProgress(int(float(rayi)/rays->size()*100.f));
          }
+         //Apply box filter and write to image
+         image.get(i).set( glm::vec4(color/sumWeights, 1.f) );
       }
       UpdateProgress(100);
       std::cout << "\n";
@@ -63,36 +61,64 @@ namespace RDST
       return i_sqrt;
    }
 
-   RayPtrListPtr Tracer::GenerateRays(const Camera& cam, int raysInX, int raysInY, bool jitter)
+   RayPtrListPtr Tracer::GenerateRays(const Camera& cam, int width, int height, const Options& opts)
    {
+      int sqsamps = (int)sqrtf((float)opts.subsamples);
       std::cout << "Generating Rays\n";
+      glm::mat4 matViewWorld(glm::vec4(glm::normalize(cam.getRight()),0.f), glm::vec4(cam.getUp(),0.f), glm::vec4(cam.getDir(),0.f), glm::vec4(cam.getPos(),1.f));
       RayPtrListPtr rays = RayPtrListPtr(new std::vector<RayPtr>());
-      float h = (float)raysInY;
-      float w = (float)raysInX;
+      float h = (float)height;
+      float w = (float)width;
       float r = glm::length(cam.getRight())*0.5f;
       float l = -r;
       float t = glm::length(cam.getUp())*0.5f;
       float b = -t;
+      //For each pixel
       for (int y=0; y<h; y++) {
          for (int x=0; x<w; x++) {
-            //Jitter samples
-            float xOffset = 0.5;
-            float yOffset = 0.5;
-            if (jitter) {
-               xOffset = unifRand();
-               yOffset = unifRand();
+            //Get ray subsample cluster center
+            float uCenter = l+((r-l)*(x+0.5f)/w);
+            float vCenter = b+((t-b)*(y+0.5f)/h);
+            //Compute subsample start indices
+            int startX = x * sqsamps;
+            int startY = y * sqsamps;
+            //For each subsample
+            for (int j=0; j<sqsamps; j++) {
+               for (int i=0; i<sqsamps; i++) {
+                  //Jitter center?
+                  float xOffset = 0.5f;
+                  float yOffset = 0.5f;
+                  if (opts.jitter) {
+                     xOffset = unifRand();
+                     yOffset = unifRand();
+                  }
+                  //Get ray coords
+                  float u = l+((r-l)*(startX+i+xOffset)/(w*sqsamps));
+                  float v = b+((t-b)*(startY+j+yOffset)/(h*sqsamps));
+                  //Create Ray
+                  glm::vec3 rayOrigin(0.f,0.f,0.f);
+                  glm::vec3 rayDir(u,v,1.f);
+                  //Convert to world space
+                  rayOrigin = glm::vec3(matViewWorld * glm::vec4(rayOrigin, 1.f));
+                  rayDir = glm::normalize(glm::vec3(matViewWorld * glm::vec4(rayDir, 0.f)));
+                  //Calculate distance from center of pixel from [-1,1]
+                  float relativeU = ((startX+i+xOffset)/sqsamps) - x; //figured this out with awesome maths
+                  relativeU = 2.f*relativeU - 1.f;
+                  float relativeV = ((startY+j+yOffset)/sqsamps) - y;
+                  relativeV = 2.f*relativeV - 1.f;
+                  //Apply filter
+                  float weight;
+                  if (opts.filter == Options::GAUSSIAN)
+                     weight = Filters::GaussianFilter(relativeU, relativeV, 1.f);
+                  else if (opts.filter == Options::MITCHELL)
+                     weight = Filters::MitchellFilter(relativeU, relativeV, 1.f);
+                  else //BOX
+                     weight = 1.f / (sqsamps*sqsamps);
+                  //Store ray
+                  rays->push_back(RayPtr(new Ray(rayDir, rayOrigin, 0.f, FLT_MAX, weight)));
+               }
             }
-            //Get view coords
-            float u = l+((r-l)*(x+xOffset)/w);
-            float v = b+((t-b)*(y+yOffset)/h);
-            //Create Ray
-            glm::vec3 rayOrigin(0.f,0.f,0.f); //view space
-            glm::vec3 rayDir(u,v,1.f);
-            glm::mat4 matViewWorld(glm::vec4(glm::normalize(cam.getRight()),0.f), glm::vec4(cam.getUp(),0.f), glm::vec4(cam.getDir(),0.f), glm::vec4(cam.getPos(),1.f));
-            rayOrigin = glm::vec3(matViewWorld * glm::vec4(rayOrigin, 1.f)); //convert to world space
-            rayDir = glm::normalize(glm::vec3(matViewWorld * glm::vec4(rayDir, 0.f)));
-            rays->push_back(RayPtr(new Ray(rayDir, rayOrigin)));
-            //Progress Bar: update every 10,000 rays
+            //Progress Bar: update every 10,000 pixels
             if ((int)(y*w+x) % 10000 == 0) {
                UpdateProgress(int((y*w+x)/(w*h)*100.f));
             }

@@ -238,17 +238,20 @@ namespace RDST
       explicit Ray(const glm::vec3& direction,
                    const glm::vec3& origin = glm::vec3(0.f),
                    float minT = 0.f,
-                   float maxT = FLT_MAX)
+                   float maxT = FLT_MAX,
+                   float _weight = 0.f)
       : d(direction),
         o(origin),
         tCur(FLT_MAX),
         tMin(minT),
-        tMax(maxT)
+        tMax(maxT),
+        weight(_weight)
       {}
       glm::vec3 d, o;
       float tCur;
       float tMin;
       float tMax;
+      float weight;
    };
    typedef boost::shared_ptr<Ray> RayPtr;
    typedef boost::shared_ptr<const Ray> ConstRayPtr;

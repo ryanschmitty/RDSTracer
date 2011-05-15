@@ -187,6 +187,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\RDSFilters.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\src\RDSScene.cpp"
 				>
 			</File>
@@ -218,6 +222,10 @@
 			</File>
 			<File
 				RelativePath="..\src\RDSbvh.h"
+				>
+			</File>
+			<File
+				RelativePath="..\src\RDSFilters.h"
 				>
 			</File>
 			<File
