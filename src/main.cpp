@@ -15,6 +15,7 @@
 
 void printUsageAndExit(char* name)
 {
+   std::cerr.fill('.');
    std::cerr << "usage: " << name << " (-f <pov_input> | +I<pov_input>)\n";
    std::cerr << "optional options:\n";
    std::cerr << std::left << std::setw(47) << "  -w <width> | +W<width>" << "image width (default: 640)\n";

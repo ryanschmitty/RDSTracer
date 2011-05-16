@@ -37,7 +37,7 @@ namespace RDST
       bool first = true;
       //OpenMP Loop
       #pragma omp parallel for \
-              shared(image, scene, currentRay, rays) \
+              shared(currentRay, rays) \
               private(i, j, rayistart, rayi, color, sumWeights) \
               firstprivate(subsamples)  \
               schedule(dynamic,10000)

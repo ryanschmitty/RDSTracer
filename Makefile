@@ -1,19 +1,20 @@
 C = g++
-INCLS = -I./glm -I/scratch/boost_1_46_1/
+INCLS = -I./glm -I/usr/include/boost/
 OUTNAME = raytrace
 FILES = ./src/*.cpp
+STDOPTS = -O3 -fopenmp
 
 build: ${FILES}
-	${C} ${FILES} ${INCLS} -o ${OUTNAME} -O3
+	${C} ${FILES} ${INCLS} -o ${OUTNAME} ${STDOPTS}
 
 fast: ${FILES}
-	${C} ${FILES} ${INCLS} -o ${OUTNAME} -O3 -ffast-math
+	${C} ${FILES} ${INCLS} -o ${OUTNAME} ${STDOPTS} -ffast-math
 
 gprof: ${FILES}
-	${C} ${FILES} ${INCLS} -o ${OUTNAME} -O3 -pg
+	${C} ${FILES} ${INCLS} -o ${OUTNAME} ${STDOPTS} -pg
 
 gproffast: ${FILES}
-	${C} ${FILES} ${INCLS} -o ${OUTNAME} -O3 -ffast-math -pg
+	${C} ${FILES} ${INCLS} -o ${OUTNAME} ${STDOPTS} -ffast-math -pg
 
 debug: ${FILES}
 	${C} ${FILES} ${INCLS} -o ${OUTNAME} -ggdb
