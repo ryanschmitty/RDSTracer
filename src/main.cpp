@@ -24,6 +24,7 @@ void printUsageAndExit(char* name)
    std::cerr << std::left << std::setw(47) << "  -g <gamma>" << "gamma correction for specified gamma\n";
    std::cerr << std::left << std::setw(47) << "  -als <numAreaLightSamples>" << "number of samples per area light (default: 16)\n";
    std::cerr << std::left << std::setw(47) << "  --filter <box | gaussian <alpha> | mitchell>" << "downsample filter for Anti-Aliasing (default: box)\n";
+   std::cerr << std::left << std::setw(47) << "  -t <threads>" << "number of threads to use (default: 8)\n";
    exit(EXIT_SUCCESS);
 }
 
@@ -39,6 +40,7 @@ RDST::Options parseParameters(int argc, char** argv)
       else if (!strcmp(argv[i], "-w")) opts.width = boost::lexical_cast<int>(argv[++i]);
       else if (strstr(argv[i], "+H")) opts.height = boost::lexical_cast<int>(&argv[i][2]);
       else if (!strcmp(argv[i], "-h")) opts.height = boost::lexical_cast<int>(argv[++i]);
+      else if (!strcmp(argv[i], "-t")) opts.numThreads = boost::lexical_cast<int>(argv[++i]);
       else if (!strcmp(argv[i], "-g")) {
          opts.enableGammaCorrection = true;
          opts.gamma = boost::lexical_cast<float>(argv[++i]);

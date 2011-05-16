@@ -13,6 +13,7 @@
 #include "RDSbvh.h"
 #include "RandUtil.h"
 #include "RDSFilters.h"
+#include <omp.h>
 
 #define MAX_RECURSION_DEPTH 5
 #define RAY_EPSILON 0.0001f
@@ -21,27 +22,37 @@ namespace RDST
 {
    void Tracer::RayTrace(const SceneDescription& scene, Image& image)
    {
-      //Anti-aliasing stuff
-      int subsamples = scene.opts().subsamples;
-      int samplesPerD = VerifyNumSubsamples(subsamples);
       //Create rays
-      int numRaysX = image.getWidth()*samplesPerD;
-      int numRaysY = image.getHeight()*samplesPerD;
       RayPtrListPtr rays = GenerateRays(scene.cam(), image.getWidth(), image.getHeight(), scene.opts());
+
       //Trace Rays
-      std::cout << "\nTracing Rays\n";
-      //For each pixel
-      for (int i=0; i < image.getHeight()*image.getWidth(); ++i) {
-         int rayistart = i * subsamples;
-         glm::vec3 color(0.f);
+      omp_set_num_threads(scene.opts().numThreads);
+      std::cout << "\nTracing Rays with " << scene.opts().numThreads << " threads:\n";
+      //Declare variables
+      int currentRay = 0;
+      int i, j, rayistart, rayi;
+      glm::vec3 color;
+      float sumWeights;
+      int subsamples = scene.opts().subsamples;
+      bool first = true;
+      //OpenMP Loop
+      #pragma omp parallel for \
+              shared(image, scene, currentRay, rays) \
+              private(i, j, rayistart, rayi, color, sumWeights) \
+              firstprivate(subsamples)  \
+              schedule(dynamic,10000)
+      for (i=0; i < image.getHeight()*image.getWidth(); ++i) {
+         first = false;
+         rayistart = i * subsamples;
+         color = glm::vec3(0.f);
          //Gather all subsamples
-         float sumWeights = 0.f;
-         for (int j=0; j < subsamples; ++j) {
-            int rayi = rayistart + j;
+         sumWeights = 0.f;
+         for (j=0; j < subsamples; ++j) {
+            rayi = rayistart + j;
             Ray& ray = *(*rays)[rayi];
             color += ray.weight * TraceRay(ray, scene, MAX_RECURSION_DEPTH);
             sumWeights += ray.weight;
-            if (rayi % 10000 == 0) UpdateProgress(int(float(rayi)/rays->size()*100.f));
+            if (currentRay++ % 10000 == 0) UpdateProgress(int(float(currentRay)/rays->size()*100.f));
          }
          //Apply box filter and write to image
          image.get(i).set( glm::vec4(color/sumWeights, 1.f) );
@@ -63,7 +74,7 @@ namespace RDST
 
    RayPtrListPtr Tracer::GenerateRays(const Camera& cam, int width, int height, const Options& opts)
    {
-      int sqsamps = (int)sqrtf((float)opts.subsamples);
+      int sqsamps = VerifyNumSubsamples(opts.subsamples);
       std::cout << "Generating Rays\n";
       glm::mat4 matViewWorld(glm::vec4(glm::normalize(cam.getRight()),0.f), glm::vec4(cam.getUp(),0.f), glm::vec4(cam.getDir(),0.f), glm::vec4(cam.getPos(),1.f));
       RayPtrListPtr rays = RayPtrListPtr(new std::vector<RayPtr>());
