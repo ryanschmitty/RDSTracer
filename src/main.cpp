@@ -87,7 +87,7 @@ RDST::Options parseParameters(int argc, char** argv)
 int main(int argc, char** argv)
 {
    clock_t start = clock();
-   //RDST::seed();
+   RDST::seed();
 
    RDST::Options opts = parseParameters(argc, argv);
    RDST::Image img(opts.width, opts.height, opts.enableGammaCorrection, opts.gamma);
@@ -96,5 +96,15 @@ int main(int argc, char** argv)
    RDST::Tracer::RayTrace(desc, img);
    img.writeToDisk(opts.imgname);
 
-   std::cout << "\nRuntime: " << float(clock() - start) / CLOCKS_PER_SEC << " seconds\n";
+   float fsecs = float(clock() - start) / CLOCKS_PER_SEC;
+   int secs = (int)fsecs;
+   int millis = int((fsecs - secs) * 1000);
+   int mins = secs/60;
+   secs -= 60*mins;
+   std::cout << "\nRuntime: ";
+   if (mins > 0)
+      std::cout << mins << "m";
+   if (secs > 0)
+      std::cout << secs << "s";
+   std::cout << millis << "ms\n";
 }

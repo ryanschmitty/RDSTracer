@@ -255,7 +255,7 @@ namespace RDST
    };
    typedef boost::shared_ptr<Ray> RayPtr;
    typedef boost::shared_ptr<const Ray> ConstRayPtr;
-   typedef boost::shared_ptr< std::vector<RayPtr> > RayPtrListPtr;
+   typedef boost::shared_ptr< std::vector<Ray> > RayListPtr;
 
    //---------------------------------------------------------------------------
    // Surface class combines Finish and Color

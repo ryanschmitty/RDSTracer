@@ -23,7 +23,7 @@ namespace RDST
    void Tracer::RayTrace(const SceneDescription& scene, Image& image)
    {
       //Create rays
-      RayPtrListPtr rays = GenerateRays(scene.cam(), image.getWidth(), image.getHeight(), scene.opts());
+      RayListPtr rays = GenerateRays(scene.cam(), image.getWidth(), image.getHeight(), scene.opts());
 
       //Trace Rays
       omp_set_num_threads(scene.opts().numThreads);
@@ -49,7 +49,7 @@ namespace RDST
          sumWeights = 0.f;
          for (j=0; j < subsamples; ++j) {
             rayi = rayistart + j;
-            Ray& ray = *(*rays)[rayi];
+            Ray& ray = (*rays)[rayi];
             color += ray.weight * TraceRay(ray, scene, MAX_RECURSION_DEPTH);
             sumWeights += ray.weight;
             if (currentRay++ % 10000 == 0) UpdateProgress(int(float(currentRay)/rays->size()*100.f));
@@ -72,12 +72,13 @@ namespace RDST
       return i_sqrt;
    }
 
-   RayPtrListPtr Tracer::GenerateRays(const Camera& cam, int width, int height, const Options& opts)
+   RayListPtr Tracer::GenerateRays(const Camera& cam, int width, int height, const Options& opts)
    {
       int sqsamps = VerifyNumSubsamples(opts.subsamples);
       std::cout << "Generating Rays\n";
       glm::mat4 matViewWorld(glm::vec4(glm::normalize(cam.getRight()),0.f), glm::vec4(cam.getUp(),0.f), glm::vec4(cam.getDir(),0.f), glm::vec4(cam.getPos(),1.f));
-      RayPtrListPtr rays = RayPtrListPtr(new std::vector<RayPtr>());
+      RayListPtr rays = RayListPtr(new std::vector<Ray>());
+      rays->reserve(width*height*opts.subsamples);
       float h = (float)height;
       float w = (float)width;
       float r = glm::length(cam.getRight())*0.5f;
@@ -124,9 +125,9 @@ namespace RDST
                   else if (opts.filter == Options::MITCHELL)
                      weight = Filters::MitchellFilter(relativeU, relativeV, 1.f);
                   else //BOX
-                     weight = 1.f / (sqsamps*sqsamps);
+                     weight = 1.f / opts.subsamples;
                   //Store ray
-                  rays->push_back(RayPtr(new Ray(rayDir, rayOrigin, 0.f, FLT_MAX, weight)));
+                  rays->push_back(Ray(rayDir, rayOrigin, 0.f, FLT_MAX, weight));
                }
             }
             //Progress Bar: update every 10,000 pixels
