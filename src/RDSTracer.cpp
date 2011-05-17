@@ -223,7 +223,7 @@ namespace RDST
       float dirAmt = 1.f - reflAmt - refrAmt;
       glm::vec3 direct(0.f);
       if (dirAmt > 0.f) {
-         direct = dirAmt * CalcDirectIllum(intrs, scene);
+         direct = dirAmt * CalcDirectIllum(intrs, scene, recursionsLeft);
          direct = glm::clamp(direct, 0.f, FLT_MAX);
       }
 
@@ -308,7 +308,7 @@ namespace RDST
       }
    }
 
-   glm::vec3 Tracer::CalcDirectIllum(const Intersection& intrs, const SceneDescription& scene)
+   glm::vec3 Tracer::CalcDirectIllum(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft)
    {
       //Parts
       glm::vec3 ambient(0.f);
@@ -325,8 +325,23 @@ namespace RDST
       //For each point light do Phong shading
       DoPointLights(ambient, diffuse, specular, intrs, scene);
 
+      //Indirect lighting via Monte Carlo
+      glm::vec3 indirectColor(0.f);
+      glm::mat3 xform = glm::mat3(intrs.tan, intrs.n, intrs.bin);
+      for (int i=0; i<4; ++i) {
+         for (int j=0; j<4; ++i) {
+            float u1 = (float)i/4 + unifRand()/4;
+            float u2 = (float)j/4 + unifRand()/4;
+            glm::vec3 unitSamp = Samplers::CosineHemisphereSample(u1,u2);
+            glm::vec3 sampleDir = glm::normalize(xform * unitSamp);
+            Ray ray = Ray(sampleDir, intrs.p+RAY_EPSILON*sampleDir);
+            //indirectColor += TraceRay(ray, scene, recursionsLeft-1);
+         }
+      }
+      indirectColor /= 16.f;
+
       //Additively blend all components and return
-      return ambient + diffuse + specular + emissive;
+      return ambient + diffuse + specular + emissive + indirectColor;
    }
 
    glm::vec3 Tracer::CalcReflection(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft)

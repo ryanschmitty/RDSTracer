@@ -95,7 +95,13 @@ namespace RDST
       glm::vec3 n = largestMin == real_min.x || largestMin == real_max.x ? xr.d.x >= 0 ? glm::vec3(-1,0,0) : glm::vec3(1,0,0) :
                     largestMin == real_min.y || largestMin == real_max.y ? xr.d.y >= 0 ? glm::vec3(0,-1,0) : glm::vec3(0,1,0) :
                                                                            xr.d.z >= 0 ? glm::vec3(0,0,-1) : glm::vec3(0,0,1);
-      return new Intersection(true, largestMin, ray.d, ray.o+(ray.d*largestMin), glm::normalize(getNormalXform()*n), Surface(getColor(), getFinish()), inside);
+      glm::vec3 tan = largestMin == real_min.x || largestMin == real_max.x ? glm::vec3(0,1,0) :
+                      largestMin == real_min.y || largestMin == real_max.y ? glm::vec3(1,0,0) :
+                                                                             glm::vec3(0,1,0);
+      tan = glm::normalize(glm::vec3(getModelXform() * glm::vec4(tan,0.f)));
+      glm::vec3 bin = glm::cross(n,tan);
+      bin = glm::normalize(glm::vec3(getModelXform() * glm::vec4(bin,0.f)));
+      return new Intersection(true, largestMin, ray.d, ray.o+(ray.d*largestMin), glm::normalize(getNormalXform()*n), Surface(getColor(), getFinish()), inside, tan, bin);
       /*
       //LONG OBNOXIOUS BOX TESTING
       //Setup transformed ray
@@ -182,9 +188,14 @@ namespace RDST
          flipNormal = -1.f; //and flip the normal;
          inside = true;
       }
-
-      glm::vec3 n = flipNormal * glm::normalize(getNormalXform() * ((xr.o + xr.d*t)-getCenter()));
-      return new Intersection(true, t, ray.d, ray.o + ray.d*t, n, Surface(getColor(), getFinish()), inside);
+      glm::vec3 n = glm::normalize((xr.o + xr.d*t)-getCenter());
+      glm::vec3 k = glm::vec3(0,1,0);
+      glm::vec3 tan = fabs(n.y) == 1.f ? glm::vec3(1,0,0) : glm::normalize(k - ((glm::dot(k, n))*n)); //Gram-Schmidt Process
+      tan = glm::normalize(glm::vec3(getModelXform() * glm::vec4(tan,0.f)));
+      glm::vec3 bin = glm::cross(n, tan);
+      bin = glm::normalize(glm::vec3(getModelXform() * glm::vec4(bin,0.f)));
+      n = flipNormal * glm::normalize(getNormalXform() * n);
+      return new Intersection(true, t, ray.d, ray.o + ray.d*t, n, Surface(getColor(), getFinish()), inside, tan, bin);
       //*/
       /*
       //Lame regular sphere intersection method (but it's correct)
@@ -247,8 +258,13 @@ namespace RDST
       if (denom == 0.f) return NULL; //ray is parallel
       float t = -(glm::dot(n, xr.o) - getDistance()) / denom;
       if (t < 0.f) return NULL; //ray intersected behind us
+      glm::vec3 k = glm::vec3(0,1,0);
+      glm::vec3 tan = fabs(n.y) == 1.f ? glm::vec3(1,0,0) : glm::normalize(k - ((glm::dot(k, n))*n)); //Gram-Schmidt Process
+      tan = glm::normalize(glm::vec3(getModelXform() * glm::vec4(tan,0.f)));
+      glm::vec3 bin = glm::cross(n, tan);
+      bin = glm::normalize(glm::vec3(getModelXform() * glm::vec4(bin,0.f)));
       if (denom > 0.f) n = -n; //flip normal if we're under the plane
-      return new Intersection(true, t, ray.d, ray.o + (ray.d*t), glm::normalize(getNormalXform()*n), Surface(getColor(), getFinish()), false);
+      return new Intersection(true, t, ray.d, ray.o + (ray.d*t), glm::normalize(getNormalXform()*n), Surface(getColor(), getFinish()), false, tan, bin);
    }
 
    //Triangle Intersection
@@ -276,7 +292,9 @@ namespace RDST
       if (v < 0.f || u+v > 1.f) return NULL;
       //compute line parameter
       float t = f*glm::dot(e2, q);
-      return new Intersection(true, t, ray.d, ray.o+(ray.d*t), glm::normalize(getNormalXform()*getNormal()), Surface(getColor(), getFinish()), false);
+      glm::vec3 tan = glm::normalize(glm::vec3(_vert0 - _vert1));
+      glm::vec3 bin = glm::cross(tan, getNormal());
+      return new Intersection(true, t, ray.d, ray.o+(ray.d*t), glm::normalize(getNormalXform()*getNormal()), Surface(getColor(), getFinish()), false, tan, bin);
    }
 
    //Triangle uniform world space sample point
