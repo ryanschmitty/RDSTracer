@@ -235,6 +235,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\RDSSamplers.h"
+				>
+			</File>
+			<File
 				RelativePath="..\src\RDSScene.h"
 				>
 			</File>

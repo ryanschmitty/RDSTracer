@@ -13,6 +13,7 @@
 #include "RDSbvh.h"
 #include "RandUtil.h"
 #include "RDSFilters.h"
+#include "RDSSamplers.h"
 #include <omp.h>
 
 #define MAX_RECURSION_DEPTH 5
