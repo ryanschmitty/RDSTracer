@@ -227,7 +227,10 @@ namespace RDST
          direct = glm::clamp(direct, 0.f, FLT_MAX);
       }
 
-      return direct + reflection + refraction;
+      //Indirect illumination
+      glm::vec3 indirect = CalcIndirectIllum(intrs, scene, recursionsLeft);
+
+      return direct + reflection + refraction + (2.f*indirect);
    }
 
    void Tracer::DoAreaLights(glm::vec3& ambient, glm::vec3& diffuse, glm::vec3& specular, const Intersection& intrs, const SceneDescription& scene)
@@ -325,33 +328,35 @@ namespace RDST
       //For each point light do Phong shading
       DoPointLights(ambient, diffuse, specular, intrs, scene);
 
-      //Indirect lighting via Monte Carlo
+      //Additively blend all components and return
+      return diffuse + specular + emissive;
+   }
+
+   glm::vec3 Tracer::CalcIndirectIllum(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft)
+   {
       glm::vec3 indirectColor(0.f);
       if (recursionsLeft > 0) {
-         int samples = 36;
-         int sqsamps = (int)sqrtf((float)samples);
+         int sqsamps = (int)sqrtf((float)scene.opts().monteCarloSamples);
          glm::mat3 xform = glm::mat3(intrs.tan, intrs.n, intrs.bin);
          for (int i=0; i<sqsamps; ++i) {
             for (int j=0; j<sqsamps; ++j) {
                float u1 = (float)i/sqsamps + unifRand()/sqsamps;
                float u2 = (float)j/sqsamps + unifRand()/sqsamps;
-               glm::vec3 unitSamp = Samplers::CosineHemisphereSample(u1,u2);
+               //glm::vec3 unitSamp = Samplers::CosineHemisphereSample(u1,u2);
+               //glm::vec3 unitSamp = Samplers::ShittyCosineHemisphereSample(u1,u2);
+               glm::vec3 unitSamp = Samplers::UniformHemisphereSample(u1,u2);
                glm::vec3 sampleDir = glm::normalize(xform * unitSamp);
-               Ray* ray = new Ray(sampleDir, intrs.p+RAY_EPSILON*sampleDir);
-               Intersection* pIsect = RaySceneIntersect(*ray, scene);
+               Ray ray = Ray(sampleDir, intrs.p+RAY_EPSILON*sampleDir);
+               Intersection* pIsect = RaySceneIntersect(ray, scene);
                if (pIsect->hit) {
-                  indirectColor += CalcDirectIllum(*pIsect, scene, 0);
+                  indirectColor += CalcDirectIllum(*pIsect, scene, 0) * glm::vec3(intrs.surf.color) * glm::dot(intrs.n, ray.d);
                }
                delete pIsect;
-               delete ray;
             }
          }
-         indirectColor /= samples;
-         indirectColor /= 2;
+         indirectColor /= (float)scene.opts().monteCarloSamples;
       }
-
-      //Additively blend all components and return
-      return ambient + diffuse + specular + emissive + indirectColor;
+      return indirectColor;
    }
 
    glm::vec3 Tracer::CalcReflection(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft)

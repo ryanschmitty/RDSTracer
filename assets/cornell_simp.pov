@@ -9,8 +9,8 @@ camera {
   look_at   <0, 5, 0>
 }
 
-light_source {<0, 5, 15> color rgb <0.1, 0.1, 0.1>}
-light_source {<0, 9.5, 0> color rgb <0.5, 0.5, 0.5>}
+//light_source {<0, 5, 15> color rgb <0.1, 0.1, 0.1>}
+light_source {<0, 11, 0> color rgb <0.8, 0.8, 0.7>}
 
 //Short box
 box { <-1,-1,-1>, <1,1,1>

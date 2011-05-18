@@ -42,6 +42,7 @@ RDST::Options parseParameters(int argc, char** argv)
       else if (strstr(argv[i], "+H")) opts.height = boost::lexical_cast<int>(&argv[i][2]);
       else if (!strcmp(argv[i], "-h")) opts.height = boost::lexical_cast<int>(argv[++i]);
       else if (!strcmp(argv[i], "-t")) opts.numThreads = boost::lexical_cast<int>(argv[++i]);
+      else if (!strcmp(argv[i], "-mc")) opts.monteCarloSamples = boost::lexical_cast<int>(argv[++i]);
       else if (!strcmp(argv[i], "-g")) {
          opts.enableGammaCorrection = true;
          opts.gamma = boost::lexical_cast<float>(argv[++i]);

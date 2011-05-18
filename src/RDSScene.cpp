@@ -95,9 +95,7 @@ namespace RDST
       glm::vec3 n = largestMin == real_min.x || largestMin == real_max.x ? xr.d.x >= 0 ? glm::vec3(-1,0,0) : glm::vec3(1,0,0) :
                     largestMin == real_min.y || largestMin == real_max.y ? xr.d.y >= 0 ? glm::vec3(0,-1,0) : glm::vec3(0,1,0) :
                                                                            xr.d.z >= 0 ? glm::vec3(0,0,-1) : glm::vec3(0,0,1);
-      glm::vec3 tan = largestMin == real_min.x || largestMin == real_max.x ? glm::vec3(0,1,0) :
-                      largestMin == real_min.y || largestMin == real_max.y ? glm::vec3(1,0,0) :
-                                                                             glm::vec3(0,1,0);
+      glm::vec3 tan = fabs(n.y) != 1.f ? glm::vec3(0,1,0) : glm::vec3(1,0,0);
       glm::vec3 bin = glm::cross(n,tan);
       tan = glm::normalize(glm::vec3(getModelXform() * glm::vec4(tan,0.f)));
       bin = glm::normalize(glm::vec3(getModelXform() * glm::vec4(bin,0.f)));

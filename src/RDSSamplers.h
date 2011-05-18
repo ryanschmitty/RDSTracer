@@ -34,45 +34,65 @@ namespace RDST
          glm::vec3 ret;
          float r, theta;
          float sx = 2.f*u1 - 1.f;
-         float sy = 2.f*u2 - 1.f;
+         float sz = 2.f*u2 - 1.f;
          
          //Map square samples to disk (Shirley is a genius)
-         if (sx == 0.f && sy == 0.f) {
+         if (sx == 0.f && sz == 0.f) {
             ret.x = 0.f;
-            ret.y = 0.f;
+            ret.z = 0.f;
          }
          else {
-            if (sx >= -sy) {
-               if (sx > sy) {
+            if (sx >= -sz) {
+               if (sx > sz) {
                   //Handle first region
                   r = sx;
-                  if (sy > 0.f) theta = sy/r;
-                  else          theta = 8.f + sy/r;
+                  if (sz > 0.f) theta = sz/r;
+                  else          theta = 8.f + sz/r;
                }
                else {
                   //Handle second region
-                  r = sy;
+                  r = sz;
                   theta = 2.f - sx/r;
                }
             }
             else {
-               if (sx <= sy) {
+               if (sx <= sz) {
                   //Handle third region
                   r = -sx;
-                  theta = 4.f - sy/r;
+                  theta = 4.f - sz/r;
                }
                else {
                   //Handle fourth region
-                  r = -sy;
+                  r = -sz;
                   theta = 6.f + sx/r;
                }
             }
             theta *= PI / 4.f;
             ret.x = r * cosf(theta);
-            ret.y = r * sinf(theta);
+            ret.z = r * sinf(theta);
          }
-         ret.z = sqrtf(glm::max(0.f, 1.f - ret.x*ret.x - ret.y*ret.y));
+         ret.y = sqrtf(glm::max(0.f, 1.f - ret.x*ret.x - ret.z*ret.z));
          return ret;
+      }
+      static glm::vec3 ShittyCosineHemisphereSample(float u1, float u2)
+      {
+          float r = sqrtf(u1);
+          float theta = 2 * PI * u2;
+       
+          float x = r * cosf(theta);
+          float z = r * cosf(theta);
+       
+          return glm::vec3(x, sqrtf(1.f - u1), z);
+      }
+      /**
+       * Uniform weighted hemisphere sampling (i.e. more samples near the top).
+       * from PBR v.2
+       */
+      static glm::vec3 UniformHemisphereSample(float u1, float u2) {
+         float r = sqrtf(1.0f - u1 * u1);
+         float phi = 2 * PI * u2;
+
+         return glm::vec3(cosf(phi) * r, u1, sinf(phi) * r);
       }
    };
 }
