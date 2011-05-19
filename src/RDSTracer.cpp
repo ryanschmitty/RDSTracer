@@ -228,9 +228,13 @@ namespace RDST
       }
 
       //Indirect illumination
-      glm::vec3 indirect = CalcIndirectIllum(intrs, scene, recursionsLeft);
+      glm::vec3 indirect(0.f);
+      if (scene.opts().bounces > 0 && scene.opts().monteCarloSamples > 0) {
+         int bounces = recursionsLeft > scene.opts().bounces ? scene.opts().bounces : recursionsLeft;
+         indirect = CalcIndirectIllum(intrs, scene, bounces);
+      }
 
-      return direct + reflection + refraction + (2.f*indirect);
+      return direct + reflection + refraction + indirect;
    }
 
    void Tracer::DoAreaLights(glm::vec3& ambient, glm::vec3& diffuse, glm::vec3& specular, const Intersection& intrs, const SceneDescription& scene)
@@ -349,7 +353,8 @@ namespace RDST
                Ray ray = Ray(sampleDir, intrs.p+RAY_EPSILON*sampleDir);
                Intersection* pIsect = RaySceneIntersect(ray, scene);
                if (pIsect->hit) {
-                  indirectColor += CalcDirectIllum(*pIsect, scene, 0) * glm::vec3(intrs.surf.color) * glm::dot(intrs.n, ray.d);
+                  //indirectColor += CalcDirectIllum(*pIsect, scene, 0) * glm::vec3(intrs.surf.color) * glm::dot(intrs.n, ray.d);
+                  indirectColor += glm::clamp(1.f/(pIsect->t * pIsect->t), 0.f, 1.f) * ShadePoint(*pIsect, scene, recursionsLeft-1) * glm::vec3(intrs.surf.color) * glm::dot(intrs.n, ray.d);
                }
                delete pIsect;
             }

@@ -10,16 +10,16 @@ camera {
 }
 
 //light_source {<0, 5, 15> color rgb <0.1, 0.1, 0.1>}
-//light_source {<0, 11, 0> color rgb <0.8, 0.8, 0.7>}
+light_source {<0, 9.5, 0> color rgb <0.8, 0.8, 0.7>}
 //TOP LIGHT
-triangle { <-1,11,1>, <-1,11,-1>, <1,11,-1>
-   pigment { color rgb <0.5, 0.5, 0.45> }
-   finish { emissive 2 }
-}
-triangle { <1,11,1>, <-1,11,1>, <1,11,-1>
-   pigment { color rgb <0.5, 0.5, 0.45> }
-   finish { emissive 2 }
-}
+//triangle { <-1,11,1>, <-1,11,-1>, <1,11,-1>
+   //pigment { color rgb <0.5, 0.5, 0.45> }
+   //finish { emissive 2 }
+//}
+//triangle { <1,11,1>, <-1,11,1>, <1,11,-1>
+   //pigment { color rgb <0.5, 0.5, 0.45> }
+   //finish { emissive 2 }
+//}
 
 
 //Short box

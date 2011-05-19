@@ -33,7 +33,8 @@ namespace RDST
            filter(BOX),
            gaussianAlpha(1.f),
            numThreads(8),
-           monteCarloSamples(0)
+           monteCarloSamples(16),
+           bounces(0)
       {}
       std::string povRayFile, imgname;
       int height, width;
@@ -47,6 +48,7 @@ namespace RDST
       float gaussianAlpha;
       int numThreads;
       int monteCarloSamples;
+      int bounces;
    };
 
    /**
