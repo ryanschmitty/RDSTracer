@@ -103,9 +103,13 @@ int main(int argc, char** argv)
    float fsecs = float(clock() - start) / CLOCKS_PER_SEC;
    int secs = (int)fsecs;
    int millis = int((fsecs - secs) * 1000);
+   int hours = secs/3600;
+   secs -= 3600*hours;
    int mins = secs/60;
    secs -= 60*mins;
    std::cout << "\nRuntime: ";
+   if (hours > 0)
+      std::cout << hours << "h";
    if (mins > 0)
       std::cout << mins << "m";
    if (secs > 0)
