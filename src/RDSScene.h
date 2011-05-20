@@ -284,20 +284,16 @@ namespace RDST
         n(glm::vec3(0.f)),
         incDir(glm::vec3(0.f)),
         surf(Surface()),
-        inside(false),
-        tan(glm::vec3(0.f)),
-        bin(glm::vec3(0.f))
+        inside(false)
       {}
-      explicit Intersection(bool hit, float hitT, const glm::vec3& incomingDir, const glm::vec3& hitPoint, const glm::vec3& normal, const Surface& surface, bool rayInsideObject, glm::vec3& tangent, glm::vec3& binormal)
+      explicit Intersection(bool hit, float hitT, const glm::vec3& incomingDir, const glm::vec3& hitPoint, const glm::vec3& normal, const Surface& surface, bool rayInsideObject)
       : hit(hit),
         t(hitT),
         p(hitPoint),
         n(normal),
         incDir(incomingDir),
         surf(surface),
-        inside(rayInsideObject),
-        tan(tangent),
-        bin(binormal)
+        inside(rayInsideObject)
       {}
       bool hit;
       float t;
@@ -306,8 +302,6 @@ namespace RDST
       glm::vec3 incDir;
       Surface surf;
       bool inside;
-      glm::vec3 tan;
-      glm::vec3 bin;
    };
    typedef boost::shared_ptr<Intersection> IntersectionPtr;
    typedef boost::shared_ptr<const Intersection> ConstIntersectionPtr;

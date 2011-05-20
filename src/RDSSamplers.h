@@ -74,7 +74,7 @@ namespace RDST
          ret.y = sqrtf(glm::max(0.f, 1.f - ret.x*ret.x - ret.z*ret.z));
          return ret;
       }
-      static glm::vec3 ShittyCosineHemisphereSample(float u1, float u2)
+      static glm::vec3 BadCosineHemisphereSample(float u1, float u2)
       {
           float r = sqrtf(u1);
           float theta = 2 * PI * u2;
