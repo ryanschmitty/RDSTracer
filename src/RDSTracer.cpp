@@ -358,7 +358,7 @@ namespace RDST
                Ray ray = Ray(sampleDir, intrs.p+RAY_EPSILON*sampleDir);
                Intersection* pIsect = RaySceneIntersect(ray, scene);
                if (pIsect->hit) {
-                  indirectColor += glm::clamp(1.f/(pIsect->t * pIsect->t), 0.f, 1.f) * ShadePoint(*pIsect, scene, recursionsLeft-1) * glm::vec3(intrs.surf.color) * glm::dot(intrs.n, ray.d);
+                  indirectColor += ShadePoint(*pIsect, scene, recursionsLeft-1) * glm::vec3(intrs.surf.color) * glm::dot(intrs.n, ray.d);
                }
                delete pIsect;
             }
