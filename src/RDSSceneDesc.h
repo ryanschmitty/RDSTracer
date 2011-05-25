@@ -32,7 +32,9 @@ namespace RDST
            areaLightSamples(16),
            filter(BOX),
            gaussianAlpha(1.f),
-           numThreads(8)
+           numThreads(8),
+           monteCarloSamples(16),
+           bounces(0)
       {}
       std::string povRayFile, imgname;
       int height, width;
@@ -45,6 +47,8 @@ namespace RDST
       FILTER_TYPE filter;
       float gaussianAlpha;
       int numThreads;
+      int monteCarloSamples;
+      int bounces;
    };
 
    /**

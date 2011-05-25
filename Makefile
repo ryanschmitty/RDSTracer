@@ -17,7 +17,7 @@ gproffast: ${FILES}
 	${C} ${FILES} ${INCLS} -o ${OUTNAME} ${STDOPTS} -ffast-math -pg
 
 debug: ${FILES}
-	${C} ${FILES} ${INCLS} -o ${OUTNAME} -ggdb
+	${C} ${FILES} ${INCLS} -o ${OUTNAME} -ggdb -fopenmp
 
 clean:
 	rm ${OUTNAME}

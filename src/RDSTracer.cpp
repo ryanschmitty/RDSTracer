@@ -13,6 +13,7 @@
 #include "RDSbvh.h"
 #include "RandUtil.h"
 #include "RDSFilters.h"
+#include "RDSSamplers.h"
 #include <omp.h>
 
 #define MAX_RECURSION_DEPTH 5
@@ -222,11 +223,18 @@ namespace RDST
       float dirAmt = 1.f - reflAmt - refrAmt;
       glm::vec3 direct(0.f);
       if (dirAmt > 0.f) {
-         direct = dirAmt * CalcDirectIllum(intrs, scene);
+         direct = dirAmt * CalcDirectIllum(intrs, scene, recursionsLeft);
          direct = glm::clamp(direct, 0.f, FLT_MAX);
       }
 
-      return direct + reflection + refraction;
+      //Indirect illumination
+      glm::vec3 indirect(0.f);
+      if (scene.opts().bounces > 0 && scene.opts().monteCarloSamples > 0) {
+         int bounces = (int)recursionsLeft > scene.opts().bounces ? scene.opts().bounces : recursionsLeft;
+         indirect = CalcIndirectIllum(intrs, scene, bounces);
+      }
+
+      return direct + reflection + refraction + indirect;
    }
 
    void Tracer::DoAreaLights(glm::vec3& ambient, glm::vec3& diffuse, glm::vec3& specular, const Intersection& intrs, const SceneDescription& scene)
@@ -307,7 +315,7 @@ namespace RDST
       }
    }
 
-   glm::vec3 Tracer::CalcDirectIllum(const Intersection& intrs, const SceneDescription& scene)
+   glm::vec3 Tracer::CalcDirectIllum(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft)
    {
       //Parts
       glm::vec3 ambient(0.f);
@@ -325,7 +333,39 @@ namespace RDST
       DoPointLights(ambient, diffuse, specular, intrs, scene);
 
       //Additively blend all components and return
-      return ambient + diffuse + specular + emissive;
+      return diffuse + specular + emissive;
+   }
+
+   glm::vec3 Tracer::CalcIndirectIllum(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft)
+   {
+      glm::vec3 indirectColor(0.f);
+      if (recursionsLeft > 0) {
+         int sqsamps = (int)sqrtf((float)scene.opts().monteCarloSamples);
+         //Construct basis for uniform sample -> intersection point transform
+         glm::vec3 k = glm::vec3(0,1,0);
+         glm::vec3 tan = fabs(intrs.n.y) == 1.f ? glm::vec3(1,0,0) : glm::normalize(k - ((glm::dot(k, intrs.n))*intrs.n)); //Gram-Schmidt Process
+         glm::vec3 bin = glm::cross(intrs.n, tan);
+         glm::mat3 xform = glm::mat3(tan, intrs.n, bin);
+         //For each sample
+         for (int i=0; i<sqsamps; ++i) {
+            for (int j=0; j<sqsamps; ++j) {
+               float u1 = (float)i/sqsamps + unifRand()/sqsamps;
+               float u2 = (float)j/sqsamps + unifRand()/sqsamps;
+               //glm::vec3 unitSamp = Samplers::CosineHemisphereSample(u1,u2);
+               //glm::vec3 unitSamp = Samplers::BadCosineHemisphereSample(u1,u2);
+               glm::vec3 unitSamp = Samplers::UniformHemisphereSample(u1,u2);
+               glm::vec3 sampleDir = glm::normalize(xform * unitSamp);
+               Ray ray = Ray(sampleDir, intrs.p+RAY_EPSILON*sampleDir);
+               Intersection* pIsect = RaySceneIntersect(ray, scene);
+               if (pIsect->hit) {
+                  indirectColor += ShadePoint(*pIsect, scene, recursionsLeft-1) * glm::vec3(intrs.surf.color) * glm::dot(intrs.n, ray.d);
+               }
+               delete pIsect;
+            }
+         }
+         indirectColor /= (float)scene.opts().monteCarloSamples;
+      }
+      return indirectColor;
    }
 
    glm::vec3 Tracer::CalcReflection(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft)

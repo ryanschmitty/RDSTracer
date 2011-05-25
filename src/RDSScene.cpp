@@ -182,8 +182,8 @@ namespace RDST
          flipNormal = -1.f; //and flip the normal;
          inside = true;
       }
-
-      glm::vec3 n = flipNormal * glm::normalize(getNormalXform() * ((xr.o + xr.d*t)-getCenter()));
+      glm::vec3 n = glm::normalize((xr.o + xr.d*t)-getCenter());
+      n = flipNormal * glm::normalize(getNormalXform() * n);
       return new Intersection(true, t, ray.d, ray.o + ray.d*t, n, Surface(getColor(), getFinish()), inside);
       //*/
       /*
