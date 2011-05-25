@@ -9,24 +9,21 @@
 #ifndef _RDS_BVH_H_
 #define _RDS_BVH_H_
 
-#if defined(_WIN32) || defined(_WIN64)
-#define uint8_t unsigned __int8
-#elif defined(__linux__)
-#include <stdint.h>
-#endif
-
 #define GLM_FORCE_INLINE
 #include <glm/glm.hpp>
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
 #include <boost/assert.hpp>
+#include <boost/cstdint.hpp>
 #include "RDSBBox.h"
 #include "RDSScene.h"
 #include "ProgressBar.h"
 
 namespace RDST
 {
+   using boost::uint8_t;
+
    //---------------------------------------------------------------------------
    // Object Info class for BVH
    //---------------------------------------------------------------------------
