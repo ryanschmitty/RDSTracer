@@ -31,8 +31,7 @@ namespace RDST
          if (i < progress) ss << '=';
          else ss << ' ';
       }
-      std::cout << ss.str() << "]\r";
-      std::cout.flush();
+      std::cout << ss.str() << "]\r" << std::flush;
    }
 }
 

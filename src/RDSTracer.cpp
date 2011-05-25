@@ -76,7 +76,7 @@ namespace RDST
    RayListPtr Tracer::GenerateRays(const Camera& cam, int width, int height, const Options& opts)
    {
       int sqsamps = VerifyNumSubsamples(opts.subsamples);
-      std::cout << "Generating Rays\n";
+      std::cout << "\nGenerating Rays\n";
       glm::mat4 matViewWorld(glm::vec4(glm::normalize(cam.getRight()),0.f), glm::vec4(cam.getUp(),0.f), glm::vec4(cam.getDir(),0.f), glm::vec4(cam.getPos(),1.f));
       RayListPtr rays = RayListPtr(new std::vector<Ray>());
       rays->reserve(width*height*opts.subsamples);

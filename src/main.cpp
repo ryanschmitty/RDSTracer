@@ -5,6 +5,7 @@
 #include <cstring>
 #include <string>
 #include <boost/lexical_cast.hpp>
+#include <boost/timer.hpp>
 #include "POVRayParser.h"
 #include "RDSScene.h"
 #include "RDSSceneDesc.h"
@@ -90,7 +91,8 @@ RDST::Options parseParameters(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
-   clock_t start = clock();
+   boost::timer timer;
+   double start = timer.elapsed();
    RDST::seed();
 
    RDST::Options opts = parseParameters(argc, argv);
@@ -100,7 +102,7 @@ int main(int argc, char** argv)
    RDST::Tracer::RayTrace(desc, img);
    img.writeToDisk(opts.imgname);
 
-   float fsecs = float(clock() - start) / CLOCKS_PER_SEC;
+   double fsecs = timer.elapsed() - start;
    int secs = (int)fsecs;
    int millis = int((fsecs - secs) * 1000);
    int hours = secs/3600;
