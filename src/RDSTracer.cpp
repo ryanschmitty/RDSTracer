@@ -234,7 +234,7 @@ namespace RDST
          indirect = CalcIndirectIllum(intrs, scene, bounces);
       }
 
-      return direct + reflection + refraction + indirect;
+      return (direct + reflection + refraction) + (PI*indirect);
    }
 
    void Tracer::DoAreaLights(glm::vec3& ambient, glm::vec3& diffuse, glm::vec3& specular, const Intersection& intrs, const SceneDescription& scene)
@@ -333,7 +333,7 @@ namespace RDST
       DoPointLights(ambient, diffuse, specular, intrs, scene);
 
       //Additively blend all components and return
-      return diffuse + specular + emissive;
+      return ambient + diffuse + specular + emissive;
    }
 
    glm::vec3 Tracer::CalcIndirectIllum(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft)
