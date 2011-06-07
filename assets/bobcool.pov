@@ -6,9 +6,12 @@ camera {
 }
 
 
-light_source { <0, 100, 100> color rgb <0.5, 0.5, 0.5> }
-light_source { <-100, 100, 100> color rgb <0.33333, 0.33333, 0.33333> }
-light_source { <100, 50, -100> color rgb <0.16667, 0.16667, 0.16667> }
+//light_source { <0, 100, 100> color rgb <0.5, 0.5, 0.5> }
+sphere { <0, 100, 100>, 20 pigment {color rgb <0.5,0.5,0.5>} finish {emissive 2} }
+//light_source { <-100, 100, 100> color rgb <0.33333, 0.33333, 0.33333> }
+sphere { <-100, 100, 100>, 20 pigment {color rgb <0.33333, 0.33333, 0.33333>} finish {emissive 2} }
+//light_source { <100, 50, -100> color rgb <0.16667, 0.16667, 0.16667> }
+sphere { <400, 200, -400>, 20 pigment {color rgb <0.16667, 0.16667, 0.16667>} finish {diffuse 1.0 emissive 5} }
 
 // red
 sphere { <0, 0, 0>, 3
