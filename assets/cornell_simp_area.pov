@@ -9,15 +9,13 @@ camera {
   look_at   <0, 5, 0>
 }
 
-//light_source {<0, 5, 15> color rgb <0.1, 0.1, 0.1>}
-//light_source {<0, 9.5, 0> color rgb <1.5, 1.5, 1.3>}
 //TOP LIGHT
 triangle { <-1,10,1>, <-1,10,-1>, <1,10,-1>
-   pigment { color rgb <1, 0.95, 0.80>}
+   pigment { color rgb <1, 0.85, 0.43>}
    finish { emissive 2 }
 }
 triangle { <1,10,1>, <-1,10,1>, <1,10,-1>
-   pigment { color rgb <1, 0.95, 0.80>}
+   pigment { color rgb <1, 0.85, 0.43>}
    finish { emissive 2 }
 }
 
@@ -28,7 +26,7 @@ box { <-1,-1,-1>, <1,1,1>
    scale 1.5
    translate <1.5, 1.5, 1.5>
    pigment { color rgb <0.76,0.75,0.5> }
-   finish { ambient 0.05 diffuse 0.2 }
+   finish { ambient 0.005 diffuse 0.1 }
 }
 
 //Tall box
@@ -37,7 +35,7 @@ box { <-1,-1,-1>, <1,1,1>
    scale <1.5, 3, 1.5>
    translate <-2, 3, -2>
    pigment { color rgb <0.76,0.75,0.5> }
-   finish { ambient 0.05 diffuse 0.2 }
+   finish { ambient 0.005 diffuse 0.1 }
 }
 
 // THE ROOM
@@ -45,78 +43,78 @@ box { <-1,-1,-1>, <1,1,1>
 // floor @ y=0
 triangle { <-5,0,5>, <5,0,-5>, <-5,0,-5>
    pigment { color rgb <0.76,0.75,0.5> }
-   finish { ambient 0.05 diffuse 0.2 }
+   finish { ambient 0.005 diffuse 0.1 }
 }
 triangle { <-5,0,5>, <5,0,5>, <5,0,-5>
    pigment { color rgb <0.76,0.75,0.5> }
-   finish { ambient 0.05 diffuse 0.2 }
+   finish { ambient 0.005 diffuse 0.1 }
 }
 
 // right wall
 triangle { <5,0,5>, <5,10,5>, <5,0,-5>
    pigment { color rgb <0.15,0.48,.09>}
-   finish { ambient 0.05 diffuse 0.2 }
+   finish { ambient 0.005 diffuse 0.1 }
 }
 triangle { <5,10,5>, <5,10,-5>, <5,0,-5>
    pigment { color rgb <0.15,0.48,.09>}
-   finish { ambient 0.05 diffuse 0.2 }
+   finish { ambient 0.005 diffuse 0.1 }
 }
 
 // left wall
 triangle { <-5,0,5>, <-5,0,-5>, <-5,10,-5>
    pigment { color rgb <0.63,0.06,.04>}
-   finish { ambient 0.05 diffuse 0.2 }
+   finish { ambient 0.005 diffuse 0.1 }
 }
 triangle { <-5,10,5>, <-5,0,5>, <-5,10,-5>
    pigment { color rgb <0.63,0.06,.04>}
-   finish { ambient 0.05 diffuse 0.2 }
+   finish { ambient 0.005 diffuse 0.1 }
 }
 
 // back wall
 triangle { <5,10,-5>, <-5,10,-5>, <5,0,-5>
    pigment { color rgb <0.76,0.75,0.5> }
-   finish { ambient 0.05 diffuse 0.2 }
+   finish { ambient 0.005 diffuse 0.1 }
 }
 triangle { <5,0,-5>, <-5,10,-5>, <-5,0,-5>
    pigment { color rgb <0.76,0.75,0.5> }
-   finish { ambient 0.05 diffuse 0.2 }
+   finish { ambient 0.005 diffuse 0.1 }
 }
 
 // ceiling @ y=10, w/ a 1x1 hole in the middle
 //big left part
 triangle { <-5,10,5>, <-5,10,-5>, <-1,10,5>
    pigment { color rgb <0.76,0.75,0.5> }
-   finish { ambient 0.05 diffuse 0.2 }
+   finish { ambient 0.005 diffuse 0.1 }
 }
 triangle { <-1,10,5>, <-5,10,-5>, <-1,10,-5>
    pigment { color rgb <0.76,0.75,0.5> }
-   finish { ambient 0.05 diffuse 0.2 }
+   finish { ambient 0.005 diffuse 0.1 }
 }
 //big right part
 triangle { <5,10,5>, <1,10,5>, <1,10,-5>
    pigment { color rgb <0.76,0.75,0.5> }
-   finish { ambient 0.05 diffuse 0.2 }
+   finish { ambient 0.005 diffuse 0.1 }
 }
 triangle { <5,10,5>, <1,10,-5>, <5,10,-5>
    pigment { color rgb <0.76,0.75,0.5> }
-   finish { ambient 0.05 diffuse 0.2 }
+   finish { ambient 0.005 diffuse 0.1 }
 }
 //little front part
 triangle { <-1,10,5>, <1,10,1>, <1,10,5>
    pigment { color rgb <0.76,0.75,0.5> }
-   finish { ambient 0.05 diffuse 0.2 }
+   finish { ambient 0.005 diffuse 0.1 }
 }
 triangle { <-1,10,5>, <-1,10,1>, <1,10,1>
    pigment { color rgb <0.76,0.75,0.5> }
-   finish { ambient 0.05 diffuse 0.2 }
+   finish { ambient 0.005 diffuse 0.1 }
 }
 //little back part
 triangle { <-1,10,-1>, <1,10,-5>, <1,10,-1>
    pigment { color rgb <0.76,0.75,0.5> }
-   finish { ambient 0.05 diffuse 0.2 }
+   finish { ambient 0.005 diffuse 0.1 }
 }
 triangle { <-1,10,-1>, <-1,10,-5>, <1,10,-5>
    pigment { color rgb <0.76,0.75,0.5> }
-   finish { ambient 0.05 diffuse 0.2 }
+   finish { ambient 0.005 diffuse 0.1 }
 }
 

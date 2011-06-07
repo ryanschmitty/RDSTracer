@@ -33,6 +33,15 @@ namespace RDST
    }
 
    float Filters::GaussianFilter(float x, float y, float a) {
-      return Gaussian1D(x, a) * Gaussian1D(y, a);
+      float weight = Gaussian1D(x,a) * Gaussian1D(y,a);
+      weight += Gaussian1D(x+1.f,a) * Gaussian1D(y,a); //left
+      weight += Gaussian1D(x-1.f,a) * Gaussian1D(y,a); //right
+      weight += Gaussian1D(x,a) * Gaussian1D(y+1.f,a); //bottom
+      weight += Gaussian1D(x,a) * Gaussian1D(y-1.f,a); //top
+      weight += Gaussian1D(x+1.f,a) * Gaussian1D(y+1.f,a); //bottom left
+      weight += Gaussian1D(x+1.f,a) * Gaussian1D(y-1.f,a); //top left
+      weight += Gaussian1D(x-1.f,a) * Gaussian1D(y+1.f,a); //bottom right
+      weight += Gaussian1D(x-1.f,a) * Gaussian1D(y-1.f,a); //top right
+      return weight/9.f;
    }
 }

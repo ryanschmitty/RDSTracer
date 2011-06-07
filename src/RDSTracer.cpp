@@ -87,8 +87,8 @@ namespace RDST
       float t = glm::length(cam.getUp())*0.5f;
       float b = -t;
       //For each pixel
-      for (int y=0; y<h; y++) {
-         for (int x=0; x<w; x++) {
+      for (int y=0; y<height; y++) {
+         for (int x=0; x<width; x++) {
             //Get ray subsample cluster center
             float uCenter = l+((r-l)*(x+0.5f)/w);
             float vCenter = b+((t-b)*(y+0.5f)/h);
@@ -102,8 +102,14 @@ namespace RDST
                   float xOffset = 0.5f;
                   float yOffset = 0.5f;
                   if (opts.jitter) {
-                     xOffset = unifRand();
-                     yOffset = unifRand();
+                     if (opts.filter == Options::GAUSSIAN) {
+                        xOffset = unifRand(-0.5f, 1.5f);
+                        yOffset = unifRand(-0.5f, 1.5f);
+                     }
+                     else {
+                        xOffset = unifRand();
+                        yOffset = unifRand();
+                     }
                   }
                   //Get ray coords
                   float u = l+((r-l)*(startX+i+xOffset)/(w*sqsamps));
@@ -115,14 +121,17 @@ namespace RDST
                   rayOrigin = glm::vec3(matViewWorld * glm::vec4(rayOrigin, 1.f));
                   rayDir = glm::normalize(glm::vec3(matViewWorld * glm::vec4(rayDir, 0.f)));
                   //Calculate distance from center of pixel from [-1,1]
-                  float relativeU = ((startX+i+xOffset)/sqsamps) - x; //figured this out with awesome maths
-                  relativeU = 2.f*relativeU - 1.f;
-                  float relativeV = ((startY+j+yOffset)/sqsamps) - y;
-                  relativeV = 2.f*relativeV - 1.f;
+                  float relativeU = xOffset - 0.5f;
+                  float relativeV = yOffset - 0.5f;
+                  //float relativeU = ((startX+i+xOffset)/sqsamps) - x; //figured this out with awesome maths
+                  //relativeU = 2.f*relativeU - 1.f;
+                  //float relativeV = ((startY+j+yOffset)/sqsamps) - y;
+                  //relativeV = 2.f*relativeV - 1.f;
+                  //std::cout << relativeU << ",\n" << relativeV << std::endl;
                   //Apply filter
                   float weight;
                   if (opts.filter == Options::GAUSSIAN)
-                     weight = Filters::GaussianFilter(relativeU, relativeV, 1.f);
+                     weight = Filters::GaussianFilter(relativeU, relativeV, opts.gaussianAlpha);
                   else if (opts.filter == Options::MITCHELL)
                      weight = Filters::MitchellFilter(relativeU, relativeV, 1.f);
                   else //BOX
