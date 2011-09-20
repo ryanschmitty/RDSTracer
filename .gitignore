@@ -2,4 +2,6 @@
 *.ppm
 *.png
 *.tga
+.DS_Store
+*.swp
 vs2008/*

@@ -1,0 +1,257 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		396B9B9614294442007FEF62 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 396B9B8514294442007FEF62 /* main.cpp */; };
+		396B9B9714294442007FEF62 /* POVRayParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 396B9B8614294442007FEF62 /* POVRayParser.cpp */; };
+		396B9B9814294442007FEF62 /* RDSbvh.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 396B9B8B14294442007FEF62 /* RDSbvh.cpp */; };
+		396B9B9914294442007FEF62 /* RDSFilters.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 396B9B8D14294442007FEF62 /* RDSFilters.cpp */; };
+		396B9B9A14294442007FEF62 /* RDSScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 396B9B9114294442007FEF62 /* RDSScene.cpp */; };
+		396B9B9B14294442007FEF62 /* RDSTracer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 396B9B9414294442007FEF62 /* RDSTracer.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		39C0588F142939E500AE5821 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		396B9B8514294442007FEF62 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../src/main.cpp; sourceTree = "<group>"; };
+		396B9B8614294442007FEF62 /* POVRayParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = POVRayParser.cpp; path = ../src/POVRayParser.cpp; sourceTree = "<group>"; };
+		396B9B8714294442007FEF62 /* POVRayParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = POVRayParser.h; path = ../src/POVRayParser.h; sourceTree = "<group>"; };
+		396B9B8814294442007FEF62 /* ProgressBar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ProgressBar.h; path = ../src/ProgressBar.h; sourceTree = "<group>"; };
+		396B9B8914294442007FEF62 /* RandUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RandUtil.h; path = ../src/RandUtil.h; sourceTree = "<group>"; };
+		396B9B8A14294442007FEF62 /* RDSBBox.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RDSBBox.h; path = ../src/RDSBBox.h; sourceTree = "<group>"; };
+		396B9B8B14294442007FEF62 /* RDSbvh.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RDSbvh.cpp; path = ../src/RDSbvh.cpp; sourceTree = "<group>"; };
+		396B9B8C14294442007FEF62 /* RDSbvh.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RDSbvh.h; path = ../src/RDSbvh.h; sourceTree = "<group>"; };
+		396B9B8D14294442007FEF62 /* RDSFilters.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RDSFilters.cpp; path = ../src/RDSFilters.cpp; sourceTree = "<group>"; };
+		396B9B8E14294442007FEF62 /* RDSFilters.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RDSFilters.h; path = ../src/RDSFilters.h; sourceTree = "<group>"; };
+		396B9B8F14294442007FEF62 /* RDSImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RDSImage.h; path = ../src/RDSImage.h; sourceTree = "<group>"; };
+		396B9B9014294442007FEF62 /* RDSSamplers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RDSSamplers.h; path = ../src/RDSSamplers.h; sourceTree = "<group>"; };
+		396B9B9114294442007FEF62 /* RDSScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RDSScene.cpp; path = ../src/RDSScene.cpp; sourceTree = "<group>"; };
+		396B9B9214294442007FEF62 /* RDSScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RDSScene.h; path = ../src/RDSScene.h; sourceTree = "<group>"; };
+		396B9B9314294442007FEF62 /* RDSSceneDesc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RDSSceneDesc.h; path = ../src/RDSSceneDesc.h; sourceTree = "<group>"; };
+		396B9B9414294442007FEF62 /* RDSTracer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RDSTracer.cpp; path = ../src/RDSTracer.cpp; sourceTree = "<group>"; };
+		396B9B9514294442007FEF62 /* RDSTracer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RDSTracer.h; path = ../src/RDSTracer.h; sourceTree = "<group>"; };
+		39C05891142939E500AE5821 /* RDSTracer */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = RDSTracer; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		39C0588E142939E500AE5821 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		39C05886142939E500AE5821 = {
+			isa = PBXGroup;
+			children = (
+				396B9B8514294442007FEF62 /* main.cpp */,
+				396B9B8614294442007FEF62 /* POVRayParser.cpp */,
+				396B9B8714294442007FEF62 /* POVRayParser.h */,
+				396B9B8814294442007FEF62 /* ProgressBar.h */,
+				396B9B8914294442007FEF62 /* RandUtil.h */,
+				396B9B8A14294442007FEF62 /* RDSBBox.h */,
+				396B9B8B14294442007FEF62 /* RDSbvh.cpp */,
+				396B9B8C14294442007FEF62 /* RDSbvh.h */,
+				396B9B8D14294442007FEF62 /* RDSFilters.cpp */,
+				396B9B8E14294442007FEF62 /* RDSFilters.h */,
+				396B9B8F14294442007FEF62 /* RDSImage.h */,
+				396B9B9014294442007FEF62 /* RDSSamplers.h */,
+				396B9B9114294442007FEF62 /* RDSScene.cpp */,
+				396B9B9214294442007FEF62 /* RDSScene.h */,
+				396B9B9314294442007FEF62 /* RDSSceneDesc.h */,
+				396B9B9414294442007FEF62 /* RDSTracer.cpp */,
+				396B9B9514294442007FEF62 /* RDSTracer.h */,
+				39C05892142939E500AE5821 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		39C05892142939E500AE5821 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				39C05891142939E500AE5821 /* RDSTracer */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		39C05890142939E500AE5821 /* RDSTracer */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 39C0589B142939E500AE5821 /* Build configuration list for PBXNativeTarget "RDSTracer" */;
+			buildPhases = (
+				39C0588D142939E500AE5821 /* Sources */,
+				39C0588E142939E500AE5821 /* Frameworks */,
+				39C0588F142939E500AE5821 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = RDSTracer;
+			productName = RDSTracer;
+			productReference = 39C05891142939E500AE5821 /* RDSTracer */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		39C05888142939E500AE5821 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0410;
+				ORGANIZATIONNAME = Apple;
+			};
+			buildConfigurationList = 39C0588B142939E500AE5821 /* Build configuration list for PBXProject "RDSTracer" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 39C05886142939E500AE5821;
+			productRefGroup = 39C05892142939E500AE5821 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				39C05890142939E500AE5821 /* RDSTracer */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		39C0588D142939E500AE5821 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				396B9B9614294442007FEF62 /* main.cpp in Sources */,
+				396B9B9714294442007FEF62 /* POVRayParser.cpp in Sources */,
+				396B9B9814294442007FEF62 /* RDSbvh.cpp in Sources */,
+				396B9B9914294442007FEF62 /* RDSFilters.cpp in Sources */,
+				396B9B9A14294442007FEF62 /* RDSScene.cpp in Sources */,
+				396B9B9B14294442007FEF62 /* RDSTracer.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		39C05899142939E500AE5821 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEPLOYMENT_LOCATION = YES;
+				DSTROOT = $SRCROOT/build;
+				ENABLE_OPENMP_SUPPORT = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_VERSION = 4.2;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					/Users/rds/School/RDSTracer/glm,
+					/usr/local/Cellar/boost/1.47.0/include,
+				);
+				INSTALL_PATH = /Debug;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		39C0589A142939E500AE5821 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEPLOYMENT_LOCATION = YES;
+				DSTROOT = $SRCROOT/build;
+				ENABLE_OPENMP_SUPPORT = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_VERSION = 4.2;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					/Users/rds/School/RDSTracer/glm,
+					/usr/local/Cellar/boost/1.47.0/include,
+				);
+				INSTALL_PATH = /Release;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		39C0589C142939E500AE5821 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		39C0589D142939E500AE5821 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		39C0588B142939E500AE5821 /* Build configuration list for PBXProject "RDSTracer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				39C05899142939E500AE5821 /* Debug */,
+				39C0589A142939E500AE5821 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		39C0589B142939E500AE5821 /* Build configuration list for PBXNativeTarget "RDSTracer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				39C0589C142939E500AE5821 /* Debug */,
+				39C0589D142939E500AE5821 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 39C05888142939E500AE5821 /* Project object */;
+}
