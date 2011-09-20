@@ -14,6 +14,17 @@
 #include "RDSbvh.h"
 #include "RandUtil.h"
 
+//----------------------------------------
+// Prototypes
+//----------------------------------------
+
+void printUsageAndExit(char*);
+RDST::Options parseParameters(int, char**);
+
+//----------------------------------------
+// Implementation
+//----------------------------------------
+
 void printUsageAndExit(char* name)
 {
    std::cerr.fill('.');

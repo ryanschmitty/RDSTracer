@@ -90,8 +90,8 @@ namespace RDST
       for (int y=0; y<height; y++) {
          for (int x=0; x<width; x++) {
             //Get ray subsample cluster center
-            float uCenter = l+((r-l)*(x+0.5f)/w);
-            float vCenter = b+((t-b)*(y+0.5f)/h);
+//            float uCenter = l+((r-l)*(x+0.5f)/w);
+//            float vCenter = b+((t-b)*(y+0.5f)/h);
             //Compute subsample start indices
             int startX = x * sqsamps;
             int startY = y * sqsamps;

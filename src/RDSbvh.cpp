@@ -29,7 +29,7 @@ namespace RDST
       int totalNodes = 0;
       std::vector<GeomObjectPtr> orderedObjs;
       orderedObjs.reserve(pObjs->size());
-      boost::shared_ptr<BVHNode> root = recursiveBuild(buildData, 0, pObjs->size(), &totalNodes, orderedObjs);
+      boost::shared_ptr<BVHNode> root = recursiveBuild(buildData, 0, (int)pObjs->size(), &totalNodes, orderedObjs);
       pObjs->swap(orderedObjs);
       //Flatten for depth-first traversal algorithm
       nodes = boost::shared_array<LinearBVHNode>(new LinearBVHNode[totalNodes]());
@@ -113,7 +113,7 @@ namespace RDST
             //Either split after selected min cost bucket, or create a leaf (if it's cheaper)
             if (nObjects > maxObjsInNode || minCost < nObjects) {
                BVHObjectInfo* pMid = std::partition(&buildData[start], &buildData[end-1]+1, CompareToBucket(minCostSplit, nBuckets, dim, centroidBounds));
-               mid = pMid - &buildData[0];
+               mid = (int)(pMid - &buildData[0]);
             }
             else {
                createLeaf(node, buildData, start, end, bbox, orderedObjs);
@@ -131,7 +131,7 @@ namespace RDST
    // Utility for creating a Leaf BVHNode
    //---------------------------------------------------------------------------
    inline void BVH::createLeaf(boost::shared_ptr<BVHNode> node, std::vector<BVHObjectInfo>& buildData, int start, int end, const BBox& bbox, std::vector<GeomObjectPtr>& orderedObjs) {
-      int firstObjOffset = orderedObjs.size();
+      int firstObjOffset = (int)orderedObjs.size();
       for (int i=start; i<end; ++i) {
          int objNdx = buildData[i].objectNumber;
          orderedObjs.push_back((*pObjs)[objNdx]);
