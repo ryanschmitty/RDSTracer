@@ -22,7 +22,7 @@ namespace RDST
 
    //Get stratefied samples
    boost::shared_ptr< std::vector<glm::vec3> >
-   GeomObject::stratefiedSamples(int numSamples) const
+   GeomObject::stratefiedSamples(bool rand, int numSamples) const
    {
       //Allocate memory
       boost::shared_ptr< std::vector<glm::vec3> > pPointList = boost::shared_ptr< std::vector<glm::vec3> >(new std::vector<glm::vec3>());
@@ -33,8 +33,16 @@ namespace RDST
       //Generate samples
       for (int i=0; i<numU1s; ++i) {
          for (int j=0; j<numU2s; ++j) {
-            float u1 = (float)i/numU1s + unifRand()/numU1s;
-            float u2 = (float)j/numU2s + unifRand()/numU2s;
+            //Add randomness or not.
+            float u1, u2;
+            if (rand) {
+               u1 = (float)i/numU1s + unifRand()/numU1s;
+               u2 = (float)j/numU2s + unifRand()/numU2s;
+            }
+            else {
+               u1 = (float)i/numU1s;
+               u2 = (float)j/numU2s;
+            }
             pPointList->push_back(uniformSample(u1, u2));
          }
       }

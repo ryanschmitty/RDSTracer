@@ -368,7 +368,7 @@ namespace RDST
       { return glm::vec3(0.f); }
       
       //Stratefied Sample Points
-      boost::shared_ptr< std::vector<glm::vec3> > stratefiedSamples(int numSamples) const;
+      boost::shared_ptr< std::vector<glm::vec3> > stratefiedSamples(bool rand, int numSamples) const;
 
    private:
       //functions

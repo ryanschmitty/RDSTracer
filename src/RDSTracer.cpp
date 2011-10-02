@@ -257,7 +257,7 @@ namespace RDST
          ambient += glm::vec3(intrs.surf.finish.getAmbient() * intrs.surf.color * light.getColor());
 
          //For each sample on light
-         boost::shared_ptr< std::vector<glm::vec3> > pLightSamples = light.stratefiedSamples(scene.opts().areaLightSamples);
+         boost::shared_ptr< std::vector<glm::vec3> > pLightSamples = light.stratefiedSamples(true, scene.opts().areaLightSamples);
          std::vector<glm::vec3>::const_iterator clsit = pLightSamples->begin();
          float contribution = 1.f / pLightSamples->size();
          for (; clsit != pLightSamples->end(); ++clsit) {
