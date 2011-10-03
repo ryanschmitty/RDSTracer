@@ -207,6 +207,10 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath="..\src\BourkePointDist.h"
+				>
+			</File>
+			<File
 				RelativePath="..\src\POVRayParser.h"
 				>
 			</File>
@@ -256,6 +260,10 @@
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
+			<File
+				RelativePath="..\assets\surfgen.pov"
+				>
+			</File>
 		</Filter>
 	</Files>
 	<Globals>

@@ -7,6 +7,7 @@
 
 #include "POVRayParser.h"
 #include "RDSbvh.h"
+#include "BourkePointDist.h"
 #include <iostream>
 #include <sstream>
 #include <cctype>
@@ -77,7 +78,27 @@ namespace RDST
          if (pos != std::string::npos) {
             line = line.substr(pos);
             GetWholeObject(line, file);
-            objs->push_back(ParseSphere(line));
+
+            //TODO: go back to this
+            //objs->push_back(ParseSphere(line));
+
+            //SurfGen, using stratefied samples = no good
+            //SpherePtr pSphere = ParseSphere(line);
+            //boost::shared_ptr< std::vector<glm::vec3> > pSampleVec = pSphere->stratefiedSamples(false, 100);
+            //std::vector<glm::vec3>::const_iterator cit = pSampleVec->begin();
+            //for (; cit != pSampleVec->end(); ++cit) {
+            //   objs->push_back(SpherePtr(new Sphere(*cit, 0.5f, glm::vec4(unifRand(), unifRand(), unifRand(), 1.f), glm::mat4(1.f), Finish(0.4f, 1.f))));
+            //}
+            
+            //SurfGen, using Bourke's (slow) method
+            SpherePtr pSphere = ParseSphere(line);
+            float minDist = 0.f;
+            boost::shared_ptr< std::vector<glm::vec3> > pSampleVec = Bourke::generateDistributedPoints(100, pSphere->getCenter(), pSphere->getRadius(), 102400, &minDist);
+            std::vector<glm::vec3>::const_iterator cit = pSampleVec->begin();
+            for (; cit != pSampleVec->end(); ++cit) {
+               objs->push_back(SpherePtr(new Sphere(*cit, minDist, glm::vec4(unifRand(), unifRand(), unifRand(), 1.f), glm::mat4(1.f), Finish(0.1f, 0.5f))));
+            }
+
          }
          pos = line.find("triangle");
          if (pos != std::string::npos) {

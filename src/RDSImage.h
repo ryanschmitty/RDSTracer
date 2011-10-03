@@ -133,75 +133,75 @@ namespace RDST
       void writeToDisk(std::string& fname)
       {
          /* Write an uncompressed PPM, ADAPTED FROM: http://rosettacode.org/wiki/Bitmap/Write_a_PPM_file#C */
-         std::string fnameExtension = fname;
-         fnameExtension += ".ppm";
-         std::ofstream file(fnameExtension.c_str(), std::ofstream::binary); //binary open
-         if (file.fail()) {
-            fprintf(stderr,"Failed to open output file: %s\n", fname.c_str());
-            exit(-1);
-         }
-         // PPM Header (P6\n<width> <height>\n<max color>\n)
-         file << "P6\n" << w << " " << h << "\n255\n";
-         // data, 0,0 is top left...
-         for (int y = 0; y < h; ++y) {
-            for (int x = 0; x < w; ++x) {
-               //Clamp it (TODO: HDR)
-               float red = glm::clamp(get(x,h-1-y).r(), 0.f, 1.f); //reverse because my Ray Tracer (and most other peoples') assumes 0,0 is bottom left not top left!
-               float green = glm::clamp(get(x,h-1-y).g(), 0.f, 1.f);
-               float blue = glm::clamp(get(x,h-1-y).b(), 0.f, 1.f);
-               //Gamma Correction it
-               if (gammaCorrect) {
-                  float inverseGamma = 1.f / gamma;
-                  red = powf(red, inverseGamma);
-                  green = powf(green, inverseGamma);
-                  blue = powf(blue, inverseGamma);
-               }
-               /*if (gammaCorrect) {
-                  red = srgbEncode(red);
-                  green = srgbEncode(green);
-                  blue = srgbEncode(blue);
-               }*/
-               //Write it
-               file.put((int)(red*255));
-               file.put((int)(green*255));
-               file.put((int)(blue*255));
-            }
-         }
-         file.close();
-
-         /* Write an uncompressed TGA, ADAPTED FROM: http://paulbourke.net/dataformats/tga/tgatest.c */
          //std::string fnameExtension = fname;
-         //fnameExtension += ".tga";
+         //fnameExtension += ".ppm";
          //std::ofstream file(fnameExtension.c_str(), std::ofstream::binary); //binary open
          //if (file.fail()) {
          //   fprintf(stderr,"Failed to open output file: %s\n", fname.c_str());
          //   exit(-1);
          //}
-         ////header
-         //file.put(0);
-         //file.put(0);
-         //file.put(2);                     /* uncompressed RGB */
-         //file.put(0); file.put(0);
-         //file.put(0); file.put(0);
-         //file.put(0);
-         //file.put(0); file.put(0);        /* X origin */
-         //file.put(0); file.put(0);        /* y origin */
-         //file.put((w & 0x00FF));
-         //file.put((w & 0xFF00) / 256);
-         //file.put((h & 0x00FF));
-         //file.put((h & 0xFF00) / 256);
-         //file.put(24);                    /* 32 bit bitmap (24 rgb 8 a) */
-         //file.put(0);
-         ////data
-         //for (std::vector<Pixel>::const_iterator it = image.begin(); it != image.end(); ++it) {
-         //   float red = glm::clamp(it->getR(), 0.f, 1.f); //reverse because my Ray Tracer (and most other peoples') assumes 0,0 is bottom left not top left!
-         //   float green = glm::clamp(it->getG(), 0.f, 1.f);
-         //   float blue = glm::clamp(it->getB(), 0.f, 1.f);
-         //   file.put((int)(blue*255));
-         //   file.put((int)(green*255));
-         //   file.put((int)(red*255));
+         //// PPM Header (P6\n<width> <height>\n<max color>\n)
+         //file << "P6\n" << w << " " << h << "\n255\n";
+         //// data, 0,0 is top left...
+         //for (int y = 0; y < h; ++y) {
+         //   for (int x = 0; x < w; ++x) {
+         //      //Clamp it (TODO: HDR)
+         //      float red = glm::clamp(get(x,h-1-y).r(), 0.f, 1.f); //reverse because my Ray Tracer (and most other peoples') assumes 0,0 is bottom left not top left!
+         //      float green = glm::clamp(get(x,h-1-y).g(), 0.f, 1.f);
+         //      float blue = glm::clamp(get(x,h-1-y).b(), 0.f, 1.f);
+         //      //Gamma Correction it
+         //      if (gammaCorrect) {
+         //         float inverseGamma = 1.f / gamma;
+         //         red = powf(red, inverseGamma);
+         //         green = powf(green, inverseGamma);
+         //         blue = powf(blue, inverseGamma);
+         //      }
+         //      /*if (gammaCorrect) {
+         //         red = srgbEncode(red);
+         //         green = srgbEncode(green);
+         //         blue = srgbEncode(blue);
+         //      }*/
+         //      //Write it
+         //      file.put((int)(red*255));
+         //      file.put((int)(green*255));
+         //      file.put((int)(blue*255));
+         //   }
          //}
          //file.close();
+
+         /* Write an uncompressed TGA, ADAPTED FROM: http://paulbourke.net/dataformats/tga/tgatest.c */
+         std::string fnameExtension = fname;
+         fnameExtension += ".tga";
+         std::ofstream file(fnameExtension.c_str(), std::ofstream::binary); //binary open
+         if (file.fail()) {
+            fprintf(stderr,"Failed to open output file: %s\n", fname.c_str());
+            exit(-1);
+         }
+         //header
+         file.put(0);
+         file.put(0);
+         file.put(2);                     /* uncompressed RGB */
+         file.put(0); file.put(0);
+         file.put(0); file.put(0);
+         file.put(0);
+         file.put(0); file.put(0);        /* X origin */
+         file.put(0); file.put(0);        /* y origin */
+         file.put((w & 0x00FF));
+         file.put((w & 0xFF00) / 256);
+         file.put((h & 0x00FF));
+         file.put((h & 0xFF00) / 256);
+         file.put(24);                    /* 32 bit bitmap (24 rgb 8 a) */
+         file.put(0);
+         //data
+         for (std::vector<Pixel>::const_iterator it = image.begin(); it != image.end(); ++it) {
+            float red = glm::clamp(it->r(), 0.f, 1.f); //reverse because my Ray Tracer (and most other peoples') assumes 0,0 is bottom left not top left!
+            float green = glm::clamp(it->g(), 0.f, 1.f);
+            float blue = glm::clamp(it->b(), 0.f, 1.f);
+            file.put((int)(blue*255));
+            file.put((int)(green*255));
+            file.put((int)(red*255));
+         }
+         file.close();
       }
 
       float srgbEncode(float c)

@@ -3,10 +3,10 @@
 // Author: Ryan Schmitt
 
 camera {
-  location  <2, 8, 5>
+  location  <2, 2, 10>
   up        <0,  1,  0>
   right     <1, 0,  0>
-  look_at   <0, 8, 0>
+  look_at   <0, 2, 0>
 }
 
 light_source {<5, 10, 0> color rgb <0.8, 0.8, 0.8>}
@@ -29,7 +29,7 @@ sphere { <0,0,0>, 2
 
 sphere { <0,0,0>, 3
    pigment { color rgb <1,1,1> }
-   finish { emissive 0.0 }
+   finish { emissive 0.5 }
 }
 
 
