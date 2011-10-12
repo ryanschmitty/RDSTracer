@@ -15,7 +15,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <boost/assert.hpp>
 #include <boost/lexical_cast.hpp>
-//#include <boost/tokenizer.hpp>
 
 namespace RDST
 {
@@ -60,7 +59,19 @@ namespace RDST
          if (pos != std::string::npos) {
             line = line.substr(pos);
             GetWholeObject(line, file);
-            objs->push_back(ParseBox(line));
+
+            //TODO: go back to this.
+//            objs->push_back(ParseBox(line));
+
+            //Do the box sampling
+            BoxPtr pBox = ParseBox(line);
+            float minDist = 0.f;
+            boost::shared_ptr< std::vector<glm::vec3> > pSampleVec = Bourke::generateDistributedPoints(100, *pBox, &minDist);
+            std::vector<glm::vec3>::const_iterator cit = pSampleVec->begin();
+            for (; cit != pSampleVec->end(); ++cit) {
+               objs->push_back(SpherePtr(new Sphere(*cit, minDist/2.f, glm::vec4(unifRand(), unifRand(), unifRand(), 1.f), glm::mat4(1.f), Finish(0.2f, 0.8f))));
+            }
+
          }
          pos = line.find("cone");
          if (pos != std::string::npos) {
@@ -82,21 +93,13 @@ namespace RDST
             //TODO: go back to this
             //objs->push_back(ParseSphere(line));
 
-            //SurfGen, using stratefied samples = no good
-            //SpherePtr pSphere = ParseSphere(line);
-            //boost::shared_ptr< std::vector<glm::vec3> > pSampleVec = pSphere->stratefiedSamples(false, 100);
-            //std::vector<glm::vec3>::const_iterator cit = pSampleVec->begin();
-            //for (; cit != pSampleVec->end(); ++cit) {
-            //   objs->push_back(SpherePtr(new Sphere(*cit, 0.5f, glm::vec4(unifRand(), unifRand(), unifRand(), 1.f), glm::mat4(1.f), Finish(0.4f, 1.f))));
-            //}
-            
             //SurfGen, using Bourke's (slow) method
             SpherePtr pSphere = ParseSphere(line);
             float minDist = 0.f;
-            boost::shared_ptr< std::vector<glm::vec3> > pSampleVec = Bourke::generateDistributedPoints(100, pSphere->getCenter(), pSphere->getRadius(), 102400, &minDist);
+            boost::shared_ptr< std::vector<glm::vec3> > pSampleVec = Bourke::generateDistributedPoints(100, *pSphere, 102400, &minDist);
             std::vector<glm::vec3>::const_iterator cit = pSampleVec->begin();
             for (; cit != pSampleVec->end(); ++cit) {
-               objs->push_back(SpherePtr(new Sphere(*cit, minDist, glm::vec4(unifRand(), unifRand(), unifRand(), 1.f), glm::mat4(1.f), Finish(0.1f, 0.5f))));
+               objs->push_back(SpherePtr(new Sphere(*cit, minDist/2.f, glm::vec4(unifRand(), unifRand(), unifRand(), 1.f), glm::mat4(1.f), Finish(0.1f, 0.5f))));
             }
 
          }
@@ -104,7 +107,20 @@ namespace RDST
          if (pos != std::string::npos) {
             line = line.substr(pos);
             GetWholeObject(line, file);
-            objs->push_back(ParseTriangle(line));
+
+            //TODO: go back to this
+            //objs->push_back(ParseTriangle(line));
+            
+            //Do the box sampling
+            TrianglePtr pTri = ParseTriangle(line);
+            float minDist = 0.f;
+            boost::shared_ptr< std::vector<glm::vec3> > pSampleVec = Bourke::generateDistributedPoints(100, *pTri, 102400, &minDist);
+            std::vector<glm::vec3>::const_iterator cit = pSampleVec->begin();
+            for (; cit != pSampleVec->end(); ++cit) {
+               objs->push_back(SpherePtr(new Sphere(*cit, minDist/2.f, glm::vec4(unifRand(), unifRand(), unifRand(), 1.f), glm::mat4(1.f), Finish(0.2f, 0.8f))));
+            }
+
+
          }
          if (objs->size() > 0 && objs->back()->getFinish().getEmissive() > 0.f) {
             areaLights->push_back(objs->back());
