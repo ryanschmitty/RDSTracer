@@ -99,7 +99,7 @@ namespace RDST
             boost::shared_ptr< std::vector<glm::vec3> > pSampleVec = Bourke::generateDistributedPoints(100, *pSphere, 102400, &minDist);
             std::vector<glm::vec3>::const_iterator cit = pSampleVec->begin();
             for (; cit != pSampleVec->end(); ++cit) {
-               objs->push_back(SpherePtr(new Sphere(*cit, minDist/2.f, glm::vec4(unifRand(), unifRand(), unifRand(), 1.f), glm::mat4(1.f), Finish(0.1f, 0.5f))));
+               objs->push_back(SpherePtr(new Sphere(*cit, minDist/2.f, glm::vec4(unifRand(), unifRand(), unifRand(), 1.f), glm::mat4(1.f), Finish(0.2f, 0.8f))));
             }
 
          }
