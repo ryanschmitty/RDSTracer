@@ -273,10 +273,10 @@ generateDistributedPoints(int numPoints, const RDST::Sphere& sphere, int maxIter
         p[minp1].z = p1.z - 0.01f * (p2.z - p1.z);
         Normalise(&p[minp1],r);
         Normalise(&p[minp2],r);
-        *minDist = Distance(p[minp1], p[minp2]);
 
         counter++;
     }
+    *minDist = mind*2.f;
 
     /* Write out the points in your favorite format */
     //Allocate memory (smart pointer to a vec3 array)

@@ -66,10 +66,10 @@ namespace RDST
             //Do the box sampling
             BoxPtr pBox = ParseBox(line);
             float minDist = 0.f;
-            boost::shared_ptr< std::vector<glm::vec3> > pSampleVec = Bourke::generateDistributedPoints(100, *pBox, &minDist);
+            boost::shared_ptr< std::vector<glm::vec3> > pSampleVec = Bourke::generateDistributedPoints(1000, *pBox, &minDist);
             std::vector<glm::vec3>::const_iterator cit = pSampleVec->begin();
             for (; cit != pSampleVec->end(); ++cit) {
-               objs->push_back(SpherePtr(new Sphere(*cit, minDist/2.f, glm::vec4(unifRand(), unifRand(), unifRand(), 1.f), glm::mat4(1.f), Finish(0.2f, 0.8f))));
+               objs->push_back(SpherePtr(new Sphere(glm::vec3(pBox->getModelXform()*glm::vec4(*cit,1.f)), minDist, pBox->getColor(), glm::mat4(1.f), Finish(0.2f, 0.8f))));
             }
 
          }
@@ -96,10 +96,10 @@ namespace RDST
             //SurfGen, using Bourke's (slow) method
             SpherePtr pSphere = ParseSphere(line);
             float minDist = 0.f;
-            boost::shared_ptr< std::vector<glm::vec3> > pSampleVec = Bourke::generateDistributedPoints(100, *pSphere, 102400, &minDist);
+            boost::shared_ptr< std::vector<glm::vec3> > pSampleVec = Bourke::generateDistributedPoints(1000, *pSphere, 10000, &minDist);
             std::vector<glm::vec3>::const_iterator cit = pSampleVec->begin();
             for (; cit != pSampleVec->end(); ++cit) {
-               objs->push_back(SpherePtr(new Sphere(*cit, minDist/2.f, glm::vec4(unifRand(), unifRand(), unifRand(), 1.f), glm::mat4(1.f), Finish(0.2f, 0.8f))));
+               objs->push_back(SpherePtr(new Sphere(glm::vec3(pSphere->getModelXform()*glm::vec4(*cit,1.f)), minDist, pSphere->getColor(), glm::mat4(1.f), Finish(0.2f, 0.8f))));
             }
 
          }
@@ -114,10 +114,10 @@ namespace RDST
             //Do the box sampling
             TrianglePtr pTri = ParseTriangle(line);
             float minDist = 0.f;
-            boost::shared_ptr< std::vector<glm::vec3> > pSampleVec = Bourke::generateDistributedPoints(100, *pTri, 102400, &minDist);
+            boost::shared_ptr< std::vector<glm::vec3> > pSampleVec = Bourke::generateDistributedPoints(1000, *pTri, 10000, &minDist);
             std::vector<glm::vec3>::const_iterator cit = pSampleVec->begin();
             for (; cit != pSampleVec->end(); ++cit) {
-               objs->push_back(SpherePtr(new Sphere(*cit, minDist/2.f, glm::vec4(unifRand(), unifRand(), unifRand(), 1.f), glm::mat4(1.f), Finish(0.2f, 0.8f))));
+               objs->push_back(SpherePtr(new Sphere(glm::vec3(pTri->getModelXform()*glm::vec4(*cit,1.f)), minDist, pTri->getColor(), glm::mat4(1.f), Finish(0.2f, 0.8f))));
             }
 
 
