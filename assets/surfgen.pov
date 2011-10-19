@@ -10,7 +10,7 @@
 
 //standard camera down z axis
 camera {
-  location  <0, 0, 5>
+  location  <0, 0, 10>
   up        <0,  1,  0>
   right     <1.33333, 0,  0>
   look_at   <0, 0, 0>
@@ -28,6 +28,7 @@ sphere { <0, 0, 0>, 1
   pigment { color rgb <1.0, 0.0, 1.0>}
   finish {ambient 0.5 diffuse 0.9}
   translate <0, 0, 0>
+  scale <1, 2, 1>
 }
 
 //sphere { <0, 0, 0>, 1

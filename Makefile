@@ -20,4 +20,4 @@ debug: ${FILES}
 	${C} ${FILES} ${INCLS} -o ${OUTNAME} -ggdb -fopenmp
 
 clean:
-	rm ${OUTNAME}
+	rm -rf ${OUTNAME} ${OUTNAME}.dSYM

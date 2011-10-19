@@ -22,7 +22,7 @@ namespace Bourke
 
 #define ABS(x) (x < 0 ? -(x) : (x))
 
-void Normalise(glm::vec3 *,float);
+void Normalise(glm::vec3 *,float, glm::vec3);
 float Distance(glm::vec3,glm::vec3);
 bool SameSide(glm::vec3, glm::vec3, glm::vec3, glm::vec3);
 void PointInTriangle(glm::vec3*, glm::vec3, glm::vec3, glm::vec3);
@@ -215,8 +215,12 @@ generateDistributedPoints(int numPoints, const RDST::Sphere& sphere, int maxIter
     int minp1,minp2;
     float r,d,mind,maxd;
     glm::vec3 p[1000],p1,p2;
+    glm::mat4 xform = sphere.getModelXform();
 
     //Enforce minimums (and maximum)
+//    n = numPoints;
+//    r = sphere.getRadius();
+//    countmax = maxIterations;
     if ((n = numPoints) < 2)
         n = 3;
     else if (n > 1000)
@@ -265,37 +269,51 @@ generateDistributedPoints(int numPoints, const RDST::Sphere& sphere, int maxIter
         */
         p1 = p[minp1];
         p2 = p[minp2];
-        p[minp2].x = p1.x + 1.01f * (p2.x - p1.x);
-        p[minp2].y = p1.y + 1.01f * (p2.y - p1.y);
-        p[minp2].z = p1.z + 1.01f * (p2.z - p1.z);
-        p[minp1].x = p1.x - 0.01f * (p2.x - p1.x);
-        p[minp1].y = p1.y - 0.01f * (p2.y - p1.y);
-        p[minp1].z = p1.z - 0.01f * (p2.z - p1.z);
-        Normalise(&p[minp1],r);
-        Normalise(&p[minp2],r);
+        p[minp2].x = p1.x + 1.05f * (p2.x - p1.x);
+        p[minp2].y = p1.y + 1.05f * (p2.y - p1.y);
+        p[minp2].z = p1.z + 1.05f * (p2.z - p1.z);
+        p[minp1].x = p1.x - 0.05f * (p2.x - p1.x);
+        p[minp1].y = p1.y - 0.05f * (p2.y - p1.y);
+        p[minp1].z = p1.z - 0.05f * (p2.z - p1.z);
+        Normalise(&p[minp1],r,sphere.getCenter());
+        Normalise(&p[minp2],r,sphere.getCenter());
+        p[minp1] = glm::vec3(xform * glm::vec4(p[minp1],1.f));
+        p[minp2] = glm::vec3(xform * glm::vec4(p[minp2],1.f));
+        if(Distance(p[minp1],p[minp2]) == 0.f) {
+            p[minp1] = sphere.uniformSample(RDST::unifRand(), RDST::unifRand());
+            p[minp2] = sphere.uniformSample(RDST::unifRand(), RDST::unifRand());
+        }
 
         counter++;
     }
     *minDist = mind*2.f;
+    printf("mindist: %f\n", mind);
+    printf("maxdist: %f\n", maxd);
 
     /* Write out the points in your favorite format */
     //Allocate memory (smart pointer to a vec3 array)
     boost::shared_ptr< std::vector<glm::vec3> > pPointVec = boost::shared_ptr< std::vector<glm::vec3> >(new std::vector<glm::vec3>());
     pPointVec->reserve(n);
     for (int i=0; i<numPoints; ++i) {
-        pPointVec->push_back(glm::vec3(p[i].x + sphere.getCenter().x, p[i].y + sphere.getCenter().y, p[i].z + sphere.getCenter().z));
+        pPointVec->push_back(p[i]);
     }
     return pPointVec;
 }
 
-void Normalise(glm::vec3* p, float r)
+void Normalise(glm::vec3* p, float r, glm::vec3 center)
 {
     float l;
 
-    l = r / sqrtf(p->x*p->x + p->y*p->y + p->z*p->z);
+    float x = p->x - center.x;
+    float y = p->y - center.y;
+    float z = p->z - center.z;
+    l = r / sqrtf(x*x + y*y + z*z);
     p->x *= l;
     p->y *= l;
     p->z *= l;
+    p->x += center.x;
+    p->y += center.y;
+    p->z += center.z;
 }
 
 float Distance(glm::vec3 p1, glm::vec3 p2)
