@@ -292,10 +292,10 @@ namespace RDST
    glm::vec3
    Triangle::uniformSample(float u1, float u2) const
    {
-      float su1 = sqrtf(u1);
-      float u = 1.f - su1;
-      float v = u2 * su1;
-      glm::vec3 p = u*_vert0 + v*_vert1 + (1-u-v)*_vert2;
-      return glm::vec3(getModelXform()*glm::vec4(p,1.f));
+       float su1 = sqrtf(u1);
+       float u = 1.f - su1;
+       float v = u2 * su1;
+       glm::vec3 p = u*_vert0 + v*_vert1 + (1-u-v)*_vert2;
+       return glm::vec3(getModelXform()*glm::vec4(p,1.f));
    }
 }
