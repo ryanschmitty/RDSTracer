@@ -7,7 +7,7 @@
 
 #include "POVRayParser.h"
 #include "RDSbvh.h"
-#include "BourkePointDist.h"
+#include "RDSPointDist.h"
 #include <iostream>
 #include <sstream>
 #include <cctype>
@@ -66,7 +66,7 @@ namespace RDST
             //Do the box sampling
             BoxPtr pBox = ParseBox(line);
             float minDist = 0.f;
-            boost::shared_ptr< std::vector<glm::vec3> > pSampleVec = Bourke::generateDistributedPoints(500, *pBox, &minDist);
+            boost::shared_ptr< std::vector<glm::vec3> > pSampleVec = generateDistributedPoints(500, *pBox, &minDist);
             std::vector<glm::vec3>::const_iterator cit = pSampleVec->begin();
             for (; cit != pSampleVec->end(); ++cit) {
                objs->push_back(SpherePtr(new Sphere(*cit, minDist, pBox->getColor(), glm::mat4(1.f), Finish(0.2f, 0.8f))));
@@ -93,10 +93,10 @@ namespace RDST
             //TODO: go back to this
             //objs->push_back(ParseSphere(line));
 
-            //SurfGen, using Bourke's (slow) method
+            //SurfGen, using a slow method
             SpherePtr pSphere = ParseSphere(line);
             float minDist = 0.f;
-            boost::shared_ptr< std::vector<glm::vec3> > pSampleVec = Bourke::generateDistributedPoints(500, *pSphere, 100000, &minDist);
+            boost::shared_ptr< std::vector<glm::vec3> > pSampleVec = generateDistributedPoints(500, *pSphere, 100000, &minDist);
             std::vector<glm::vec3>::const_iterator cit = pSampleVec->begin();
             for (; cit != pSampleVec->end(); ++cit) {
                objs->push_back(SpherePtr(new Sphere(*cit, minDist, pSphere->getColor(), glm::mat4(1.f), Finish(0.2f, 0.8f))));
@@ -114,7 +114,7 @@ namespace RDST
             //Do the box sampling
             TrianglePtr pTri = ParseTriangle(line);
             float minDist = 0.f;
-            boost::shared_ptr< std::vector<glm::vec3> > pSampleVec = Bourke::generateDistributedPoints(500, *pTri, 10000, &minDist);
+            boost::shared_ptr< std::vector<glm::vec3> > pSampleVec = generateDistributedPoints(500, *pTri, 10000, &minDist);
             std::vector<glm::vec3>::const_iterator cit = pSampleVec->begin();
             for (; cit != pSampleVec->end(); ++cit) {
                objs->push_back(SpherePtr(new Sphere(*cit, minDist, pTri->getColor(), glm::mat4(1.f), Finish(0.2f, 0.8f))));
