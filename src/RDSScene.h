@@ -536,6 +536,58 @@ namespace RDST
    typedef boost::shared_ptr<Plane> PlanePtr;
    typedef boost::shared_ptr<const Plane> ConstPlanePtr;
    typedef boost::shared_ptr< std::vector<PlanePtr> > PlanePtrListPtr;
+   
+   //---------------------------------------------------------------------------
+   // Disk Class
+   //---------------------------------------------------------------------------
+   class Disk: public GeomObject
+   {
+   public:
+      explicit Disk(const glm::vec3& center = glm::vec3(0.f, 0.f, 0.f),
+                    const glm::vec3& normal = glm::vec3(0.f, 1.f, 0.f),
+                    float radius = 1.f,
+                    const glm::vec4& color = glm::vec4(1.f, 1.f, 1.f, 1.f),
+                    const glm::mat4& modelXform = glm::mat4(1.f),
+                    const Finish& finish = Finish())
+      : GeomObject(color, modelXform, finish),
+        _center(center),
+        _normal(normal),
+        _radius(radius),
+        _radiusSquared(radius*radius)
+      {
+         Box b = Box(center+glm::vec3(-radius), center+glm::vec3(radius), glm::vec4(1.f), modelXform);
+         _bbox = b.getWorldBounds();
+      }
+
+      //Center, normal, and radius define a disk
+      const glm::vec3& getCenter() const
+      { return _center; }
+      const glm::vec3& getNormal() const
+      { return _normal; }
+      float getRadius() const
+      { return _radius; }
+      float getRadiusSquared() const
+      { return _radiusSquared; }
+
+      void setDimensions(const glm::vec3& center, const glm::vec3& normal, float radius) {
+         _center = center; _normal = normal; _radius = radius; _radiusSquared = radius*radius;
+         Box b = Box(center+glm::vec3(-radius), center+glm::vec3(radius), glm::vec4(1.f), getModelXform());
+         _bbox = b.getWorldBounds();
+      }
+
+      //Intersection
+      Intersection* intersect(const Ray& ray) const;
+
+      float getSurfaceArea() const
+      { return PI * getRadiusSquared(); }
+
+   private:
+      glm::vec3 _center, _normal;
+      float     _radius, _radiusSquared;
+   };
+   typedef boost::shared_ptr<Disk> DiskPtr;
+   typedef boost::shared_ptr<const Disk> ConstDiskPtr;
+   typedef boost::shared_ptr< std::vector<DiskPtr> > DiskPtrListPtr;
 
    //---------------------------------------------------------------------------
    // Sphere class
@@ -567,7 +619,8 @@ namespace RDST
 
       void setDimensions(const glm::vec3& center, float radius) {
          _center = center; _radius = radius; _radiusSquared = radius*radius;
-        _bbox = BBox(glm::vec3(getModelXform()*glm::vec4(center,1.f))); _bbox.expand(radius);
+         Box b = Box(center+glm::vec3(-radius), center+glm::vec3(radius), glm::vec4(1.f), getModelXform());
+         _bbox = b.getWorldBounds();
       }
 
       //Intersection

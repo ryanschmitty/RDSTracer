@@ -7,7 +7,7 @@
 
 #include "POVRayParser.h"
 #include "RDSbvh.h"
-#include "RDSPointDist.h"
+#include "RDSPointDistribution.h"
 #include "RDSSurfelCloud.h"
 #include <iostream>
 #include <sstream>
@@ -64,14 +64,14 @@ namespace RDST
 
             //Get actual geometry
             BoxPtr pBox = ParseBox(line);
-            objs->push_back(pBox);
+            //objs->push_back(pBox);
 
             //Get point cloud and generate surfels
             float minDist = 0.f;
             boost::shared_ptr< std::vector<glm::vec3> > pPoints = GenerateDistributedPoints(500, *pBox, &minDist);
             std::vector<glm::vec3>::const_iterator cit = pPoints->begin();
             for (; cit != pPoints->end(); ++cit) {
-                surfels->push_back(SpherePtr(new Sphere(*cit, minDist, pBox->getColor(), glm::mat4(1.f), Finish(0.2f, 0.8f))));
+                objs->push_back(DiskPtr(new Disk(*cit, glm::vec3(0,0,-1), minDist, pBox->getColor(), glm::mat4(1.f), Finish(0.2f, 0.8f))));
             }
 
          }
@@ -94,14 +94,14 @@ namespace RDST
 
             //Get actual geometry
             SpherePtr pSphere = ParseSphere(line);
-            objs->push_back(pSphere);
+            //objs->push_back(pSphere);
 
             //Get point cloud and generate surfels
             float minDist = 0.f;
             boost::shared_ptr< std::vector<glm::vec3> > pPoints = GenerateDistributedPoints(500, *pSphere, 100000, &minDist);
             std::vector<glm::vec3>::const_iterator cit = pPoints->begin();
             for (; cit != pPoints->end(); ++cit) {
-               surfels->push_back(SpherePtr(new Sphere(*cit, minDist, pSphere->getColor(), glm::mat4(1.f), Finish(0.2f, 0.8f))));
+               objs->push_back(DiskPtr(new Disk(*cit, glm::vec3(0,0,-1), minDist, pSphere->getColor(), glm::mat4(1.f), Finish(0.2f, 0.8f))));
             }
 
          }
@@ -112,14 +112,14 @@ namespace RDST
 
             //Get actual geometry
             TrianglePtr pTri = ParseTriangle(line);
-            objs->push_back(pTri);
+            //objs->push_back(pTri);
             
             //Get point cloud and generate surfels
             float minDist = 0.f;
             boost::shared_ptr< std::vector<glm::vec3> > pPoints = GenerateDistributedPoints(500, *pTri, 10000, &minDist);
             std::vector<glm::vec3>::const_iterator cit = pPoints->begin();
             for (; cit != pPoints->end(); ++cit) {
-               surfels->push_back(SpherePtr(new Sphere(*cit, minDist, pTri->getColor(), glm::mat4(1.f), Finish(0.2f, 0.8f))));
+               objs->push_back(DiskPtr(new Disk(*cit, pTri->getNormal(), minDist, pTri->getColor(), glm::mat4(1.f), Finish(0.2f, 0.8f))));
             }
 
 

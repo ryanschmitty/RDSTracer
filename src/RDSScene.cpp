@@ -259,6 +259,30 @@ namespace RDST
       return new Intersection(true, t, ray.d, ray.o + (ray.d*t), glm::normalize(getNormalXform()*n), Surface(getColor(), getFinish()), false);
    }
 
+   //Disk Intersection
+   Intersection*
+   Disk::intersect(const Ray& ray) const
+   {
+       //Setup transformed Ray
+       Ray xr = transformRay(ray);
+       //Intersection code
+       Plane p(getNormal(), 0.f, getColor(), getModelXform(), getFinish()); //TODO: solve for proper distance
+       Intersection* pInt = p.intersect(xr);
+       if (pInt != NULL) {
+           if (pInt->hit) {
+               glm::vec3 xc = glm::vec3(getModelXform() * glm::vec4(getCenter(),1.f));
+               glm::vec3 v2 = pInt->p - xc;
+               v2 *= v2;
+               float length2 = v2.x+v2.y+v2.z;
+               if (length2 < getRadiusSquared()) {
+                   return pInt;
+               }
+           }
+           delete pInt;
+       }
+       return NULL;
+   }
+
    //Triangle Intersection
    Intersection*
    Triangle::intersect(const Ray& ray) const

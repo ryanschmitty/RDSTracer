@@ -1,12 +1,12 @@
 /**
-* RDSPointDist.h
+* RDSPointDistribution.h
 * --------------------
 * Functions to distribute points on geometry
 * Author: Ryan Schmitt
 */
 
-#ifndef __RDS_POINT_DIST_H__
-#define __RDS_POINT_DIST_H__
+#ifndef __RDS_POINT_DISTRIBUTION_H__
+#define __RDS_POINT_DISTRIBUTION_H__
 
 #define ABS(x) (x < 0 ? -(x) : (x))
 
@@ -76,7 +76,7 @@ namespace RDST
 
         //Record min distance
         FindClosestPoints(&minp1, &minp2, &mind, pPointVec);
-        *minDist = 2.f*mind;
+        *minDist = mind;
 
         return pPointVec;
     }
@@ -160,7 +160,7 @@ namespace RDST
 
         //Record min distance
         FindClosestPoints(&minp1, &minp2, &mind, pPointVec);
-        *minDist = 2.f*mind;
+        *minDist = mind;
 
         return pPointVec;
     }
@@ -212,7 +212,7 @@ namespace RDST
         FindClosestPoints(&minp1, &minp2, &mind, p);
 
         //Grab minimum distance
-        *minDist = 2.f*mind;
+        *minDist = mind;
 
         return p;
     }
