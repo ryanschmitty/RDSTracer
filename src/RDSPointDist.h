@@ -31,7 +31,7 @@ namespace RDST
      * Generate sample points for a triangle.
      */
     boost::shared_ptr< std::vector<glm::vec3> >
-    generateDistributedPoints(int numPoints, const RDST::Triangle& tri, int maxIterations, float* minDist)
+    GenerateDistributedPoints(int numPoints, const RDST::Triangle& tri, int maxIterations, float* minDist)
     {
         int minp1, minp2;
         float mind;
@@ -85,7 +85,7 @@ namespace RDST
      * Generate sample points for a box
      */
     boost::shared_ptr< std::vector<glm::vec3> >
-    generateDistributedPoints(int numPoints, const RDST::Box& b, float* minDist)
+    GenerateDistributedPoints(int numPoints, const RDST::Box& b, float* minDist)
     {
         int n = 3*numPoints;
         int minp1, minp2;
@@ -169,7 +169,7 @@ namespace RDST
      * Generate points for a Sphere.
      */
     boost::shared_ptr< std::vector<glm::vec3> >
-    generateDistributedPoints(int numPoints, const RDST::Sphere& sphere, int maxIterations, float* minDist)
+    GenerateDistributedPoints(int numPoints, const RDST::Sphere& sphere, int maxIterations, float* minDist)
     {
         static const int MULTIPLIER = 4;
         int i,j,n;

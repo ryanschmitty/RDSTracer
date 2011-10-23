@@ -8,6 +8,7 @@
 #include "POVRayParser.h"
 #include "RDSbvh.h"
 #include "RDSPointDist.h"
+#include "RDSSurfelCloud.h"
 #include <iostream>
 #include <sstream>
 #include <cctype>
@@ -27,6 +28,7 @@ namespace RDST
       boost::shared_ptr< std::vector<GeomObjectPtr> > areaLights(new std::vector<GeomObjectPtr>());
       boost::shared_ptr< std::vector<GeomObjectPtr> > objs(new std::vector<GeomObjectPtr>());
       boost::shared_ptr< std::vector<GeomObjectPtr> > planes(new std::vector<GeomObjectPtr>());
+      boost::shared_ptr< std::vector<GeomObjectPtr> > surfels(new std::vector<GeomObjectPtr>());
 
       std::string line;
       std::ifstream file(fileToParse.c_str());
@@ -60,16 +62,16 @@ namespace RDST
             line = line.substr(pos);
             GetWholeObject(line, file);
 
-            //TODO: go back to this.
-//            objs->push_back(ParseBox(line));
-
-            //Do the box sampling
+            //Get actual geometry
             BoxPtr pBox = ParseBox(line);
+            objs->push_back(pBox);
+
+            //Get point cloud and generate surfels
             float minDist = 0.f;
-            boost::shared_ptr< std::vector<glm::vec3> > pSampleVec = generateDistributedPoints(500, *pBox, &minDist);
-            std::vector<glm::vec3>::const_iterator cit = pSampleVec->begin();
-            for (; cit != pSampleVec->end(); ++cit) {
-               objs->push_back(SpherePtr(new Sphere(*cit, minDist, pBox->getColor(), glm::mat4(1.f), Finish(0.2f, 0.8f))));
+            boost::shared_ptr< std::vector<glm::vec3> > pPoints = GenerateDistributedPoints(500, *pBox, &minDist);
+            std::vector<glm::vec3>::const_iterator cit = pPoints->begin();
+            for (; cit != pPoints->end(); ++cit) {
+                surfels->push_back(SpherePtr(new Sphere(*cit, minDist, pBox->getColor(), glm::mat4(1.f), Finish(0.2f, 0.8f))));
             }
 
          }
@@ -90,16 +92,16 @@ namespace RDST
             line = line.substr(pos);
             GetWholeObject(line, file);
 
-            //TODO: go back to this
-            //objs->push_back(ParseSphere(line));
-
-            //SurfGen, using a slow method
+            //Get actual geometry
             SpherePtr pSphere = ParseSphere(line);
+            objs->push_back(pSphere);
+
+            //Get point cloud and generate surfels
             float minDist = 0.f;
-            boost::shared_ptr< std::vector<glm::vec3> > pSampleVec = generateDistributedPoints(500, *pSphere, 100000, &minDist);
-            std::vector<glm::vec3>::const_iterator cit = pSampleVec->begin();
-            for (; cit != pSampleVec->end(); ++cit) {
-               objs->push_back(SpherePtr(new Sphere(*cit, minDist, pSphere->getColor(), glm::mat4(1.f), Finish(0.2f, 0.8f))));
+            boost::shared_ptr< std::vector<glm::vec3> > pPoints = GenerateDistributedPoints(500, *pSphere, 100000, &minDist);
+            std::vector<glm::vec3>::const_iterator cit = pPoints->begin();
+            for (; cit != pPoints->end(); ++cit) {
+               surfels->push_back(SpherePtr(new Sphere(*cit, minDist, pSphere->getColor(), glm::mat4(1.f), Finish(0.2f, 0.8f))));
             }
 
          }
@@ -108,16 +110,16 @@ namespace RDST
             line = line.substr(pos);
             GetWholeObject(line, file);
 
-            //TODO: go back to this
-            //objs->push_back(ParseTriangle(line));
-            
-            //Do the box sampling
+            //Get actual geometry
             TrianglePtr pTri = ParseTriangle(line);
+            objs->push_back(pTri);
+            
+            //Get point cloud and generate surfels
             float minDist = 0.f;
-            boost::shared_ptr< std::vector<glm::vec3> > pSampleVec = generateDistributedPoints(500, *pTri, 10000, &minDist);
-            std::vector<glm::vec3>::const_iterator cit = pSampleVec->begin();
-            for (; cit != pSampleVec->end(); ++cit) {
-               objs->push_back(SpherePtr(new Sphere(*cit, minDist, pTri->getColor(), glm::mat4(1.f), Finish(0.2f, 0.8f))));
+            boost::shared_ptr< std::vector<glm::vec3> > pPoints = GenerateDistributedPoints(500, *pTri, 10000, &minDist);
+            std::vector<glm::vec3>::const_iterator cit = pPoints->begin();
+            for (; cit != pPoints->end(); ++cit) {
+               surfels->push_back(SpherePtr(new Sphere(*cit, minDist, pTri->getColor(), glm::mat4(1.f), Finish(0.2f, 0.8f))));
             }
 
 
@@ -127,7 +129,7 @@ namespace RDST
          }
       }
       std::cout << "Done." << std::endl;
-      return SceneDescription(pCam, lights, areaLights, objs, planes, BVH(objs));
+      return SceneDescription(pCam, lights, areaLights, objs, planes, BVH(objs), SurfelCloudPtr(new SurfelCloud(surfels)));
    }
 
    std::string&
