@@ -26,6 +26,7 @@ namespace RDST
     void Normalise(glm::vec3 *,float, glm::vec3);
     float Distance(glm::vec3,glm::vec3);
     void FindClosestPoints(int*, int*, float*, boost::shared_ptr< std::vector<glm::vec3> >);
+    void FindClosestPoints(int*, int*, float*, boost::shared_ptr< std::vector<glm::vec4> >);
 
     /*
      * Generate sample points for a triangle.
@@ -76,7 +77,7 @@ namespace RDST
 
         //Record min distance
         FindClosestPoints(&minp1, &minp2, &mind, pPointVec);
-        *minDist = mind;
+        *minDist = 2.f*mind;
 
         return pPointVec;
     }
@@ -84,7 +85,7 @@ namespace RDST
     /*
      * Generate sample points for a box
      */
-    boost::shared_ptr< std::vector<glm::vec3> >
+    boost::shared_ptr< std::vector<glm::vec4> >
     GenerateDistributedPoints(int numPoints, const RDST::Box& b, float* minDist)
     {
         int n = 3*numPoints;
@@ -95,7 +96,7 @@ namespace RDST
         n = pointsPerDim * pointsPerDim * 6;
 
         //Allocate memory (smart pointer to a vec3 array)
-        boost::shared_ptr< std::vector<glm::vec3> > pPointVec = boost::shared_ptr< std::vector<glm::vec3> >(new std::vector<glm::vec3>());
+        boost::shared_ptr< std::vector<glm::vec4> > pPointVec = boost::shared_ptr< std::vector<glm::vec4> >(new std::vector<glm::vec4>());
         pPointVec->reserve(n);
 
         for (int side = 0; side < 6; ++side) {
@@ -109,42 +110,42 @@ namespace RDST
     //                float beta  = (float)vStep / (pointsPerDim);
                     float x,y,z;
                     if (side == 0) {
-                        //small z plane
+                        //small z plane, normal = <0, 0, -1>
                         x = (1.f-alpha)*start.x + alpha*end.x;
                         y = (1.f-beta) *start.y + beta *end.y;
                         z = start.z;
                     }
                     else if (side == 2) {
-                        //large z plane
+                        //large z plane, normal = <0, 0, 1>
                         x = (1.f-alpha)*start.x + alpha*end.x;
                         y = (1.f-beta) *start.y + beta *end.y;
                         z = end.z;
                     }
                     else if (side == 3) {
-                        //small x plane
+                        //small x plane, normal = <-1, 0, 0>
                         x = start.x;
                         y = (1.f-alpha)*start.y + alpha*end.y;
                         z = (1.f-beta) *start.z + beta *end.z;
                     }
                     else if (side == 1) {
-                        //large x plane
+                        //large x plane, normal = <1, 0, 0>
                         x = end.x;
                         y = (1.f-alpha)*start.y + alpha*end.y;
                         z = (1.f-beta) *start.z + beta *end.z;
                     }
                     else if (side == 4) {
-                        //small y plane
+                        //small y plane, normal = <0, -1, 0>
                         x = (1.f-alpha)*start.x + alpha*end.x;
                         y = start.y;
                         z = (1.f-beta) *start.z + beta *end.z;
                     }
                     else /*if (side == 5)*/ {
-                        //large y plane
+                        //large y plane, normal <0, 1, 0>
                         x = (1.f-alpha)*start.x + alpha*end.x;
                         y = end.y;
                         z = (1.f-beta) *start.z + beta *end.z;
                     }
-                    pPointVec->push_back(glm::vec3(x,y,z));
+                    pPointVec->push_back(glm::vec4(x,y,z,side));
                 }
             }
         }
@@ -160,7 +161,7 @@ namespace RDST
 
         //Record min distance
         FindClosestPoints(&minp1, &minp2, &mind, pPointVec);
-        *minDist = mind;
+        *minDist = 2.f*mind;
 
         return pPointVec;
     }
@@ -212,7 +213,7 @@ namespace RDST
         FindClosestPoints(&minp1, &minp2, &mind, p);
 
         //Grab minimum distance
-        *minDist = mind;
+        *minDist = 2.f*mind;
 
         return p;
     }
@@ -252,6 +253,23 @@ namespace RDST
         for (int i=0;i<p->size()-1;i++) {
             for (int j=i+1;j<p->size();j++) {
                 if ((d = Distance((*p)[i],(*p)[j])) < *mind) {
+                    *mind = d;
+                    *minp1 = i;
+                    *minp2 = j;
+                }
+            }
+        }
+    }
+
+    void FindClosestPoints(int* minp1, int* minp2, float* mind, boost::shared_ptr< std::vector<glm::vec4> > p)
+    {
+        float d;
+        *minp1 = 0;
+        *minp2 = 1;
+        *mind = Distance(glm::vec3((*p)[*minp1]),glm::vec3((*p)[*minp2]));
+        for (int i=0;i<p->size()-1;i++) {
+            for (int j=i+1;j<p->size();j++) {
+                if ((d = Distance(glm::vec3((*p)[i]),glm::vec3((*p)[j]))) < *mind) {
                     *mind = d;
                     *minp1 = i;
                     *minp2 = j;

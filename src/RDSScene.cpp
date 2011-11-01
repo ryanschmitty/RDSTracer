@@ -266,7 +266,17 @@ namespace RDST
        //Setup transformed Ray
        Ray xr = transformRay(ray);
        //Intersection code
-       Plane p(getNormal(), 0.f, getColor(), getModelXform(), getFinish()); //TODO: solve for proper distance
+           //TODO: move this plane creation to disk construction.
+           glm::vec3 A = getCenter();
+           glm::vec3 B = getCenter() + getNormal();
+           glm::vec3 AB = B-A;
+           glm::vec3 P = glm::vec3(0.f);
+           float ABLen2 = AB.x*AB.x + AB.y*AB.y + AB.z*AB.z;
+           float t = glm::dot(AB, P-A) / ABLen2;
+           glm::vec3 point = A + t*getNormal();
+           float dist = glm::length(point - getCenter());
+           if (t>0) dist *= -1.f;
+           Plane p(getNormal(), dist, getColor(), getModelXform(), getFinish());
        Intersection* pInt = p.intersect(xr);
        if (pInt != NULL) {
            if (pInt->hit) {
