@@ -242,6 +242,28 @@ namespace RDST
       glm::vec4 actualPoint = glm::vec4((unitSample*_radius) + _center, 1.f);
       return glm::vec3(getModelXform()*actualPoint);
    }
+   
+   //Disk uniform world space sample point
+   glm::vec3
+   Disk::uniformSample(float rand1, float rand2) const
+   {
+       float sqrtR = sqrtf(rand1*getRadius());
+       float phi = 2.f*PI*rand2;
+       float x = sqrtR * cosf(phi);
+       float y = sqrtR * sinf(phi);
+       glm::vec3 unitSample(x,y,0.f);
+       float len = glm::length(unitSample);
+       // Create world space xform
+       glm::vec3 n = getNormal();
+       glm::vec3 k = glm::vec3(0,1,0);
+       glm::vec3 tan = fabs(n.y) == 1.f ? glm::vec3(1,0,0) : glm::normalize(k - ((glm::dot(k, n))*n)); //Gram-Schmidt Process
+       glm::vec3 bin = glm::cross(n, tan);
+       glm::mat3 xform = glm::mat3(tan, n, bin);
+       //Finish up point generation
+       unitSample = len*glm::normalize(xform*glm::vec3(x,y,0.f));
+       glm::vec4 actualPoint = glm::vec4(getCenter() + unitSample, 1.f);
+       return glm::vec3(getModelXform()*actualPoint);
+   }
 
    //Plane Intersection
    Intersection*

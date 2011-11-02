@@ -10,11 +10,11 @@ camera {
 }
 
 //TOP LIGHT
-triangle { <-1,10,1>, <-1,10,-1>, <1,10,-1>
+triangle { <-1,9,1>, <-1,9,-1>, <1,9,-1>
    pigment { color rgb <1, 0.85, 0.43>}
    finish { emissive 2 }
 }
-triangle { <1,10,1>, <-1,10,1>, <1,10,-1>
+triangle { <1,9,1>, <-1,9,1>, <1,9,-1>
    pigment { color rgb <1, 0.85, 0.43>}
    finish { emissive 2 }
 }

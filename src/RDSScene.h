@@ -580,6 +580,9 @@ namespace RDST
 
       float getSurfaceArea() const
       { return PI * getRadiusSquared(); }
+      
+      //Uniform Sample Point
+      glm::vec3 uniformSample(float u1, float u2) const;
 
    private:
       glm::vec3 _center, _normal;

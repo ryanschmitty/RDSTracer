@@ -64,7 +64,7 @@ namespace RDST
 
             //Get actual geometry
             BoxPtr pBox = ParseBox(line);
-            //objs->push_back(pBox);
+//            objs->push_back(pBox);
 
             //Get point cloud and generate surfels
             float minDist = 0.f;
@@ -85,7 +85,7 @@ namespace RDST
                 else /* (cit->w == 5) */
                     n = glm::vec3( 0, 1, 0);
                 n = glm::normalize(pBox->getNormalXform() * n);
-                objs->push_back(DiskPtr(new Disk(glm::vec3(*cit), n, minDist, pBox->getColor(), glm::mat4(1.f), Finish(0.2f, 0.8f))));
+                objs->push_back(DiskPtr(new Disk(glm::vec3(*cit), n, minDist/3.f, pBox->getColor(), glm::mat4(1.f), pBox->getFinish())));
             }
 
          }
@@ -115,8 +115,8 @@ namespace RDST
             boost::shared_ptr< std::vector<glm::vec3> > pPoints = GenerateDistributedPoints(500, *pSphere, 100000, &minDist);
             std::vector<glm::vec3>::const_iterator cit = pPoints->begin();
             for (; cit != pPoints->end(); ++cit) {
-               glm::vec3 n = glm::normalize( pSphere->getNormalXform() * glm::normalize(*cit-pSphere->getCenter()) );
-               objs->push_back(DiskPtr(new Disk(*cit, n, minDist, pSphere->getColor(), glm::mat4(1.f), Finish(0.2f, 0.8f))));
+                glm::vec3 n = glm::normalize( pSphere->getNormalXform() * glm::normalize(*cit-pSphere->getCenter()) );
+                objs->push_back(DiskPtr(new Disk(*cit, n, minDist/3.f, pSphere->getColor(), glm::mat4(1.f), pSphere->getFinish())));
             }
 
          }
@@ -127,14 +127,14 @@ namespace RDST
 
             //Get actual geometry
             TrianglePtr pTri = ParseTriangle(line);
-            //objs->push_back(pTri);
+//            objs->push_back(pTri);
             
             //Get point cloud and generate surfels
             float minDist = 0.f;
             boost::shared_ptr< std::vector<glm::vec3> > pPoints = GenerateDistributedPoints(500, *pTri, 10000, &minDist);
             std::vector<glm::vec3>::const_iterator cit = pPoints->begin();
             for (; cit != pPoints->end(); ++cit) {
-               objs->push_back(DiskPtr(new Disk(*cit, glm::normalize(pTri->getNormalXform()*pTri->getNormal()), minDist, pTri->getColor(), glm::mat4(1.f), Finish(0.2f, 0.8f))));
+                objs->push_back(DiskPtr(new Disk(*cit, glm::normalize(pTri->getNormalXform()*pTri->getNormal()), minDist/3.f, pTri->getColor(), glm::mat4(1.f), pTri->getFinish())));
             }
 
 

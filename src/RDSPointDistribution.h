@@ -100,14 +100,12 @@ namespace RDST
         pPointVec->reserve(n);
 
         for (int side = 0; side < 6; ++side) {
-            glm::vec3 start = glm::vec3(b.getModelXform()*glm::vec4(b.getSmallCorner(),1.f));
-            glm::vec3 end = glm::vec3(b.getModelXform()*glm::vec4(b.getLargeCorner(),1.f));
+            glm::vec3 start = b.getSmallCorner();
+            glm::vec3 end = b.getLargeCorner();
             for (int uStep = 0; uStep < pointsPerDim; ++uStep) {
                 for (int vStep = 0; vStep < pointsPerDim; ++vStep) {
                     float alpha = ((float)uStep+RDST::unifRand()) / (pointsPerDim);
                     float beta  = ((float)vStep+RDST::unifRand()) / (pointsPerDim);
-    //                float alpha = (float)uStep / (pointsPerDim);
-    //                float beta  = (float)vStep / (pointsPerDim);
                     float x,y,z;
                     if (side == 0) {
                         //small z plane, normal = <0, 0, -1>
@@ -145,7 +143,8 @@ namespace RDST
                         y = end.y;
                         z = (1.f-beta) *start.z + beta *end.z;
                     }
-                    pPointVec->push_back(glm::vec4(x,y,z,side));
+                    glm::vec4 finalPoint = glm::vec4(glm::vec3(b.getModelXform()*glm::vec4(x,y,z,1.f)), side);
+                    pPointVec->push_back(finalPoint);
                 }
             }
         }

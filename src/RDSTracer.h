@@ -19,6 +19,9 @@
 #include "RDSSceneDesc.h"
 #include "POVRayParser.h"
 
+#define MAX_RECURSION_DEPTH 5
+#define RAY_EPSILON 0.0001f
+
 namespace RDST
 {
    /**
@@ -37,7 +40,7 @@ namespace RDST
    public:
       /* Ray tracing functions */
       static void RayTrace(const SceneDescription& scene, Image& image);
-   private:
+//   private:
       /* Helper Functions */
       static RayListPtr    GenerateRays(const Camera& cam, int width, int height, const Options& opts);
       static glm::vec3     TraceRay(Ray& ray, const SceneDescription& scene, unsigned int recursionsLeft);

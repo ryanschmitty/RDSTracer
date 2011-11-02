@@ -14,10 +14,8 @@
 #include "RandUtil.h"
 #include "RDSFilters.h"
 #include "RDSSamplers.h"
+#include "RDSIndirectIllum.h"
 #include <omp.h>
-
-#define MAX_RECURSION_DEPTH 5
-#define RAY_EPSILON 0.0001f
 
 namespace RDST
 {
@@ -241,6 +239,7 @@ namespace RDST
       if (scene.opts().bounces > 0 && scene.opts().monteCarloSamples > 0) {
          int bounces = (int)recursionsLeft > scene.opts().bounces ? scene.opts().bounces : recursionsLeft;
          indirect = CalcIndirectIllum(intrs, scene, bounces);
+//         indirect = IndirectIllumMonteCarlo(intrs, scene, bounces);
       }
 
       return (direct + reflection + refraction) + (PI*indirect);
