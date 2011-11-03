@@ -67,7 +67,7 @@ namespace RDST
         }
 
         // Prune the points
-        while (pPointVec->size() > numPoints) {
+        while ((int)pPointVec->size() > numPoints) {
 
             FindClosestPoints(&minp1, &minp2, &mind, pPointVec);
 
@@ -90,9 +90,9 @@ namespace RDST
     {
         int n = 3*numPoints;
         int minp1, minp2;
-        float mind, maxd, d;
+        float mind;
         int pointsPerSide = n / 6;
-        int pointsPerDim = sqrtf(pointsPerSide);
+        int pointsPerDim = (int)sqrtf((float)pointsPerSide);
         n = pointsPerDim * pointsPerDim * 6;
 
         //Allocate memory (smart pointer to a vec3 array)
@@ -150,7 +150,7 @@ namespace RDST
         }
 
         // Prune the points
-        while (pPointVec->size() > numPoints) {
+        while ((int)pPointVec->size() > numPoints) {
 
             FindClosestPoints(&minp1, &minp2, &mind, pPointVec);
 
@@ -172,13 +172,12 @@ namespace RDST
     GenerateDistributedPoints(int numPoints, const RDST::Sphere& sphere, int maxIterations, float* minDist)
     {
         static const int MULTIPLIER = 4;
-        int i,j,n;
+        int n;
         int minp1,minp2;
-        float r,d,mind,maxd;
+        float r,mind;
         glm::mat4 xform;
         glm::vec3 c,p1,p2;
         boost::shared_ptr< std::vector<glm::vec3> > p = boost::shared_ptr< std::vector<glm::vec3> >(new std::vector<glm::vec3>());
-        p->reserve(MULTIPLIER*n);
 
         //Prep vars, enforce minimum points (and maximum)
         n = numPoints;
@@ -198,10 +197,11 @@ namespace RDST
                 p->push_back(v);
             }
         }
-        n = numU1s * numU2s; //ensure accurate count
+        n = numU1s * numU2s; //ensure accurate count and reserve enough space
+        p->reserve(MULTIPLIER*n);
 
         // Prune the points
-        while (p->size() > numPoints) {
+        while ((int)p->size() > numPoints) {
 
             FindClosestPoints(&minp1, &minp2, &mind, p);
 
@@ -249,8 +249,8 @@ namespace RDST
         *minp1 = 0;
         *minp2 = 1;
         *mind = Distance((*p)[*minp1],(*p)[*minp2]);
-        for (int i=0;i<p->size()-1;i++) {
-            for (int j=i+1;j<p->size();j++) {
+        for (int i=0;i<(int)p->size()-1;i++) {
+            for (int j=i+1;j<(int)p->size();j++) {
                 if ((d = Distance((*p)[i],(*p)[j])) < *mind) {
                     *mind = d;
                     *minp1 = i;
@@ -266,8 +266,8 @@ namespace RDST
         *minp1 = 0;
         *minp2 = 1;
         *mind = Distance(glm::vec3((*p)[*minp1]),glm::vec3((*p)[*minp2]));
-        for (int i=0;i<p->size()-1;i++) {
-            for (int j=i+1;j<p->size();j++) {
+        for (int i=0;i<(int)p->size()-1;i++) {
+            for (int j=i+1;j<(int)p->size();j++) {
                 if ((d = Distance(glm::vec3((*p)[i]),glm::vec3((*p)[j]))) < *mind) {
                     *mind = d;
                     *minp1 = i;

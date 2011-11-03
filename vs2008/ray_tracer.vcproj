@@ -193,6 +193,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\RDSIndirectIllum.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\src\RDSScene.cpp"
 				>
 			</File>
@@ -206,10 +210,6 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
-			<File
-				RelativePath="..\src\BourkePointDist.h"
-				>
-			</File>
 			<File
 				RelativePath="..\src\POVRayParser.h"
 				>
@@ -239,6 +239,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\RDSIndirectIllum.h"
+				>
+			</File>
+			<File
+				RelativePath="..\src\RDSPointDistribution.h"
+				>
+			</File>
+			<File
 				RelativePath="..\src\RDSSamplers.h"
 				>
 			</File>
@@ -248,6 +256,10 @@
 			</File>
 			<File
 				RelativePath="..\src\RDSSceneDesc.h"
+				>
+			</File>
+			<File
+				RelativePath="..\src\RDSSurfelCloud.h"
 				>
 			</File>
 			<File
