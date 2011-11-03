@@ -9,7 +9,6 @@
 #define __RDS_SCENE_DESC_H__
 
 #include "RDSScene.h"
-#include "RDSSurfelCloud.h"
 #include "RDSbvh.h"
 
 namespace RDST
@@ -64,7 +63,7 @@ namespace RDST
                                 GeomObjectPtrListPtr geometryObjects,
                                 GeomObjectPtrListPtr planes,
                                 const BVH& bvh,
-                                SurfelCloudPtr surfels,
+                                const BVH& surfels,
                                 const Options& opts = Options())
       : _pCam(pCamera),
         _pLights(lights),
@@ -73,7 +72,7 @@ namespace RDST
         _pPlanes(planes),
         _bvh(bvh),
         _opts(opts),
-        _pSurfelCloud(surfels)
+        _surfelCloud(surfels)
       {}
 
       //Mutable
@@ -91,8 +90,8 @@ namespace RDST
       { _bvh = bvh; }
       void setOpts(const Options& opts)
       { _opts = opts; }
-      void setSurfelCloud(SurfelCloudPtr surfels)
-      { _pSurfelCloud = surfels; }
+      void setSurfelCloud(const BVH& surfels)
+      { _surfelCloud = surfels; }
 
       //Non-mutable
       const Camera& cam() const
@@ -109,8 +108,8 @@ namespace RDST
       { return _bvh; }
       const Options& opts() const
       { return _opts; }
-      const SurfelCloud& surfelCloud() const
-      { return *_pSurfelCloud; }
+      const BVH& surfelCloud() const
+      { return _surfelCloud; }
 
    private:
       CameraPtr            _pCam;
@@ -120,7 +119,7 @@ namespace RDST
       GeomObjectPtrListPtr _pPlanes;
       BVH                  _bvh;
       Options              _opts;
-      SurfelCloudPtr       _pSurfelCloud;
+      BVH                  _surfelCloud;
    };
 }
 

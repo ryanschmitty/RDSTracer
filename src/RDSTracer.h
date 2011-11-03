@@ -50,7 +50,8 @@ namespace RDST
       static void          DoAreaLights(glm::vec3& ambient, glm::vec3& diffuse, glm::vec3& specular, const Intersection& intrs, const SceneDescription& scene);
       static void          DoPointLights(glm::vec3& ambient, glm::vec3& diffuse, glm::vec3& specular, const Intersection& intrs, const SceneDescription& scene);
       static glm::vec3     CalcDirectIllum(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft);
-      static glm::vec3     CalcIndirectIllum(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft);
+      static glm::vec3     CalcIndirectIllumMonteCarlo(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft);
+      static glm::vec3     CalcIndirectIllumPointBased(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft);
       static glm::vec3     CalcReflection(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft);
       static glm::vec3     CalcRefraction(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft);
       static int           VerifyNumSubsamples(int subsamples);
