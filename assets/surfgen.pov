@@ -34,11 +34,12 @@ light_source {<-100, 100, 100> color rgb <1, 1, 1>}
 //}
 
 box { <-1,-1,-1>, <1,1,1>
-   rotate <0, 45, 0>
+   rotate <0, 80, 0>
+//   rotate <0, 45, 0>
    scale 1.5
    translate <1.5, 1.5, 1.5>
    pigment { color rgb <0.76,0.75,0.5> }
-   finish { ambient 0 diffuse 0.2 }
+   finish { ambient 0.6 diffuse 0.8 }
 }
 
 //sphere { <0, 0, 0>, 1

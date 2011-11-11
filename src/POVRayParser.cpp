@@ -14,6 +14,7 @@
 #include <cctype>
 #include <ctime>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 #include <boost/assert.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -64,7 +65,7 @@ namespace RDST
 
             //Get actual geometry
             BoxPtr pBox = ParseBox(line);
-            objs->push_back(pBox);
+//            objs->push_back(pBox);
 
             //Get point cloud and generate surfels
             float minDist = 0.f;
@@ -85,7 +86,17 @@ namespace RDST
                 else /* (cit->w == 5) */
                     n = glm::vec3( 0, 1, 0);
                 n = glm::normalize(pBox->getNormalXform() * n);
-                surfels->push_back(DiskPtr(new Disk(glm::vec3(*cit), n, minDist/3.f, pBox->getColor(), glm::mat4(1.f), pBox->getFinish())));
+                    glm::vec3 k = glm::vec3(0,1,0);
+                    glm::vec3 tan = fabs(n.y) == 1.f ? glm::vec3(1,0,0) : glm::normalize(k - ((glm::dot(k, n))*n)); //Gram-Schmidt Process
+                    glm::vec3 v0,v1,v2;
+                    float randDegreeOffset = unifRand(0.f, 359.f);
+                    v0 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset, n);
+                    v1 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset + 120.f, n);
+                    v2 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset + 240.f, n);
+//                    objs->push_back(TrianglePtr(new Triangle(v0, v1, v2, pBox->getColor(), glm::mat4(1.f), Finish(0.4, 0.6))));
+                    objs->push_back(TrianglePtr(new Triangle(v0, v1, v2, pBox->getColor(), glm::mat4(1.f), pBox->getFinish())));
+                surfels->push_back(TrianglePtr(new Triangle(v0, v1, v2, pBox->getColor(), glm::mat4(1.f), pBox->getFinish())));
+//                surfels->push_back(DiskPtr(new Disk(glm::vec3(*cit), n, minDist, pBox->getColor(), glm::mat4(1.f), pBox->getFinish())));
             }
 
          }
@@ -108,7 +119,7 @@ namespace RDST
 
             //Get actual geometry
             SpherePtr pSphere = ParseSphere(line);
-            objs->push_back(pSphere);
+//            objs->push_back(pSphere);
 
             //Get point cloud and generate surfels
             float minDist = 0.f;
@@ -116,7 +127,17 @@ namespace RDST
             std::vector<glm::vec3>::const_iterator cit = pPoints->begin();
             for (; cit != pPoints->end(); ++cit) {
                 glm::vec3 n = glm::normalize( pSphere->getNormalXform() * glm::normalize(*cit-pSphere->getCenter()) );
-                surfels->push_back(DiskPtr(new Disk(*cit, n, minDist/3.f, pSphere->getColor(), glm::mat4(1.f), pSphere->getFinish())));
+                    glm::vec3 k = glm::vec3(0,1,0);
+                    glm::vec3 tan = fabs(n.y) == 1.f ? glm::vec3(1,0,0) : glm::normalize(k - ((glm::dot(k, n))*n)); //Gram-Schmidt Process
+                    glm::vec3 v0,v1,v2;
+                    float randDegreeOffset = unifRand(0.f, 359.f);
+                    v0 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset, n);
+                    v1 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset + 120.f, n);
+                    v2 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset + 240.f, n);
+//                    objs->push_back(TrianglePtr(new Triangle(v0, v1, v2, pSphere->getColor(), glm::mat4(1.f), Finish(0.4, 0.6))));
+                    objs->push_back(TrianglePtr(new Triangle(v0, v1, v2, pSphere->getColor(), glm::mat4(1.f), pSphere->getFinish())));
+                surfels->push_back(TrianglePtr(new Triangle(v0, v1, v2, pSphere->getColor(), glm::mat4(1.f), pSphere->getFinish())));
+//                surfels->push_back(DiskPtr(new Disk(*cit, n, minDist, pSphere->getColor(), glm::mat4(1.f), pSphere->getFinish())));
             }
 
          }
@@ -127,14 +148,25 @@ namespace RDST
 
             //Get actual geometry
             TrianglePtr pTri = ParseTriangle(line);
-            objs->push_back(pTri);
+//            objs->push_back(pTri);
             
             //Get point cloud and generate surfels
             float minDist = 0.f;
             boost::shared_ptr< std::vector<glm::vec3> > pPoints = GenerateDistributedPoints(500, *pTri, 10000, &minDist);
             std::vector<glm::vec3>::const_iterator cit = pPoints->begin();
             for (; cit != pPoints->end(); ++cit) {
-                surfels->push_back(DiskPtr(new Disk(*cit, glm::normalize(pTri->getNormalXform()*pTri->getNormal()), minDist/3.f, pTri->getColor(), glm::mat4(1.f), pTri->getFinish())));
+                glm::vec3 n = glm::normalize(pTri->getNormalXform() * pTri->getNormal());
+                    glm::vec3 k = glm::vec3(0,1,0);
+                    glm::vec3 tan = fabs(n.y) == 1.f ? glm::vec3(1,0,0) : glm::normalize(k - ((glm::dot(k, n))*n)); //Gram-Schmidt Process
+                    glm::vec3 v0,v1,v2;
+                    float randDegreeOffset = unifRand(0.f, 359.f);
+                    v0 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset, n);
+                    v1 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset + 120.f, n);
+                    v2 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset + 240.f, n);
+//                    objs->push_back(TrianglePtr(new Triangle(v0, v1, v2, pTri->getColor(), glm::mat4(1.f), Finish(0.4, 0.6))));
+                    objs->push_back(TrianglePtr(new Triangle(v0, v1, v2, pTri->getColor(), glm::mat4(1.f), pTri->getFinish())));
+                surfels->push_back(TrianglePtr(new Triangle(v0, v1, v2, pTri->getColor(), glm::mat4(1.f), pTri->getFinish())));
+//                surfels->push_back(DiskPtr(new Disk(*cit, n, minDist, pTri->getColor(), glm::mat4(1.f), pTri->getFinish())));
             }
 
 

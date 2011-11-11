@@ -77,7 +77,11 @@ namespace RDST
 
         //Record min distance
         FindClosestPoints(&minp1, &minp2, &mind, pPointVec);
-        *minDist = 2.f*mind;
+        // For disk surfels, we'd use mind as a radius, however, for triangles
+        // we need to solve for the correct distance from the center to each
+        // equilateral vertex such that the surface area is preserved.
+        // Note: we also multiply by 2 to cover any gaps.
+        *minDist = 0.5f*sqrt((3.14159265359*mind*mind) / 1.29903810568);
 
         return pPointVec;
     }
@@ -160,7 +164,11 @@ namespace RDST
 
         //Record min distance
         FindClosestPoints(&minp1, &minp2, &mind, pPointVec);
-        *minDist = 2.f*mind;
+        // For disk surfels, we'd use mind as a radius, however, for triangles
+        // we need to solve for the correct distance from the center to each
+        // equilateral vertex such that the surface area is preserved.
+        // Note: we also multiply by 2 to cover any gaps.
+        *minDist = 0.5f*sqrt((3.14159265359*mind*mind) / 1.29903810568);
 
         return pPointVec;
     }
@@ -209,10 +217,13 @@ namespace RDST
             p->erase(p->begin()+minp1);
         }
 
+        //Record min distance
         FindClosestPoints(&minp1, &minp2, &mind, p);
-
-        //Grab minimum distance
-        *minDist = 2.f*mind;
+        // For disk surfels, we'd use mind as a radius, however, for triangles
+        // we need to solve for the correct distance from the center to each
+        // equilateral vertex such that the surface area is preserved.
+        // Note: we also multiply by 2 to cover any gaps.
+        *minDist = 0.5f*sqrt((3.14159265359*mind*mind) / 1.29903810568);
 
         return p;
     }
