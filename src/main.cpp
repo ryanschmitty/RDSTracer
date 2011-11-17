@@ -348,8 +348,8 @@ int main(int argc, char** argv)
    RDST::Image img(opts.width, opts.height, opts.enableGammaCorrection, opts.gamma);
    RDST::SceneDescription desc = RDST::POVRayParser::ParseFile(opts.povRayFile);
    desc.setOpts(opts);
-   RDST::Tracer::RayTrace(desc, img);
-   img.writeToDisk(opts.imgname);
+//   RDST::Tracer::RayTrace(desc, img);
+//   img.writeToDisk(opts.imgname);
 
    double fsecs = timer.elapsed() - start;
    int secs = (int)fsecs;
@@ -366,4 +366,52 @@ int main(int argc, char** argv)
    if (secs > 0)
       std::cout << secs << "s";
    std::cout << millis << "ms\n";
+
+   //REAL-TIME STUFFS
+   width = curWidth = 800;
+   height = curHeight = 600;
+   elapsedTime = frame = timebase = timeNow = timeLast = 0;
+   model = 0;
+
+   // Create the camera
+   camera = new FlyingCamera(45.0,       // fov
+                             0, 0, 20,   // location
+                             1.0, 300.0);// zNear, zFar
+
+   //Load model
+   bm[0] = new BasicModel("./assets/bunny500.m");
+   bm[1] = new BasicModel("./assets/gargoyle_2k.m");
+   bm[2] = new BasicModel("./assets/dragon10k.m");
+
+   //OpenGL setup
+   glutInit(&argc, argv);
+   glutInitWindowSize(width, height);
+   glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
+   glutCreateWindow("Deferred Shading");
+   glEnable(GL_DEPTH_TEST);
+   glEnable(GL_NORMALIZE);
+   glClearColor(0.0, 0.0, 0.0, 1.0);
+
+   //register callback functions
+   glutDisplayFunc(display);
+   glutIdleFunc(idle);
+   glutReshapeFunc(reshape);
+   glutKeyboardFunc(keyboardDown);
+   glutKeyboardUpFunc(keyboardUp);
+   glutMotionFunc(motion);
+   glutPassiveMotionFunc(passiveMotion);
+
+   //Error check
+   GLenum err = glewInit();
+   if (err != GLEW_OK || !glewIsSupported("GL_VERSION_2_0"))
+   {
+      printf("OpenGL 2.0 not supported. No shaders!\n");
+      printf("%s\n", glewGetErrorString(err));
+      printf("%s\n", (char*)glGetString( GL_VERSION ) );
+      exit(-1);
+   }
+   printf("OpenGL 2.0 supported. Using OpenGL %s \n\n",(char*)glGetString( GL_VERSION ));
+
+   //start the main loop
+   glutMainLoop();
 }
