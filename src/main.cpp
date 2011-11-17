@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <cstdlib>
 #include <ctime>
@@ -40,6 +41,7 @@ bool keysDown[6];
 int mouseX, mouseY;
 const int NUM_MODELS = 3;
 BasicModel* bm[NUM_MODELS];
+RDST::SceneDescription* desc;
 int model;
 int frame, elapsedTime, timebase, timeNow, timeLast;
 float fps;
@@ -157,14 +159,40 @@ void geometry() {
    GLfloat matSpec[4] = {1.0f, 1.0f, 1.0f, 1.0f};
    GLfloat shininess = 128.0f;
 
-   glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, matColor);
-   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, matSpec);
-   glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+//   glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, matColor);
+//   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, matSpec);
+//   glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
 
-   glPushMatrix();
-   glScalef(10.0, 10.0, 10.0);
-   bm[model]->draw();
-   glPopMatrix();
+      glBegin(GL_TRIANGLES);
+   const std::vector<RDST::GeomObjectPtr>& tris = desc->objs();
+   for(std::vector<RDST::GeomObjectPtr>::const_iterator it = tris.begin(); it != tris.end(); ++it) {
+       RDST::Triangle* tri = static_cast<RDST::Triangle*>(&(**it));
+       matColor[0] = tri->getColor().x;
+       matColor[1] = tri->getColor().y;
+       matColor[2] = tri->getColor().z;
+       glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, matColor);
+       glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, matSpec);
+       glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+       glm::vec3 v0 = tri->getVertex0();
+       glm::vec3 v1 = tri->getVertex1();
+       glm::vec3 v2 = tri->getVertex2();
+       glm::vec3 vCp1(v1.x - v0.x, v1.y - v0.y, v1.z - v0.z);
+       glm::vec3 vCp2(v2.x - v0.x, v2.y - v0.y, v2.z - v0.z);
+       glm::vec3 normal = glm::cross(vCp1, vCp2);
+       normal = glm::normalize(normal);
+       glNormal3f(normal.x, normal.y, normal.z);
+       glVertex3f(v0.x, v0.y, v0.z);
+       glNormal3f(normal.x, normal.y, normal.z);
+       glVertex3f(v1.x, v1.y, v1.z);
+       glNormal3f(normal.x, normal.y, normal.z);
+       glVertex3f(v2.x, v2.y, v2.z);
+   }
+   glEnd();
+
+//   glPushMatrix();
+//   glScalef(10.0, 10.0, 10.0);
+//   bm[model]->draw();
+//   glPopMatrix();
 }
 
 void idle() {
@@ -346,8 +374,9 @@ int main(int argc, char** argv)
 
    RDST::Options opts = parseParameters(argc, argv);
    RDST::Image img(opts.width, opts.height, opts.enableGammaCorrection, opts.gamma);
-   RDST::SceneDescription desc = RDST::POVRayParser::ParseFile(opts.povRayFile);
-   desc.setOpts(opts);
+   RDST::SceneDescription localdesc = RDST::POVRayParser::ParseFile(opts.povRayFile);
+   desc = &localdesc;
+   desc->setOpts(opts);
 //   RDST::Tracer::RayTrace(desc, img);
 //   img.writeToDisk(opts.imgname);
 
@@ -367,6 +396,28 @@ int main(int argc, char** argv)
       std::cout << secs << "s";
    std::cout << millis << "ms\n";
 
+
+   //WRITE IT OUT! FOR BASICMODEL
+   std::ofstream surfelFile;
+   surfelFile.open("surfelcloud.m");
+   const std::vector<RDST::GeomObjectPtr>& tris = desc->objs();
+   int i = 1;
+   printf("num objs: %d\n", tris.size());
+   for(std::vector<RDST::GeomObjectPtr>::const_iterator it = tris.begin(); it != tris.end(); ++it) {
+       glm::vec3 v0 = (static_cast<RDST::Triangle*>(&(**it)))->getVertex0();
+       surfelFile << "Vertex " << i++ << "  " << v0.x << " " << v0.y << " " << v0.z << "\n";
+       glm::vec3 v1 = (static_cast<RDST::Triangle*>(&(**it)))->getVertex1();
+       surfelFile << "Vertex " << i++ << "  " << v1.x << " " << v1.y << " " << v1.z << "\n";
+       glm::vec3 v2 = (static_cast<RDST::Triangle*>(&(**it)))->getVertex2();
+       surfelFile << "Vertex " << i++ << "  " << v2.x << " " << v2.y << " " << v2.z << "\n";
+   }
+   int k = 0;
+   for (int j=1; j<=(i-1)/3; ++j) {
+       surfelFile << "Face " << j << "  " << (k+1) << " " << (k+2) << " " << (k+3) << "\n";
+       k+=3;
+   }
+   surfelFile.close();
+
    //REAL-TIME STUFFS
    width = curWidth = 800;
    height = curHeight = 600;
@@ -379,7 +430,7 @@ int main(int argc, char** argv)
                              1.0, 300.0);// zNear, zFar
 
    //Load model
-   bm[0] = new BasicModel("./assets/bunny500.m");
+   bm[0] = new BasicModel("./surfelcloud.m");
    bm[1] = new BasicModel("./assets/gargoyle_2k.m");
    bm[2] = new BasicModel("./assets/dragon10k.m");
 
