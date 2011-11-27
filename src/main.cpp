@@ -23,6 +23,7 @@
 
 #include <glew.h>
 #include <GLUT/glut.h>
+#include "glext.h"
 #include "FlyingCamera.h"
 #include "BasicModel.h"
 #include "ScreenDraw.h"
@@ -45,6 +46,10 @@ RDST::SceneDescription* desc;
 int model;
 int frame, elapsedTime, timebase, timeNow, timeLast;
 float fps;
+GLuint vboId = 0;
+    GLfloat vertices [3*3*500];
+    GLfloat normals  [3*3*500];
+    GLfloat colors   [3*3*500];
 
 /* FUNCTIONS */
 
@@ -61,6 +66,7 @@ void keyboardDown(unsigned char, int, int);
 void keyboardUp(unsigned char, int, int);
 void motion(int, int);
 void passiveMotion(int, int);
+void loadVBO();
 
 void display() {
    timeNow = glutGet(GLUT_ELAPSED_TIME);
@@ -113,7 +119,8 @@ void drawCamPos() {
 
 void drawScene() {
    //draw
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
    view();
@@ -134,15 +141,15 @@ void lights() {
    glEnable(GL_LIGHTING);
    glEnable(GL_LIGHT0);
    //Point light position
-   GLfloat lightPos[] = {0.0, 5.0, 0.0, 0.0};
+   GLfloat lightPos[] = {0.0, 5.0, -5.0, 0.0};
    //Ambient composition
    GLfloat ambientComp[] = {0.0, 0.0, 0.0, 0.0};
    //Diffuse composition
-   GLfloat diffuseComp[] = {0.5, 0.5, 0.5, 0.0};
+   GLfloat diffuseComp[] = {0.8, 0.8, 0.8, 0.0};
    //Specular composition
    GLfloat specularComp[] = {0.0, 0.0, 0.0, 0.0};
    //Ambient light
-   GLfloat globalAmbient[] = {0.2, 0.2, 0.2, 0.0};
+   GLfloat globalAmbient[] = {0.5, 0.5, 0.5, 0.0};
    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, globalAmbient);
    //Point light
    glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
@@ -163,31 +170,120 @@ void geometry() {
 //   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, matSpec);
 //   glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
 
-      glBegin(GL_TRIANGLES);
-   const std::vector<RDST::GeomObjectPtr>& tris = desc->objs();
-   for(std::vector<RDST::GeomObjectPtr>::const_iterator it = tris.begin(); it != tris.end(); ++it) {
-       RDST::Triangle* tri = static_cast<RDST::Triangle*>(&(**it));
-       matColor[0] = tri->getColor().x;
-       matColor[1] = tri->getColor().y;
-       matColor[2] = tri->getColor().z;
-       glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, matColor);
-       glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, matSpec);
-       glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
-       glm::vec3 v0 = tri->getVertex0();
-       glm::vec3 v1 = tri->getVertex1();
-       glm::vec3 v2 = tri->getVertex2();
-       glm::vec3 vCp1(v1.x - v0.x, v1.y - v0.y, v1.z - v0.z);
-       glm::vec3 vCp2(v2.x - v0.x, v2.y - v0.y, v2.z - v0.z);
-       glm::vec3 normal = glm::cross(vCp1, vCp2);
-       normal = glm::normalize(normal);
-       glNormal3f(normal.x, normal.y, normal.z);
-       glVertex3f(v0.x, v0.y, v0.z);
-       glNormal3f(normal.x, normal.y, normal.z);
-       glVertex3f(v1.x, v1.y, v1.z);
-       glNormal3f(normal.x, normal.y, normal.z);
-       glVertex3f(v2.x, v2.y, v2.z);
-   }
-   glEnd();
+//   glBegin(GL_TRIANGLES);
+//   const std::vector<RDST::GeomObjectPtr>& tris = desc->objs();
+//   int i = 0;
+//   for(std::vector<RDST::GeomObjectPtr>::const_iterator it = tris.begin(); it != tris.end(); ++it) {
+//       RDST::Triangle* tri = static_cast<RDST::Triangle*>(&(**it));
+//       matColor[0] = tri->getColor().x;
+//       matColor[1] = tri->getColor().y;
+//       matColor[2] = tri->getColor().z;
+//       glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, matColor);
+//       glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, matSpec);
+//       glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+//       glm::vec3 v0 = tri->getVertex0();
+//       glm::vec3 v1 = tri->getVertex1();
+//       glm::vec3 v2 = tri->getVertex2();
+//       glm::vec3 vCp1(v1.x - v0.x, v1.y - v0.y, v1.z - v0.z);
+//       glm::vec3 vCp2(v2.x - v0.x, v2.y - v0.y, v2.z - v0.z);
+//       glm::vec3 normal = glm::cross(vCp1, vCp2);
+//       normal = glm::normalize(normal);
+//       glm::vec4 color = tri->getColor();
+//       glNormal3f(normal.x, normal.y, normal.z);
+//       glVertex3f(v0.x, v0.y, v0.z);
+//       glNormal3f(normal.x, normal.y, normal.z);
+//       glVertex3f(v1.x, v1.y, v1.z);
+//       glNormal3f(normal.x, normal.y, normal.z);
+//       glVertex3f(v2.x, v2.y, v2.z);
+//       //Vertex 0
+//       if (vertices[i] != v0.x || normals[i] != normal.x || colors[i] != color.r) {
+//           printf("%d\n",i);
+//           exit(-1);
+//       }
+//       ++i;
+//       if (vertices[i] != v0.y || normals[i] != normal.y || colors[i] != color.y) {
+//           printf("%d\n",i);
+//           exit(-1);
+//       }
+//       ++i;
+//       if (vertices[i] != v0.z || normals[i] != normal.z || colors[i] != color.z) {
+//           printf("%d\n",i);
+//           exit(-1);
+//       }
+//       ++i;
+//       //Vertex 1
+//       if (vertices[i] != v1.x || normals[i] != normal.x || colors[i] != color.r) {
+//           printf("%d\n",i);
+//           exit(-1);
+//       }
+//       ++i;
+//       if (vertices[i] != v1.y || normals[i] != normal.y || colors[i] != color.y) {
+//           printf("%d\n",i);
+//           exit(-1);
+//       }
+//       ++i;
+//       if (vertices[i] != v1.z || normals[i] != normal.z || colors[i] != color.z) {
+//           printf("%d\n",i);
+//           exit(-1);
+//       }
+//       ++i;
+//       //Vertex 2
+//       if (vertices[i] != v2.x || normals[i] != normal.x || colors[i] != color.r) {
+//           printf("%d\n",i);
+//           exit(-1);
+//       }
+//       ++i;
+//       if (vertices[i] != v2.y || normals[i] != normal.y || colors[i] != color.y) {
+//           printf("%d\n",i);
+//           exit(-1);
+//       }
+//       ++i;
+//       if (vertices[i] != v2.z || normals[i] != normal.z || colors[i] != color.z) {
+//           printf("%d\n",i);
+//           exit(-1);
+//       }
+//       ++i;
+//   }
+//   glEnd();
+   
+        // bind VBOs with IDs and set the buffer offsets of the bound VBOs
+        // When buffer object is bound with its ID, all pointers in gl*Pointer()
+        // are treated as offset instead of real pointer.
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, vboId);
+
+        // enable vertex arrays
+        glEnableClientState(GL_NORMAL_ARRAY);
+        glEnableClientState(GL_COLOR_ARRAY);
+        glEnableClientState(GL_VERTEX_ARRAY);
+
+        int numVertices = desc->objs().size() * 3; //3 vertices per surfel
+        int numItemsPerList = 3*numVertices; //3 values per vertex/color/normal
+        int bytesPerList = sizeof(GLfloat) * numItemsPerList; //num bytes per list of vertex/color/normal
+
+        // before draw, specify vertex and index arrays with their offsets
+        glVertexPointer(3, GL_FLOAT, 0, 0);
+        glNormalPointer(GL_FLOAT, 0, (void*)bytesPerList);
+        glColorPointer(3, GL_FLOAT, 0, (void*)(2*bytesPerList));
+
+        //Draw a number of vertices (e.g. all of them!)
+        glDrawArrays(GL_TRIANGLES, 0, 3*desc->objs().size());
+
+        glDisableClientState(GL_VERTEX_ARRAY);  // disable vertex arrays
+        glDisableClientState(GL_COLOR_ARRAY);
+        glDisableClientState(GL_NORMAL_ARRAY);
+
+        // it is good idea to release VBOs with ID 0 after use.
+        // Once bound with 0, all pointers in gl*Pointer() behave as real
+        // pointer, so, normal vertex array operations are re-activated
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+
+//        GLenum errCode;
+//        const GLubyte *errString;
+//        if ((errCode = glGetError()) != GL_NO_ERROR) {
+//            errString = gluErrorString(errCode);
+//            fprintf (stderr, "OpenGL Error: %s\n", errString);
+//            exit(-1);
+//        }
 
 //   glPushMatrix();
 //   glScalef(10.0, 10.0, 10.0);
@@ -276,6 +372,90 @@ void motion(int x, int y) {
 void passiveMotion(int x, int y) {
    mouseX = x;
    mouseY = y;
+}
+
+void loadVBO() {
+    const std::vector<RDST::GeomObjectPtr>& tris = desc->objs();
+
+    int i=0;
+    for(std::vector<RDST::GeomObjectPtr>::const_iterator it = tris.begin(); it != tris.end(); ++it) {
+        //Get all the data!
+        RDST::Triangle* tri = static_cast<RDST::Triangle*>(&(**it));
+        glm::vec3 v0 = tri->getVertex0();
+        glm::vec3 v1 = tri->getVertex1();
+        glm::vec3 v2 = tri->getVertex2();
+        glm::vec3 vCp1(v1.x - v0.x, v1.y - v0.y, v1.z - v0.z);
+        glm::vec3 vCp2(v2.x - v0.x, v2.y - v0.y, v2.z - v0.z);
+        glm::vec3 normal = glm::cross(vCp1, vCp2);
+        normal = glm::normalize(normal);
+        glm::vec4 color = tri->getColor();
+        //Store all the data!
+        //Vertex 0
+        vertices[i] = v0.x;
+        normals[i]  = normal.x;
+        colors[i]   = color.r;
+        ++i;
+        vertices[i] = v0.y;
+        normals[i]  = normal.y;
+        colors[i]   = color.g;
+        ++i;
+        vertices[i] = v0.z;
+        normals[i]  = normal.z;
+        colors[i]   = color.b;
+        ++i;
+        //Vertex 1
+        vertices[i] = v1.x;
+        normals[i]  = normal.x;
+        colors[i]   = color.r;
+        ++i;
+        vertices[i] = v1.y;
+        normals[i]  = normal.y;
+        colors[i]   = color.g;
+        ++i;
+        vertices[i] = v1.z;
+        normals[i]  = normal.z;
+        colors[i]   = color.b;
+        ++i;
+        //Vertex 2
+        vertices[i] = v2.x;
+        normals[i]  = normal.x;
+        colors[i]   = color.r;
+        ++i;
+        vertices[i] = v2.y;
+        normals[i]  = normal.y;
+        colors[i]   = color.g;
+        ++i;
+        vertices[i] = v2.z;
+        normals[i]  = normal.z;
+        colors[i]   = color.b;
+        ++i;
+    }
+
+//    printf("i: %d\n",i);
+
+    int numItems = 3*3*tris.size();
+    size_t bytesPerList = sizeof(GLfloat)*numItems;
+
+    printf("numItems: %d\ni: %d\nsizeof(GLfloat): %d\nbytesPerList: %d\n", numItems, i, sizeof(GLfloat), bytesPerList);
+
+
+//    for (int i=0; i<len; i+=3) {
+//        printf("vertices[%d]:%f\nvertices[%d]:%f\nvertices[%d]:%f\n", i, vertices[i], i+1, vertices[i+1], i+2, vertices[i+2]);
+//    }
+//    for (int i=0; i<len; i+=3) {
+//        printf("colors[%d]:%f\ncolors[%d]:%f\ncolors[%d]:%f\n", i, colors[i], i+1, colors[i+1], i+2, colors[i+2]);
+//    }
+
+    glGenBuffersARB(1, &vboId);
+    glBindBufferARB(GL_ARRAY_BUFFER_ARB, vboId);
+    glBufferDataARB(GL_ARRAY_BUFFER_ARB, 3*bytesPerList, 0, GL_STATIC_DRAW_ARB);
+    glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0,              bytesPerList, vertices);
+    glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, bytesPerList,   bytesPerList, normals);
+    glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, 2*bytesPerList, bytesPerList, colors);
+
+//    delete[] vertices;
+//    delete[] normals;
+//    delete[] colors;
 }
 
 //--- REAL-TIME STUFF ---//
@@ -462,7 +642,27 @@ int main(int argc, char** argv)
       exit(-1);
    }
    printf("OpenGL 2.0 supported. Using OpenGL %s \n\n",(char*)glGetString( GL_VERSION ));
+   
+   //InitGL
+   glShadeModel(GL_SMOOTH);
+   glPixelStorei(GL_UNPACK_ALIGNMENT, 4);      // 4-byte pixel alignment
+   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+   glEnable(GL_DEPTH_TEST);
+   glEnable(GL_LIGHTING);
+   glEnable(GL_TEXTURE_2D);
+   glDisable(GL_CULL_FACE);
+   glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+   glEnable(GL_COLOR_MATERIAL);
+   glClearColor(0, 0, 0, 0);                   // background color
+   glClearStencil(0);                          // clear stencil buffer
+   glClearDepth(1.0f);                         // 0 is near, 1 is far
+   glDepthFunc(GL_LEQUAL);
+   //Load VBO
+   loadVBO();
 
    //start the main loop
    glutMainLoop();
+
+   //Clean up vbo
+   glDeleteBuffersARB(1, &vboId);
 }
