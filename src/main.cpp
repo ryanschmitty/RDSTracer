@@ -23,7 +23,6 @@
 
 #include <glew.h>
 #include <GLUT/glut.h>
-#include "glext.h"
 #include "FlyingCamera.h"
 #include "BasicModel.h"
 #include "ScreenDraw.h"
@@ -157,7 +156,7 @@ void lights() {
 
 void geometry() {
    /* DRAW GEOMETRY */
-   glBindBufferARB(GL_ARRAY_BUFFER_ARB, vboId);
+   glBindBuffer(GL_ARRAY_BUFFER, vboId);
 
    // enable vertex arrays
    glEnableClientState(GL_NORMAL_ARRAY);
@@ -179,7 +178,7 @@ void geometry() {
    glDisableClientState(GL_COLOR_ARRAY);
    glDisableClientState(GL_NORMAL_ARRAY);
 
-   glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+   glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void idle() {
@@ -329,12 +328,12 @@ void loadVBO() {
     size_t bytesPerList = sizeof(GLfloat)*numItems;
 
     //Generate VBO and load it full of data
-    glGenBuffersARB(1, &vboId);
-    glBindBufferARB(GL_ARRAY_BUFFER_ARB, vboId);
-    glBufferDataARB(GL_ARRAY_BUFFER_ARB, 3*bytesPerList, 0, GL_STATIC_DRAW_ARB);
-    glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0,              bytesPerList, vertices);
-    glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, bytesPerList,   bytesPerList, normals);
-    glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, 2*bytesPerList, bytesPerList, colors);
+    glGenBuffers(1, &vboId);
+    glBindBuffer(GL_ARRAY_BUFFER, vboId);
+    glBufferData(GL_ARRAY_BUFFER, 3*bytesPerList, 0, GL_STATIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0,              bytesPerList, vertices);
+    glBufferSubData(GL_ARRAY_BUFFER, bytesPerList,   bytesPerList, normals);
+    glBufferSubData(GL_ARRAY_BUFFER, 2*bytesPerList, bytesPerList, colors);
 }
 
 //--- REAL-TIME STUFF ---//
@@ -541,5 +540,5 @@ int main(int argc, char** argv)
    glutMainLoop();
 
    //Clean up vbo
-   glDeleteBuffersARB(1, &vboId);
+   glDeleteBuffers(1, &vboId);
 }
