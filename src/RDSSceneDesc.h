@@ -66,6 +66,7 @@ namespace RDST
                                 GeomObjectPtrListPtr planes,
                                 const BVH& bvh,
                                 const BVH& surfels,
+                                GeomObjectPtrListPtr rawSurfels,
                                 const Options& opts = Options())
       : _pCam(pCamera),
         _pLights(lights),
@@ -74,7 +75,8 @@ namespace RDST
         _pPlanes(planes),
         _bvh(bvh),
         _opts(opts),
-        _surfelCloud(surfels)
+        _surfelCloud(surfels),
+        _pRawSurfels(rawSurfels)
       {}
 
       //Mutable
@@ -94,6 +96,8 @@ namespace RDST
       { _opts = opts; }
       void setSurfelCloud(const BVH& surfels)
       { _surfelCloud = surfels; }
+      void setSurfelCloud(GeomObjectPtrListPtr surfels)
+      { _pRawSurfels = surfels; }
 
       //Non-mutable
       const Camera& cam() const
@@ -112,6 +116,8 @@ namespace RDST
       { return _opts; }
       const BVH& surfelCloud() const
       { return _surfelCloud; }
+      const std::vector<GeomObjectPtr>& surfels() const
+      { return *_pRawSurfels; }
 
    private:
       CameraPtr            _pCam;
@@ -122,6 +128,7 @@ namespace RDST
       BVH                  _bvh;
       Options              _opts;
       BVH                  _surfelCloud;
+      GeomObjectPtrListPtr   _pRawSurfels;
    };
 }
 

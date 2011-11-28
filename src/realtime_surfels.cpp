@@ -179,7 +179,7 @@ void RealtimeSurfels::geometry() {
    glEnableClientState(GL_VERTEX_ARRAY);
 
    // before draw, specify vertex and index arrays with their offsets
-   int numVertices = desc->objs().size() * 3; //3 vertices per surfel
+   int numVertices = desc->surfels().size() * 3; //3 vertices per surfel
    int numItemsPerList = 3*numVertices; //3 GLfloats per vertex/color/normal
    int bytesPerList = sizeof(GLfloat) * numItemsPerList;
    glVertexPointer(3, GL_FLOAT, 0, 0);
@@ -187,7 +187,7 @@ void RealtimeSurfels::geometry() {
    glColorPointer(3, GL_FLOAT, 0, (void*)(2*bytesPerList));
 
    //Draw a number of vertices (e.g. all of them!)
-   glDrawArrays(GL_TRIANGLES, 0, 3*desc->objs().size());
+   glDrawArrays(GL_TRIANGLES, 0, 3*desc->surfels().size());
 
    glDisableClientState(GL_VERTEX_ARRAY);  // disable vertex arrays
    glDisableClientState(GL_COLOR_ARRAY);
@@ -279,7 +279,7 @@ void RealtimeSurfels::passiveMotion(int x, int y) {
 
 void RealtimeSurfels::loadVBO() {
 
-   const std::vector<GeomObjectPtr>& tris = desc->objs();
+   const std::vector<GeomObjectPtr>& tris = desc->surfels();
    //Allocate space on the stack since we won't need it later
    GLfloat vertices [3*3*tris.size()];
    GLfloat normals  [3*3*tris.size()];

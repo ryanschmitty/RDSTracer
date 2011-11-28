@@ -65,7 +65,7 @@ namespace RDST
 
             //Get actual geometry
             BoxPtr pBox = ParseBox(line);
-//            objs->push_back(pBox);
+            objs->push_back(pBox);
 
             //Get point cloud and generate surfels
             float minDist = 0.f;
@@ -94,9 +94,9 @@ namespace RDST
                     v1 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset + 120.f, n);
                     v2 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset + 240.f, n);
 //                    objs->push_back(TrianglePtr(new Triangle(v0, v1, v2, pBox->getColor(), glm::mat4(1.f), Finish(0.4, 0.6))));
-                    objs->push_back(TrianglePtr(new Triangle(v0, v1, v2, pBox->getColor(), glm::mat4(1.f), pBox->getFinish())));
-                surfels->push_back(TrianglePtr(new Triangle(v0, v1, v2, pBox->getColor(), glm::mat4(1.f), pBox->getFinish())));
-//                surfels->push_back(DiskPtr(new Disk(glm::vec3(*cit), n, minDist, pBox->getColor(), glm::mat4(1.f), pBox->getFinish())));
+//                    objs->push_back(TrianglePtr(new Triangle(v0, v1, v2, pBox->getColor(), glm::mat4(1.f), pBox->getFinish())));
+                    surfels->push_back(TrianglePtr(new Triangle(v0, v1, v2, pBox->getColor(), glm::mat4(1.f), pBox->getFinish())));
+//                    surfels->push_back(DiskPtr(new Disk(glm::vec3(*cit), n, minDist, pBox->getColor(), glm::mat4(1.f), pBox->getFinish())));
             }
 
          }
@@ -119,7 +119,7 @@ namespace RDST
 
             //Get actual geometry
             SpherePtr pSphere = ParseSphere(line);
-//            objs->push_back(pSphere);
+            objs->push_back(pSphere);
 
             //Get point cloud and generate surfels
             float minDist = 0.f;
@@ -135,9 +135,9 @@ namespace RDST
                     v1 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset + 120.f, n);
                     v2 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset + 240.f, n);
 //                    objs->push_back(TrianglePtr(new Triangle(v0, v1, v2, pSphere->getColor(), glm::mat4(1.f), Finish(0.4, 0.6))));
-                    objs->push_back(TrianglePtr(new Triangle(v0, v1, v2, pSphere->getColor(), glm::mat4(1.f), pSphere->getFinish())));
-                surfels->push_back(TrianglePtr(new Triangle(v0, v1, v2, pSphere->getColor(), glm::mat4(1.f), pSphere->getFinish())));
-//                surfels->push_back(DiskPtr(new Disk(*cit, n, minDist, pSphere->getColor(), glm::mat4(1.f), pSphere->getFinish())));
+//                    objs->push_back(TrianglePtr(new Triangle(v0, v1, v2, pSphere->getColor(), glm::mat4(1.f), pSphere->getFinish())));
+                    surfels->push_back(TrianglePtr(new Triangle(v0, v1, v2, pSphere->getColor(), glm::mat4(1.f), pSphere->getFinish())));
+//                    surfels->push_back(DiskPtr(new Disk(*cit, n, minDist, pSphere->getColor(), glm::mat4(1.f), pSphere->getFinish())));
             }
 
          }
@@ -148,7 +148,7 @@ namespace RDST
 
             //Get actual geometry
             TrianglePtr pTri = ParseTriangle(line);
-//            objs->push_back(pTri);
+            objs->push_back(pTri);
             
             //Get point cloud and generate surfels
             float minDist = 0.f;
@@ -164,9 +164,10 @@ namespace RDST
                     v1 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset + 120.f, n);
                     v2 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset + 240.f, n);
 //                    objs->push_back(TrianglePtr(new Triangle(v0, v1, v2, pTri->getColor(), glm::mat4(1.f), Finish(0.4, 0.6))));
-                    objs->push_back(TrianglePtr(new Triangle(v0, v1, v2, pTri->getColor(), glm::mat4(1.f), pTri->getFinish())));
-                surfels->push_back(TrianglePtr(new Triangle(v0, v1, v2, pTri->getColor(), glm::mat4(1.f), pTri->getFinish())));
-//                surfels->push_back(DiskPtr(new Disk(*cit, n, minDist, pTri->getColor(), glm::mat4(1.f), pTri->getFinish())));
+//                    objs->push_back(TrianglePtr(new Triangle(v0, v1, v2, pTri->getColor(), glm::mat4(1.f), pTri->getFinish())));
+//                    surfels->push_back(TrianglePtr(new Triangle(v0, v1, v2, pTri->getColor(), glm::mat4(1.f), pTri->getFinish())));
+//                    surfels->push_back(DiskPtr(new Disk(*cit, n, minDist, pTri->getColor(), glm::mat4(1.f), pTri->getFinish())));
+                    surfels->push_back(pTri);
             }
 
 
@@ -176,7 +177,7 @@ namespace RDST
          }
       }
       std::cout << "Done." << std::endl;
-      return SceneDescription(pCam, lights, areaLights, objs, planes, BVH(objs), BVH(surfels));
+      return SceneDescription(pCam, lights, areaLights, objs, planes, BVH(objs), BVH(surfels), surfels);
    }
 
    std::string&

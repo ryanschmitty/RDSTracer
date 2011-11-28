@@ -704,6 +704,7 @@ namespace RDST
    };
    typedef boost::shared_ptr<Triangle> TrianglePtr;
    typedef boost::shared_ptr<const Triangle> ConstTrianglePtr;
+   typedef boost::shared_ptr< std::vector<TrianglePtr> > TrianglePtrListPtr;
 
 } // end namespace RDST
 
