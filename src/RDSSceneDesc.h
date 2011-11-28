@@ -34,7 +34,8 @@ namespace RDST
            gaussianAlpha(1.f),
            numThreads(8),
            monteCarloSamples(16),
-           bounces(0)
+           bounces(0),
+           realtime(false)
       {}
       std::string povRayFile, imgname;
       int height, width;
@@ -49,6 +50,7 @@ namespace RDST
       int numThreads;
       int monteCarloSamples;
       int bounces;
+      bool realtime;
    };
 
    /**

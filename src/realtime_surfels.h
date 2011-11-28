@@ -65,6 +65,7 @@ private:
    static void lights();
    static void geometry();
    static void idle();
+   static void timer(int);
    static void reshape(int, int);
    static void keyboardDown(unsigned char, int, int);
    static void keyboardUp(unsigned char, int, int);

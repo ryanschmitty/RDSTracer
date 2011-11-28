@@ -50,7 +50,8 @@ void RealtimeSurfels::Render(const SceneDescription& scene) {
 
    //register callback functions
    glutDisplayFunc(RealtimeSurfels::display);
-   glutIdleFunc(RealtimeSurfels::idle);
+//   glutIdleFunc(RealtimeSurfels::idle);
+   glutTimerFunc(16, timer, 16); //16 millisecond render loop (60fps)
    glutReshapeFunc(RealtimeSurfels::reshape);
    glutKeyboardFunc(RealtimeSurfels::keyboardDown);
    glutKeyboardUpFunc(RealtimeSurfels::keyboardUp);
@@ -100,7 +101,7 @@ void RealtimeSurfels::display() {
 
    /* ACTION */
    glutSwapBuffers();
-   glutPostRedisplay();
+//   glutPostRedisplay();
    RealtimeSurfels::timeLast = RealtimeSurfels::timeNow;
 }
 
@@ -199,6 +200,11 @@ void RealtimeSurfels::idle() {
    glutPostRedisplay();
 }
 
+void RealtimeSurfels::timer(int millisec) {
+   glutTimerFunc(millisec, timer, millisec);
+   glutPostRedisplay();
+}
+
 void RealtimeSurfels::reshape(int w, int h) {
    curWidth = w;
    curHeight = h;
@@ -263,7 +269,7 @@ void RealtimeSurfels::motion(int x, int y) {
    mouseY = y;
 
    //Display changes
-   glutPostRedisplay();
+//   glutPostRedisplay();
 }
 
 void RealtimeSurfels::passiveMotion(int x, int y) {
