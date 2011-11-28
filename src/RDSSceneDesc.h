@@ -128,7 +128,7 @@ namespace RDST
       BVH                  _bvh;
       Options              _opts;
       BVH                  _surfelCloud;
-      GeomObjectPtrListPtr   _pRawSurfels;
+      GeomObjectPtrListPtr _pRawSurfels;
    };
 }
 

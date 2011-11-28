@@ -8,6 +8,7 @@
  */
 
 #include "realtime_surfels.h"
+#include <stdio.h>
 
 namespace RDST
 {
@@ -47,6 +48,7 @@ void RealtimeSurfels::Render(const SceneDescription& scene) {
 //   glCullFace(GL_BACK);
    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
    glEnable(GL_COLOR_MATERIAL);
+   glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 
    //register callback functions
    glutDisplayFunc(RealtimeSurfels::display);
@@ -150,23 +152,31 @@ void RealtimeSurfels::view() {
 void RealtimeSurfels::lights() {
    /* LIGHTS */
    glEnable(GL_LIGHTING);
-   glEnable(GL_LIGHT0);
-   //Point light position
-   GLfloat lightPos[] = {0.0, 5.0, -5.0, 0.0};
-   //Ambient composition
-   GLfloat ambientComp[] = {0.0, 0.0, 0.0, 0.0};
-   //Diffuse composition
-   GLfloat diffuseComp[] = {0.8, 0.8, 0.8, 0.0};
-   //Specular composition
-   GLfloat specularComp[] = {0.0, 0.0, 0.0, 0.0};
-   //Ambient light
-   GLfloat globalAmbient[] = {0.5, 0.5, 0.5, 0.0};
-   glLightModelfv(GL_LIGHT_MODEL_AMBIENT, globalAmbient);
-   //Point light
-   glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
-   glLightfv(GL_LIGHT0, GL_AMBIENT, ambientComp);
-   glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseComp);
-   glLightfv(GL_LIGHT0, GL_SPECULAR, specularComp);
+   int i=0;
+   unsigned int curLight = GL_LIGHT0;
+   for(std::vector<PointLightPtr>::const_iterator it = desc->lights().begin(); it != desc->lights().end(); ++it) {
+      if (i++>7) break; //Only allow 8 lights
+      glEnable(curLight++);
+      glm::vec3 lpos = (*it)->getPos();
+      glm::vec4 lcolor = (*it)->getColor();
+      //Point light position
+      GLfloat lightPos[] = {lpos.x, lpos.y, lpos.z, 0.0};
+      //Ambient composition
+//      GLfloat ambientComp[] = {lcolor.r, lcolor.g, lcolor.b, 0.0};
+      GLfloat ambientComp[] = {0.0, 0.0, 0.0, 0.0};
+      //Diffuse composition
+      GLfloat diffuseComp[] = {lcolor.r, lcolor.g, lcolor.b, 0.0};
+      //Specular composition
+      GLfloat specularComp[] = {0.0, 0.0, 0.0, 0.0};
+      //Ambient light
+//      GLfloat globalAmbient[] = {0.5, 0.5, 0.5, 0.0};
+//      glLightModelfv(GL_LIGHT_MODEL_AMBIENT, globalAmbient);
+      //Point light
+      glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
+      glLightfv(GL_LIGHT0, GL_AMBIENT, ambientComp);
+      glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseComp);
+      glLightfv(GL_LIGHT0, GL_SPECULAR, specularComp);
+   }
 }
 
 void RealtimeSurfels::geometry() {
