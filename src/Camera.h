@@ -23,6 +23,7 @@ class Camera
       float zNear, zFar;
       AABoundingBox bounds;
 
+      Camera() {}
       Camera(float setFOV, float setX, float setY, float setZ,
              float dx,     float dy,   float dz,
              float upx,    float upy,  float upz,
