@@ -10,15 +10,17 @@
 
 #define GLM_FORCE_INLINE
 
+#include <glew.h>
+#include <GLUT/glut.h>
+#include <OpenGL/gl.h>
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include <glm/glm.hpp>
+#include "Camera.h"
 #include "RDSScene.h"
 #include "RDSSceneDesc.h"
 #include "RDSSamplers.h"
 #include "RDSTracer.h"
-//#include <OpenGL/gl.h>
-#include <GLUT/glut.h>
 
 namespace RDST
 {
@@ -27,9 +29,18 @@ class Rasterizer {
    public:
       explicit Rasterizer(int w, int h);
       virtual ~Rasterizer() = 0;
+
+      //Returns a texture handle
+      GLuint rasterSurfels(const SceneDescription& desc, ::Camera& camera);
    private:
+      void initGL();
+      void loadVBO(const SceneDescription& desc);
+      void geometry(const SceneDescription& desc);
+      void view(::Camera& camera);
+      void lights(const SceneDescription& desc);
       int width, height;
       GLuint fbo;
+      GLuint vboId;
       GLuint depthtexture;
       GLuint colortexture;
 };
