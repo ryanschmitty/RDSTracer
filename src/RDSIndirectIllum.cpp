@@ -31,7 +31,7 @@ namespace RDST
 
       glGenTextures(1, &colortexture);
       glBindTexture(GL_TEXTURE_2D, colortexture);
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB10_A2,  width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,  width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -54,28 +54,28 @@ namespace RDST
 
    void Rasterizer::initGL()
    {
-      int argc = 0;
-      char** argv;
-      glutInit(&argc, argv);
-      glutInitWindowSize(8, 8); // 8x8 cube faces, not that this setting matters for the FBO
-      glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-      glutCreateWindow("Surfel Rasterizing");
-      glEnable(GL_DEPTH_TEST);
-      glEnable(GL_NORMALIZE);
-      glClearColor(0.0, 0.0, 0.0, 1.0);
-      glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-      glEnable(GL_COLOR_MATERIAL);
-      glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-      
-      //Error check
-      GLenum err = glewInit();
-      if (err != GLEW_OK || !glewIsSupported("GL_VERSION_2_0")) {
-         printf("OpenGL 2.0 not supported. No shaders!\n");
-         printf("%s\n", glewGetErrorString(err));
-         printf("%s\n", (char*)glGetString( GL_VERSION ) );
-         exit(-1);
-      }
-      printf("OpenGL 2.0 supported. Using OpenGL %s \n\n",(char*)glGetString( GL_VERSION ));
+//      int argc = 0;
+//      char** argv;
+//      glutInit(&argc, argv);
+//      glutInitWindowSize(width, height); // 8x8 cube faces, not that this setting matters for the FBO
+//      glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
+//      glutCreateWindow("Surfel Rasterizing");
+//      glEnable(GL_DEPTH_TEST);
+//      glEnable(GL_NORMALIZE);
+//      glClearColor(0.0, 0.0, 0.0, 1.0);
+//      glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+//      glEnable(GL_COLOR_MATERIAL);
+//      glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+//      
+//      //Error check
+//      GLenum err = glewInit();
+//      if (err != GLEW_OK || !glewIsSupported("GL_VERSION_2_0")) {
+//         printf("OpenGL 2.0 not supported. No shaders!\n");
+//         printf("%s\n", glewGetErrorString(err));
+//         printf("%s\n", (char*)glGetString( GL_VERSION ) );
+//         exit(-1);
+//      }
+//      printf("OpenGL 2.0 supported. Using OpenGL %s \n\n",(char*)glGetString( GL_VERSION ));
    }
 
    void Rasterizer::loadVBO(const SceneDescription& desc) {
@@ -213,6 +213,17 @@ namespace RDST
 
    GLuint Rasterizer::rasterSurfels(::Camera& camera)
    {
+      glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fbo);
+
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      gluPerspective(camera.fov,
+                     float(width)/height,
+                     camera.zNear,
+                     camera.zFar);
+      glMatrixMode(GL_MODELVIEW);
+      glViewport(0, 0, width, height);
+
       //draw
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glMatrixMode(GL_MODELVIEW);
@@ -221,6 +232,8 @@ namespace RDST
       lights(desc);
       geometry(desc);
       glFlush();
+
+      glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
       
       return colortexture;
    }
@@ -284,7 +297,17 @@ namespace RDST
                             tan.x, tan.y, tan.z, //up
                             0.01f, 100.f); //near/far
       //Rasterize cube faces (i.e. render 8x8 texture per camera)
+      Rasterizer rstr(8, 8, scene);
+      GLuint tex = rstr.rasterSurfels(cameras[0]);
       //Add them all up
+      unsigned char pixelData[4*64];
+      glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, &pixelData);
+      for (int i=0; i<64; ++i) {
+         if (i%8 == 0) printf("\n");
+         printf("<%u %u %u %u>", pixelData[4*i], pixelData[4*i+1], pixelData[4*i+2], pixelData[4*i+3]);
+      }
+      printf("\n");
+
       return indirectColor;
    }
 }

@@ -28,7 +28,7 @@ namespace RDST
 class Rasterizer {
    public:
       explicit Rasterizer(int w, int h, const SceneDescription& desc);
-      virtual ~Rasterizer() = 0;
+      virtual ~Rasterizer() {};
 
       //Returns a texture handle
       GLuint rasterSurfels(::Camera& camera);
