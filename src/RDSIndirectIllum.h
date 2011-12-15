@@ -27,11 +27,11 @@ namespace RDST
 
 class Rasterizer {
    public:
-      explicit Rasterizer(int w, int h);
+      explicit Rasterizer(int w, int h, const SceneDescription& desc);
       virtual ~Rasterizer() = 0;
 
       //Returns a texture handle
-      GLuint rasterSurfels(const SceneDescription& desc, ::Camera& camera);
+      GLuint rasterSurfels(::Camera& camera);
    private:
       void initGL();
       void loadVBO(const SceneDescription& desc);
@@ -43,6 +43,7 @@ class Rasterizer {
       GLuint vboId;
       GLuint depthtexture;
       GLuint colortexture;
+      const SceneDescription& desc;
 };
 
 /**

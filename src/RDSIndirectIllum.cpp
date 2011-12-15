@@ -11,9 +11,11 @@
 
 namespace RDST
 {
-   Rasterizer::Rasterizer(int w, int h)
-   : width(w), height(h)
+   Rasterizer::Rasterizer(int w, int h, const SceneDescription& desc)
+   : width(w), height(h), desc(desc)
    {
+      initGL();
+
       glGenFramebuffersEXT(1, &fbo);
       glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fbo);
 
@@ -46,6 +48,8 @@ namespace RDST
       }
 
       glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0); //unbind fbo for now
+
+      loadVBO(desc);
    }
 
    void Rasterizer::initGL()
@@ -207,7 +211,7 @@ namespace RDST
       }
    }
 
-   GLuint Rasterizer::rasterSurfels(const SceneDescription& desc, ::Camera& camera)
+   GLuint Rasterizer::rasterSurfels(::Camera& camera)
    {
       //draw
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -216,6 +220,7 @@ namespace RDST
       view(camera);
       lights(desc);
       geometry(desc);
+      glFlush();
       
       return colortexture;
    }
