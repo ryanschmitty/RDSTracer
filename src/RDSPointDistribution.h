@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <glm/glm.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 #include <boost/shared_ptr.hpp>
 #include "RandUtil.h"
 #include "RDSScene.h"
@@ -173,6 +174,38 @@ namespace RDST
         return pPointVec;
     }
 
+    void
+    GenerateSurfels(std::vector<GeomObjectPtr>& surfels, Box& box) {
+       float minDist = 0.f;
+       boost::shared_ptr< std::vector<glm::vec4> > pPoints = GenerateDistributedPoints(500, box, &minDist);
+       std::vector<glm::vec4>::const_iterator cit = pPoints->begin();
+       for (; cit != pPoints->end(); ++cit) {
+          glm::vec3 n;
+          if      (cit->w == 0)
+             n = glm::vec3( 0, 0,-1);
+          else if (cit->w == 2)
+             n = glm::vec3( 0, 0, 1);
+          else if (cit->w == 3)
+             n = glm::vec3(-1, 0, 0);
+          else if (cit->w == 1)
+             n = glm::vec3( 1, 0, 0);
+          else if (cit->w == 4)
+             n = glm::vec3( 0,-1, 0);
+          else /* (cit->w == 5) */
+             n = glm::vec3( 0, 1, 0);
+          n = glm::normalize(box.getNormalXform() * n);
+          glm::vec3 k = glm::vec3(0,1,0);
+          glm::vec3 tan = fabs(n.y) == 1.f ? glm::vec3(1,0,0) : glm::normalize(k - ((glm::dot(k, n))*n)); //Gram-Schmidt Process
+          glm::vec3 v0,v1,v2;
+          float randDegreeOffset = unifRand(0.f, 359.f);
+          v0 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset, n);
+          v1 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset + 120.f, n);
+          v2 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset + 240.f, n);
+          surfels.push_back(TrianglePtr(new Triangle(v0, v1, v2, box.getColor(), glm::mat4(1.f), box.getFinish())));
+//          surfels.push_back(DiskPtr(new Disk(glm::vec3(*cit), n, minDist, box.getColor(), glm::mat4(1.f), box.getFinish())));
+       }
+    }
+
     /*
      * Generate points for a Sphere.
      */
@@ -226,6 +259,25 @@ namespace RDST
         *minDist = 0.5f*sqrt((3.14159265359*mind*mind) / 1.29903810568);
 
         return p;
+    }
+
+    void
+    GenerateSurfels(std::vector<GeomObjectPtr>& surfels, Sphere& sphere) {
+       float minDist = 0.f;
+       boost::shared_ptr< std::vector<glm::vec3> > pPoints = GenerateDistributedPoints(500, sphere, 100000, &minDist);
+       std::vector<glm::vec3>::const_iterator cit = pPoints->begin();
+       for (; cit != pPoints->end(); ++cit) {
+          glm::vec3 n = glm::normalize( sphere.getNormalXform() * glm::normalize(*cit-sphere.getCenter()) );
+          glm::vec3 k = glm::vec3(0,1,0);
+          glm::vec3 tan = fabs(n.y) == 1.f ? glm::vec3(1,0,0) : glm::normalize(k - ((glm::dot(k, n))*n)); //Gram-Schmidt Process
+          glm::vec3 v0,v1,v2;
+          float randDegreeOffset = unifRand(0.f, 359.f);
+          v0 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset, n);
+          v1 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset + 120.f, n);
+          v2 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset + 240.f, n);
+          surfels.push_back(TrianglePtr(new Triangle(v0, v1, v2, sphere.getColor(), glm::mat4(1.f), sphere.getFinish())));
+//          surfels.push_back(DiskPtr(new Disk(*cit, n, minDist, sphere.getColor(), glm::mat4(1.f), sphere.getFinish())));
+       }
     }
 
     void Normalise(glm::vec3* p, float r, glm::vec3 center)

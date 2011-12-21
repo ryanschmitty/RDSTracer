@@ -31,8 +31,8 @@ void RealtimeSurfels::Render(const SceneDescription& scene) {
 
    // Create the camera
    RealtimeSurfels::camera = new FlyingCamera(45.0,       // fov
-                             0, 0, 20,   // location
-                             1.0, 300.0);// zNear, zFar
+                                              0, 0, 20,   // location
+                                              1.0, 300.0);// zNear, zFar
 
    //OpenGL setup
    int argc = 0;

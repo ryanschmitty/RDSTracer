@@ -48,8 +48,20 @@ namespace RDST
       }
 
       glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0); //unbind fbo for now
+      printf("lol\n");
 
       loadVBO(desc);
+
+//      glMatrixMode(GL_PROJECTION);
+//      glLoadIdentity();
+//      gluPerspective(90,
+//                     1.f,
+//                     0.001f,
+//                     100.f);
+//      glMatrixMode(GL_MODELVIEW);
+//      glViewport(0, 0, 8, 8);
+//      
+//      lights(desc);
    }
 
    void Rasterizer::initGL()
@@ -183,7 +195,7 @@ namespace RDST
       gluLookAt( camera.loc.x, camera.loc.y, camera.loc.z, // eye location
                  camera.loc.x+camera.dir.x, camera.loc.y+camera.dir.y, camera.loc.z+camera.dir.z, // Look at point
                  camera.up.x, camera.up.y, camera.up.z // up vector
-            );
+               );
    }
 
    void Rasterizer::lights(const SceneDescription& desc) {
@@ -297,16 +309,23 @@ namespace RDST
                             tan.x, tan.y, tan.z, //up
                             0.01f, 100.f); //near/far
       //Rasterize cube faces (i.e. render 8x8 texture per camera)
-      Rasterizer rstr(8, 8, scene);
-      GLuint tex = rstr.rasterSurfels(cameras[0]);
-      //Add them all up
+      static Rasterizer rstr(8, 8, scene); //TODO: static? or should I redesign?
       unsigned char pixelData[4*64];
-      glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, &pixelData);
-      for (int i=0; i<64; ++i) {
-         if (i%8 == 0) printf("\n");
-         printf("<%u %u %u %u>", pixelData[4*i], pixelData[4*i+1], pixelData[4*i+2], pixelData[4*i+3]);
+      for (int i=0; i<5; ++i) {
+         GLuint tex = rstr.rasterSurfels(cameras[i]);
+         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, &pixelData);
+         for (int j=0; j<64; ++j) {
+//            printf("<%f %f %f> ", pixelData[4*j]/255.f, pixelData[4*j+1]/255.f, pixelData[4*j+2]/255.f);
+//            if (j%8 == 0) printf("\n");
+            indirectColor.r += pixelData[4*j+0]/255.f; //red
+            indirectColor.g += pixelData[4*j+1]/255.f; //green
+            indirectColor.b += pixelData[4*j+2]/255.f; //blue
+//            indirectColor += pixelData[4*j+3]; //alpha
+         }
+//         printf("\n");
       }
-      printf("\n");
+      indirectColor /= 64.f * 5.f;
+//      printf("final color: %f %f %f\n", indirectColor.r, indirectColor.g, indirectColor.b);
 
       return indirectColor;
    }

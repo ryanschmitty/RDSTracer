@@ -245,7 +245,8 @@ namespace RDST
          indirect = IndirectIllumSurfelRaster(intrs, scene);
       }
 
-      return (direct + reflection + refraction) + (PI*indirect);
+//      return (direct + reflection + refraction) + (PI*indirect);
+      return (direct + reflection + refraction) + (indirect);
    }
 
    void Tracer::DoAreaLights(glm::vec3& ambient, glm::vec3& diffuse, glm::vec3& specular, const Intersection& intrs, const SceneDescription& scene)
