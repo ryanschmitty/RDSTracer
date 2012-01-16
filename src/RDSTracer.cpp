@@ -245,9 +245,44 @@ namespace RDST
          indirect = IndirectIllumSurfelRaster(intrs, scene);
       }
 
-//      return (direct + reflection + refraction) + (PI*indirect);
-      return (direct + reflection + refraction) + (indirect);
+//      return indirect;
+      return (direct + reflection + refraction) + (PI*indirect);
+//      return (direct + reflection + refraction) + (indirect);
    }
+
+//   glm::vec3 Tracer::ShadePointNoIndirect(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft)
+//   {
+//      //return (intrs.n+1.f) * 0.5f;
+//      //Reflection
+//      float reflAmt = intrs.surf.finish.getReflection();
+//      glm::vec3 reflection(0.f);
+//      if (reflAmt > 0.f) {
+//         reflection = reflAmt * CalcReflection(intrs, scene, recursionsLeft);
+//         reflection = glm::clamp(reflection, 0.f, FLT_MAX);
+//      }
+//
+//      //Refraction
+//      float refrAmt = 0.f;
+//      glm::vec3 refraction(0.f);
+//      if (intrs.surf.finish.getRefraction() > 0.f) {
+//         refrAmt = intrs.surf.color.a;
+//         refraction = CalcRefraction(intrs, scene, recursionsLeft);
+//         if (glm::length(refraction) <= 0.f)
+//            refrAmt = 0.f;
+//         else
+//            refraction = glm::clamp(refrAmt*refraction, 0.f, FLT_MAX);
+//      }
+//
+//      //Direct illumination
+//      float dirAmt = 1.f - reflAmt - refrAmt;
+//      glm::vec3 direct(0.f);
+//      if (dirAmt > 0.f) {
+//         direct = dirAmt * CalcDirectIllum(intrs, scene, recursionsLeft);
+//         direct = glm::clamp(direct, 0.f, FLT_MAX);
+//      }
+//
+//      return (direct + reflection + refraction);
+//   }
 
    void Tracer::DoAreaLights(glm::vec3& ambient, glm::vec3& diffuse, glm::vec3& specular, const Intersection& intrs, const SceneDescription& scene)
    {

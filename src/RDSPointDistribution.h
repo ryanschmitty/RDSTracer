@@ -18,6 +18,7 @@
 #include <boost/shared_ptr.hpp>
 #include "RandUtil.h"
 #include "RDSScene.h"
+#include "RDSTracer.h"
 
 namespace RDST
 {
@@ -35,56 +36,99 @@ namespace RDST
     boost::shared_ptr< std::vector<glm::vec3> >
     GenerateDistributedPoints(int numPoints, const RDST::Triangle& tri, int maxIterations, float* minDist)
     {
-        int minp1, minp2;
-        float mind;
-        int n = 4*numPoints;
-        int numU1s = (int)sqrtf((float)n);
-        int numU2s = n / numU1s;
+       int minp1, minp2;
+       float mind;
+       int n = 4*numPoints;
+       int numU1s = (int)sqrtf((float)n);
+       int numU2s = n / numU1s;
 
-        //Allocate memory (smart pointer to a vec3 array)
-        boost::shared_ptr< std::vector<glm::vec3> > pPointVec = boost::shared_ptr< std::vector<glm::vec3> >(new std::vector<glm::vec3>());
-        pPointVec->reserve(numU1s*numU2s);
+       //Allocate memory (smart pointer to a vec3 array)
+       boost::shared_ptr< std::vector<glm::vec3> > pPointVec = boost::shared_ptr< std::vector<glm::vec3> >(new std::vector<glm::vec3>());
+       pPointVec->reserve(numU1s*numU2s);
 
-        // Create the initial random cloud
-        glm::vec3 v0 = tri.getVertex0();
-        glm::vec3 v1 = tri.getVertex1();
-        glm::vec3 v2 = tri.getVertex2();
-        glm::vec3 v01 = v1 - v0;
-        glm::vec3 v02 = v2 - v0;
-        for (int i=0; i<numU1s; ++i) {
-            for (int j=0; j<numU2s; ++j) {
-                float u1 = (float)i/numU1s + RDST::unifRand()/numU1s;
-                float u2 = (float)j/numU2s + RDST::unifRand()/numU2s;
-                glm::vec3 p;
-                // Inside or outside the triangle?
-                if (u1 + u2 < 1) //inside
-                    p = v0 + u1*v01 + u2*v02;
-                else //outside, so project it back
-                    p = v0 + (1.f-u1)*v01 + (1.f-u2)*v02;
+       // Create the initial random cloud
+       glm::vec3 v0 = tri.getVertex0();
+       glm::vec3 v1 = tri.getVertex1();
+       glm::vec3 v2 = tri.getVertex2();
+       glm::vec3 v01 = v1 - v0;
+       glm::vec3 v02 = v2 - v0;
+       for (int i=0; i<numU1s; ++i) {
+          for (int j=0; j<numU2s; ++j) {
+             float u1 = (float)i/numU1s + RDST::unifRand()/numU1s;
+             float u2 = (float)j/numU2s + RDST::unifRand()/numU2s;
+             glm::vec3 p;
+             // Inside or outside the triangle?
+             if (u1 + u2 < 1) //inside
+                p = v0 + u1*v01 + u2*v02;
+             else //outside, so project it back
+                p = v0 + (1.f-u1)*v01 + (1.f-u2)*v02;
 
-                p = glm::vec3(tri.getModelXform()*glm::vec4(p,1.f));
-                pPointVec->push_back(p);
-            }
-        }
+             p = glm::vec3(tri.getModelXform()*glm::vec4(p,1.f));
+             pPointVec->push_back(p);
+          }
+       }
 
-        // Prune the points
-        while ((int)pPointVec->size() > numPoints) {
+       // Prune the points
+       while ((int)pPointVec->size() > numPoints) {
 
-            FindClosestPoints(&minp1, &minp2, &mind, pPointVec);
+          FindClosestPoints(&minp1, &minp2, &mind, pPointVec);
 
-            //Remove one offending point
-            pPointVec->erase(pPointVec->begin()+minp1);
-        }
+          //Remove one offending point
+          pPointVec->erase(pPointVec->begin()+minp1);
+       }
 
-        //Record min distance
-        FindClosestPoints(&minp1, &minp2, &mind, pPointVec);
-        // For disk surfels, we'd use mind as a radius, however, for triangles
-        // we need to solve for the correct distance from the center to each
-        // equilateral vertex such that the surface area is preserved.
-        // Note: we also multiply by 2 to cover any gaps.
-        *minDist = 0.5f*sqrt((3.14159265359*mind*mind) / 1.29903810568);
+       //Record min distance
+       FindClosestPoints(&minp1, &minp2, &mind, pPointVec);
+       // For disk surfels, we'd use mind as a radius, however, for triangles
+       // we need to solve for the correct distance from the center to each
+       // equilateral vertex such that the surface area is preserved.
+       // Note: we also multiply by 2 to cover any gaps.
+       *minDist = 2.f*sqrt((3.14159265359*mind*mind) / 1.29903810568);
 
-        return pPointVec;
+       return pPointVec;
+    }
+
+    void
+    GenerateSurfels(std::vector<GeomObjectPtr>& surfels, const SceneDescription& scene, Triangle& tri) {
+       // Use raw triangles and average color of 3 vertex
+//       float oneThird = 1.f/3.f;
+//       glm::vec3 v0 = tri.getVertex0(), v1 = tri.getVertex1(), v2 = tri.getVertex2();
+//       glm::vec3 center(oneThird * (v0.x + v1.x + v2.x), oneThird * (v0.y + v1.y + v2.y), oneThird * (v0.z + v1.z + v2.z));
+//       Intersection intrs;
+//       intrs.n = tri.getNormal();
+//       intrs.p = v0;
+//       intrs.incDir = -intrs.n;
+//       intrs.surf = Surface(tri.getColor(), tri.getFinish());
+//       glm::vec3 color1 = Tracer::CalcDirectIllum(intrs, scene, 0);
+//       color1 = glm::clamp(color1, 0.f, FLT_MAX);
+//       intrs.p = v1;
+//       glm::vec3 color2 = Tracer::CalcDirectIllum(intrs, scene, 0);
+//       color2 = glm::clamp(color2, 0.f, FLT_MAX);
+//       intrs.p = v2;
+//       glm::vec3 color3 = Tracer::CalcDirectIllum(intrs, scene, 0);
+//       color3 = glm::clamp(color3, 0.f, FLT_MAX);
+//       surfels.push_back(TrianglePtr(new Triangle(v0, v1, v2, glm::vec4((color1+color2+color3)*oneThird,1.f), glm::mat4(1.f), tri.getFinish())));
+       float minDist = 0.f;
+       boost::shared_ptr< std::vector<glm::vec3> > pPoints = GenerateDistributedPoints(500, tri, 100000, &minDist);
+       std::vector<glm::vec3>::const_iterator cit = pPoints->begin();
+       for (; cit != pPoints->end(); ++cit) {
+          glm::vec3 n = tri.getNormal();
+          glm::vec3 tan = glm::normalize(tri.getVertex0()-tri.getVertex1());
+          glm::vec3 v0,v1,v2;
+          float randDegreeOffset = unifRand(0.f, 359.f);
+          v0 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset, n);
+          v1 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset + 120.f, n);
+          v2 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset + 240.f, n);
+             Intersection intrs;
+             intrs.n = n;
+             intrs.p = *cit;
+             intrs.incDir = -n;
+             intrs.surf = Surface(tri.getColor(), tri.getFinish());
+             glm::vec3 color = Tracer::CalcDirectIllum(intrs, scene, 0);
+             color = glm::clamp(color, 0.f, FLT_MAX);
+          surfels.push_back(TrianglePtr(new Triangle(v0, v1, v2, glm::vec4(color,1.f), glm::mat4(1.f), tri.getFinish())));
+//          surfels.push_back(DiskPtr(new Disk(*cit, n, minDist, sphere.getColor(), glm::mat4(1.f), sphere.getFinish())));
+       }
     }
 
     /*
@@ -169,13 +213,13 @@ namespace RDST
         // we need to solve for the correct distance from the center to each
         // equilateral vertex such that the surface area is preserved.
         // Note: we also multiply by 2 to cover any gaps.
-        *minDist = 0.5f*sqrt((3.14159265359*mind*mind) / 1.29903810568);
+        *minDist = 2.f*sqrt((3.14159265359*mind*mind) / 1.29903810568);
 
         return pPointVec;
     }
 
     void
-    GenerateSurfels(std::vector<GeomObjectPtr>& surfels, Box& box) {
+    GenerateSurfels(std::vector<GeomObjectPtr>& surfels, const SceneDescription& scene, Box& box) {
        float minDist = 0.f;
        boost::shared_ptr< std::vector<glm::vec4> > pPoints = GenerateDistributedPoints(500, box, &minDist);
        std::vector<glm::vec4>::const_iterator cit = pPoints->begin();
@@ -201,7 +245,15 @@ namespace RDST
           v0 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset, n);
           v1 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset + 120.f, n);
           v2 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset + 240.f, n);
-          surfels.push_back(TrianglePtr(new Triangle(v0, v1, v2, box.getColor(), glm::mat4(1.f), box.getFinish())));
+             Intersection intrs;
+             intrs.n = n;
+             intrs.p = glm::vec3(*cit);
+             intrs.incDir = -n;
+             intrs.surf = Surface(box.getColor(), box.getFinish());
+             glm::vec3 color = Tracer::CalcDirectIllum(intrs, scene, 0);
+//             printf("%f %f %f\n", color.r, color.g, color.b);
+             color = glm::clamp(color, 0.f, FLT_MAX);
+          surfels.push_back(TrianglePtr(new Triangle(v0, v1, v2, glm::vec4(color,1.f), glm::mat4(1.f), box.getFinish())));
 //          surfels.push_back(DiskPtr(new Disk(glm::vec3(*cit), n, minDist, box.getColor(), glm::mat4(1.f), box.getFinish())));
        }
     }
@@ -256,13 +308,13 @@ namespace RDST
         // we need to solve for the correct distance from the center to each
         // equilateral vertex such that the surface area is preserved.
         // Note: we also multiply by 2 to cover any gaps.
-        *minDist = 0.5f*sqrt((3.14159265359*mind*mind) / 1.29903810568);
+        *minDist = 2.f*sqrt((3.14159265359*mind*mind) / 1.29903810568);
 
         return p;
     }
 
     void
-    GenerateSurfels(std::vector<GeomObjectPtr>& surfels, Sphere& sphere) {
+    GenerateSurfels(std::vector<GeomObjectPtr>& surfels, const SceneDescription& scene, Sphere& sphere) {
        float minDist = 0.f;
        boost::shared_ptr< std::vector<glm::vec3> > pPoints = GenerateDistributedPoints(500, sphere, 100000, &minDist);
        std::vector<glm::vec3>::const_iterator cit = pPoints->begin();
@@ -275,7 +327,14 @@ namespace RDST
           v0 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset, n);
           v1 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset + 120.f, n);
           v2 = glm::vec3(*cit) + minDist*glm::rotate(tan, randDegreeOffset + 240.f, n);
-          surfels.push_back(TrianglePtr(new Triangle(v0, v1, v2, sphere.getColor(), glm::mat4(1.f), sphere.getFinish())));
+             Intersection intrs;
+             intrs.n = n;
+             intrs.p = *cit;
+             intrs.incDir = -n;
+             intrs.surf = Surface(sphere.getColor(), sphere.getFinish());
+             glm::vec3 color = Tracer::CalcDirectIllum(intrs, scene, 0);
+             color = glm::clamp(color, 0.f, FLT_MAX);
+          surfels.push_back(TrianglePtr(new Triangle(v0, v1, v2, glm::vec4(color,1.f), glm::mat4(1.f), sphere.getFinish())));
 //          surfels.push_back(DiskPtr(new Disk(*cit, n, minDist, sphere.getColor(), glm::mat4(1.f), sphere.getFinish())));
        }
     }

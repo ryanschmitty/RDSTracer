@@ -17,6 +17,7 @@
 #include "RDSbvh.h"
 #include "RandUtil.h"
 #include "realtime_surfels.h"
+#include "RDSSurfelGen.h"
 
 #include <glew.h>
 #include <GLUT/glut.h>
@@ -122,31 +123,32 @@ int main(int argc, char** argv)
    RDST::Image img(opts.width, opts.height, opts.enableGammaCorrection, opts.gamma);
    RDST::SceneDescription desc = RDST::POVRayParser::ParseFile(opts.povRayFile);
    desc.setOpts(opts);
-
-//      int argc2 = 0;
-//      char** argv2;
-//      glutInit(&argc2, argv2);
-//      glutInitWindowSize(8, 8); // 8x8 cube faces, not that this setting matters for the FBO
-//      glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-//      glutCreateWindow("Surfel Rasterizing");
-//      glEnable(GL_DEPTH_TEST);
-//      glEnable(GL_NORMALIZE);
-//      glClearColor(0.0, 0.0, 0.0, 1.0);
-//      glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-//      glEnable(GL_COLOR_MATERIAL);
-//      glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-//      
-//      //Error check
-//      GLenum err = glewInit();
-//      if (err != GLEW_OK || !glewIsSupported("GL_VERSION_2_0")) {
-//         printf("OpenGL 2.0 not supported. No shaders!\n");
-//         printf("%s\n", glewGetErrorString(err));
-//         printf("%s\n", (char*)glGetString( GL_VERSION ) );
-//         exit(-1);
-//      }
-//      printf("OpenGL 2.0 supported. Using OpenGL %s \n\n",(char*)glGetString( GL_VERSION ));
+   RDST::SurfelGenerator::GenerateSurfels(desc);
 
    if (!opts.realtime) {
+      int argc2 = 0;
+      char** argv2;
+      glutInit(&argc2, argv2);
+      glutInitWindowSize(8, 8); // 8x8 cube faces, not that this setting matters for the FBO
+      glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
+      glutCreateWindow("Surfel Rasterizing");
+      glEnable(GL_DEPTH_TEST);
+      glEnable(GL_NORMALIZE);
+      glClearColor(0.0, 0.0, 0.0, 1.0);
+      glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+      glEnable(GL_COLOR_MATERIAL);
+      glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+      
+      //Error check
+      GLenum err = glewInit();
+      if (err != GLEW_OK || !glewIsSupported("GL_VERSION_2_0")) {
+         printf("OpenGL 2.0 not supported. No shaders!\n");
+         printf("%s\n", glewGetErrorString(err));
+         printf("%s\n", (char*)glGetString( GL_VERSION ) );
+         exit(-1);
+      }
+      printf("OpenGL 2.0 supported. Using OpenGL %s \n\n",(char*)glGetString( GL_VERSION ));
+
       RDST::Tracer::RayTrace(desc, img);
       img.writeToDisk(opts.imgname);
    }

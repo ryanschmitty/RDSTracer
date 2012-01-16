@@ -8,6 +8,7 @@
 #include "RDSIndirectIllum.h"
 #define GLM_FORCE_INLINE
 #include <glm/gtx/rotate_vector.hpp>
+#include <glm/gtx/vector_angle.hpp>
 
 namespace RDST
 {
@@ -48,7 +49,7 @@ namespace RDST
       }
 
       glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0); //unbind fbo for now
-      printf("lol\n");
+//      printf("lol\n");
 
       loadVBO(desc);
 
@@ -66,6 +67,8 @@ namespace RDST
 
    void Rasterizer::initGL()
    {
+      glCullFace(GL_BACK);
+      glEnable(GL_CULL_FACE);
 //      int argc = 0;
 //      char** argv;
 //      glutInit(&argc, argv);
@@ -200,7 +203,8 @@ namespace RDST
 
    void Rasterizer::lights(const SceneDescription& desc) {
       /* LIGHTS */
-      glEnable(GL_LIGHTING);
+//      glEnable(GL_LIGHTING);
+      glDisable(GL_LIGHTING);
       int i=0;
       unsigned int curLight = GL_LIGHT0;
       for(std::vector<PointLightPtr>::const_iterator it = desc.lights().begin(); it != desc.lights().end(); ++it) {
@@ -210,9 +214,10 @@ namespace RDST
          glm::vec4 lcolor = (*it)->getColor();
          //Point light position
          GLfloat lightPos[] = {lpos.x, lpos.y, lpos.z, 0.0};
-         GLfloat ambientComp[] = {0.0, 0.0, 0.0, 0.0};
+         GLfloat ambientComp[] = {lcolor.r, lcolor.g, lcolor.b, 0.0};
          //Diffuse composition
-         GLfloat diffuseComp[] = {lcolor.r, lcolor.g, lcolor.b, 0.0};
+//         GLfloat diffuseComp[] = {lcolor.r, lcolor.g, lcolor.b, 0.0};
+         GLfloat diffuseComp[] = {0.f, 0.f, 0.f, 0.f};
          //Specular composition
          GLfloat specularComp[] = {0.0, 0.0, 0.0, 0.0};
          //Point light
@@ -249,7 +254,6 @@ namespace RDST
       
       return colortexture;
    }
-
 
    glm::vec3 IndirectIllumMonteCarlo(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft)
    {
@@ -291,42 +295,63 @@ namespace RDST
       glm::vec3 tan = fabs(intrs.n.y) == 1.f ? glm::vec3(1,0,0) : glm::normalize(k - ((glm::dot(k, intrs.n))*intrs.n)); //Gram-Schmidt Process
       //Generate 6 cube faces (i.e. 5 cameras)
       ::Camera cameras [5];
+      float near = 0.01f, far = 15.f;
+      glm::vec3 loc = intrs.p + (near*intrs.n);
+//      glm::vec3 loc = intrs.p;
+      glm::vec3 dir1 = tan;
+      glm::vec3 dir2 = glm::rotate(tan,  90.f, intrs.n);
+      glm::vec3 dir3 = glm::rotate(tan, 180.f, intrs.n);
+      glm::vec3 dir4 = glm::rotate(tan, 270.f, intrs.n);
+      glm::vec3 dir5 = intrs.n;
       for (int i=0; i<4; ++i) {
-         glm::vec3 dir(0.f);
-         if      (i==0)   dir = tan;
-         else if (i==1)   dir = glm::rotate(tan,  90.f, intrs.n);
-         else if (i==2)   dir = glm::rotate(tan, 180.f, intrs.n);
-         else  /*(i==3)*/ dir = glm::rotate(tan, 270.f, intrs.n);
+         glm::vec3 dir;
+         if      (i==0)   dir = dir1;
+         else if (i==1)   dir = dir2;
+         else if (i==2)   dir = dir3;
+         else  /*(i==3)*/ dir = dir4;
          cameras[i] = ::Camera(90, //fov
-                               intrs.p.x, intrs.p.y, intrs.p.z, //loc
+                               loc.x, loc.y, loc.z, //loc
                                dir.x, dir.y, dir.z, //dir
                                intrs.n.x, intrs.n.y, intrs.n.z, //up
-                               0.01f, 100.f); //near/far
+                               near, far); //clipping planes
       } 
       cameras[4] = ::Camera(90, //fov
-                            intrs.p.x, intrs.p.y, intrs.p.z, //loc
-                            intrs.n.x, intrs.n.y, intrs.n.z, //dir
+                            loc.x, loc.y, loc.z, //loc
+                            dir5.x, dir5.y, dir5.z, //dir
                             tan.x, tan.y, tan.z, //up
-                            0.01f, 100.f); //near/far
+                            near, far); //clipping planes
       //Rasterize cube faces (i.e. render 8x8 texture per camera)
       static Rasterizer rstr(8, 8, scene); //TODO: static? or should I redesign?
       unsigned char pixelData[4*64];
+//      printf("\nPoint!\n");
       for (int i=0; i<5; ++i) {
          GLuint tex = rstr.rasterSurfels(cameras[i]);
          glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, &pixelData);
+         float weight = 0.f;
          for (int j=0; j<64; ++j) {
-//            printf("<%f %f %f> ", pixelData[4*j]/255.f, pixelData[4*j+1]/255.f, pixelData[4*j+2]/255.f);
-//            if (j%8 == 0) printf("\n");
+               int x = j%8, y = j/8;
+               glm::vec3 U(cameras[i].up.x, cameras[i].up.y, cameras[i].up.z);
+               glm::vec3 D(cameras[i].dir.x, cameras[i].dir.y, cameras[i].dir.z);
+               glm::vec3 R = -glm::cross(U, D);
+               glm::vec3 M = loc + (near*D);
+               glm::vec3 pt = M + (-0.875f*near + 0.25f*(float)x*near)*R + (-0.875f*near + 0.25f*(float)y*near)*U;
+               glm::vec3 v = glm::normalize(pt - intrs.p); 
+               weight = glm::dot(intrs.n, v);
+//               if (j%8 == 0) printf("\n");
+//               printf("<%f %f %f, %f> ", pixelData[4*j]/255.f, pixelData[4*j+1]/255.f, pixelData[4*j+2]/255.f, weight);
+//               printf("%f ", weight);
             indirectColor.r += pixelData[4*j+0]/255.f; //red
             indirectColor.g += pixelData[4*j+1]/255.f; //green
             indirectColor.b += pixelData[4*j+2]/255.f; //blue
-//            indirectColor += pixelData[4*j+3]; //alpha
+            //indirectColor += pixelData[4*j+3]; //alpha
+            indirectColor *= weight;
          }
 //         printf("\n");
       }
+//      printf("Point done!\n");
       indirectColor /= 64.f * 5.f;
 //      printf("final color: %f %f %f\n", indirectColor.r, indirectColor.g, indirectColor.b);
 
-      return indirectColor;
+      return 6.f*indirectColor;
    }
 }

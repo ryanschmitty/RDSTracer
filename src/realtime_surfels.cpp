@@ -151,7 +151,9 @@ void RealtimeSurfels::view() {
 
 void RealtimeSurfels::lights() {
    /* LIGHTS */
-   glEnable(GL_LIGHTING);
+//   glEnable(GL_LIGHTING);
+   glDisable(GL_LIGHTING);
+   return;
    int i=0;
    unsigned int curLight = GL_LIGHT0;
    for(std::vector<PointLightPtr>::const_iterator it = desc->lights().begin(); it != desc->lights().end(); ++it) {
@@ -162,10 +164,11 @@ void RealtimeSurfels::lights() {
       //Point light position
       GLfloat lightPos[] = {lpos.x, lpos.y, lpos.z, 0.0};
       //Ambient composition
-//      GLfloat ambientComp[] = {lcolor.r, lcolor.g, lcolor.b, 0.0};
-      GLfloat ambientComp[] = {0.0, 0.0, 0.0, 0.0};
+      GLfloat ambientComp[] = {lcolor.r, lcolor.g, lcolor.b, 0.0};
+//      GLfloat ambientComp[] = {0.0, 0.0, 0.0, 0.0};
       //Diffuse composition
-      GLfloat diffuseComp[] = {lcolor.r, lcolor.g, lcolor.b, 0.0};
+//      GLfloat diffuseComp[] = {lcolor.r, lcolor.g, lcolor.b, 0.0};
+      GLfloat diffuseComp[] = {0.0, 0.0, 0.0, 0.0};
       //Specular composition
       GLfloat specularComp[] = {0.0, 0.0, 0.0, 0.0};
       //Ambient light

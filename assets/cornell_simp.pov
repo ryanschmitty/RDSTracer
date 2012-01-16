@@ -10,9 +10,9 @@ camera {
 }
 
 //TOP LIGHT
-//light_source {<0, 10, 0> color rgb <3, 2.55, 1.29>}
+light_source {<0, 10, 0> color rgb <3, 2.55, 1.29>}
 //doubled the real colors, it was too dark
-light_source {<0, 10, 0> color rgb <2, 1.7, 0.86>}
+//light_source {<0, 10, 0> color rgb <2, 1.7, 0.86>}
 //halved the real colors, so it is subtle
 //light_source {<0, 5, 15> color rgb <0.1, 0.085, 0.043>}
 

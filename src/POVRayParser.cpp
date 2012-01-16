@@ -7,8 +7,6 @@
 
 #include "POVRayParser.h"
 #include "RDSbvh.h"
-#include "RDSPointDistribution.h"
-#include "RDSSurfelCloud.h"
 #include <iostream>
 #include <sstream>
 #include <cctype>
@@ -68,7 +66,7 @@ namespace RDST
             objs->push_back(pBox);
 
             //Generate surfels
-            GenerateSurfels(*surfels, *pBox);
+//            GenerateSurfels(*surfels, *pBox);
          }
          pos = line.find("cone");
          if (pos != std::string::npos) {
@@ -92,7 +90,7 @@ namespace RDST
             objs->push_back(pSphere);
 
             //Generate surfels
-            GenerateSurfels(*surfels, *pSphere);
+//            GenerateSurfels(*surfels, *pSphere);
 
          }
          pos = line.find("triangle");
@@ -105,7 +103,7 @@ namespace RDST
             objs->push_back(pTri);
 
             //Generate surfels
-            surfels->push_back(pTri);
+//            surfels->push_back(pTri);
             
             //Get point cloud and generate surfels
 //            float minDist = 0.f;
@@ -134,7 +132,7 @@ namespace RDST
          }
       }
       std::cout << "Done." << std::endl;
-      return SceneDescription(pCam, lights, areaLights, objs, planes, BVH(objs), BVH(surfels), surfels);
+      return SceneDescription(pCam, lights, areaLights, objs, planes, BVH(objs), BVH(objs/*surfels*/), surfels);
    }
 
    std::string&
