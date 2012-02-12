@@ -21,6 +21,7 @@
 #include "RDSSceneDesc.h"
 #include "RDSSamplers.h"
 #include "RDSTracer.h"
+#include "RandUtil.h"
 
 namespace RDST
 {

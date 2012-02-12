@@ -33,11 +33,13 @@ namespace RDST
       glm::vec3 color;
       float sumWeights;
       int subsamples = scene.opts().subsamples;
+      int progressUpdateNum = rays.size()/100;
+      printf("progNum: %i\n", progressUpdateNum);
       bool first = true;
       //OpenMP Loop
       #pragma omp parallel for \
               shared(currentRay, rays) \
-              private(i, j, rayistart, rayi, color, sumWeights) \
+              private(i, j, rayistart, rayi, color, sumWeights, progressUpdateNum) \
               firstprivate(subsamples)  \
               schedule(dynamic,10000)
       for (i=0; i < image.getHeight()*image.getWidth(); ++i) {
@@ -51,7 +53,7 @@ namespace RDST
             Ray& ray = (*rays)[rayi];
             color += ray.weight * TraceRay(ray, scene, MAX_RECURSION_DEPTH);
             sumWeights += ray.weight;
-            if (currentRay++ % 10000 == 0) UpdateProgress(int(float(currentRay)/rays->size()*100.f));
+            if (currentRay++ % progressUpdateNum == 0) UpdateProgress(int(float(currentRay)/rays->size()*100.f));
          }
          //Apply box filter and write to image
          image.get(i).set( glm::vec4(color/sumWeights, 1.f) );
@@ -237,17 +239,28 @@ namespace RDST
 
       //Indirect illumination
       glm::vec3 indirect(0.f);
-      if (scene.opts().bounces > 0 && scene.opts().monteCarloSamples > 0) {
+      glm::vec3 indirectSurfs(0.f);
+      if (scene.opts().bounces > 0 && scene.opts().monteCarloSamples > 0 && recursionsLeft > 0) {
          int bounces = (int)recursionsLeft > scene.opts().bounces ? scene.opts().bounces : recursionsLeft;
 //         indirect = CalcIndirectIllumMonteCarlo(intrs, scene, bounces);
 //         indirect = CalcIndirectIllumPointBased(intrs, scene, bounces);
-//         indirect = IndirectIllumMonteCarlo(intrs, scene, bounces);
-         indirect = IndirectIllumSurfelRaster(intrs, scene);
+         indirect = IndirectIllumMonteCarlo(intrs, scene, bounces);
+         indirectSurfs = IndirectIllumSurfelRaster(intrs, scene);
       }
 
+      if (recursionsLeft > 0) { //first call
+//         return glm::length(indirectSurfs) > glm::length(indirect) ? glm::vec3(1.f) : glm::vec3(0.f);
+         return glm::vec3(glm::length(indirectSurfs - indirect)/glm::length(glm::vec3(1.f)));
+      }
+      else //second call via IndirectIllumMonteCarlo
+         return (direct + reflection + refraction) + (PI*indirect);
+
 //      return indirect;
-      return (direct + reflection + refraction) + (PI*indirect);
+//      return (direct + reflection + refraction) + (PI*indirect);
 //      return (direct + reflection + refraction) + (indirect);
+//      return glm::vec3(glm::length(indirectSurfs - indirect)/glm::length(glm::vec3(1.f)));
+//      return glm::length(indirectSurfs) > glm::length(indirect) ? glm::vec3(1.f) : glm::vec3(0.f);
+//      return glm::vec3(0.f);
    }
 
 //   glm::vec3 Tracer::ShadePointNoIndirect(const Intersection& intrs, const SceneDescription& scene, unsigned int recursionsLeft)

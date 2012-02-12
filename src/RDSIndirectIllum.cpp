@@ -67,30 +67,31 @@ namespace RDST
 
    void Rasterizer::initGL()
    {
+      int argc = 0;
+      char** argv;
+      glutInit(&argc, argv);
+      glutInitWindowSize(width, height); // 8x8 cube faces, not that this setting matters for the FBO
+      glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
+      glutCreateWindow("Surfel Rasterizing");
+      glEnable(GL_DEPTH_TEST);
+      glEnable(GL_NORMALIZE);
+      glClearColor(0.0, 0.0, 0.0, 1.0);
+      glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+      glEnable(GL_COLOR_MATERIAL);
+      glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+      
+      //Error check
+      GLenum err = glewInit();
+      if (err != GLEW_OK || !glewIsSupported("GL_VERSION_2_0")) {
+         printf("OpenGL 2.0 not supported. No shaders!\n");
+         printf("%s\n", glewGetErrorString(err));
+         printf("%s\n", (char*)glGetString( GL_VERSION ) );
+         exit(-1);
+      }
+      printf("OpenGL 2.0 supported. Using OpenGL %s \n\n",(char*)glGetString( GL_VERSION ));
+
       glCullFace(GL_BACK);
       glEnable(GL_CULL_FACE);
-//      int argc = 0;
-//      char** argv;
-//      glutInit(&argc, argv);
-//      glutInitWindowSize(width, height); // 8x8 cube faces, not that this setting matters for the FBO
-//      glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-//      glutCreateWindow("Surfel Rasterizing");
-//      glEnable(GL_DEPTH_TEST);
-//      glEnable(GL_NORMALIZE);
-//      glClearColor(0.0, 0.0, 0.0, 1.0);
-//      glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-//      glEnable(GL_COLOR_MATERIAL);
-//      glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-//      
-//      //Error check
-//      GLenum err = glewInit();
-//      if (err != GLEW_OK || !glewIsSupported("GL_VERSION_2_0")) {
-//         printf("OpenGL 2.0 not supported. No shaders!\n");
-//         printf("%s\n", glewGetErrorString(err));
-//         printf("%s\n", (char*)glGetString( GL_VERSION ) );
-//         exit(-1);
-//      }
-//      printf("OpenGL 2.0 supported. Using OpenGL %s \n\n",(char*)glGetString( GL_VERSION ));
    }
 
    void Rasterizer::loadVBO(const SceneDescription& desc) {
@@ -293,6 +294,7 @@ namespace RDST
       //Solve for tangent
       glm::vec3 k = glm::vec3(0,1,0);
       glm::vec3 tan = fabs(intrs.n.y) == 1.f ? glm::vec3(1,0,0) : glm::normalize(k - ((glm::dot(k, intrs.n))*intrs.n)); //Gram-Schmidt Process
+      tan = glm::rotate(tan, unifRand(0.f, 359.f),intrs.n); //random cube rotation
       //Generate 6 cube faces (i.e. 5 cameras)
       ::Camera cameras [5];
       float near = 0.01f, far = 15.f;
@@ -321,37 +323,76 @@ namespace RDST
                             tan.x, tan.y, tan.z, //up
                             near, far); //clipping planes
       //Rasterize cube faces (i.e. render 8x8 texture per camera)
-      static Rasterizer rstr(8, 8, scene); //TODO: static? or should I redesign?
-      unsigned char pixelData[4*64];
+      const float CUBE_FACE_DIM = 8.f;
+      static Rasterizer rstr(CUBE_FACE_DIM, CUBE_FACE_DIM, scene); //TODO: static? or should I redesign?
+      unsigned char pixelData[4*(int)CUBE_FACE_DIM*(int)CUBE_FACE_DIM];
 //      printf("\nPoint!\n");
       for (int i=0; i<5; ++i) {
          GLuint tex = rstr.rasterSurfels(cameras[i]);
          glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, &pixelData);
          float weight = 0.f;
-         for (int j=0; j<64; ++j) {
-               int x = j%8, y = j/8;
+         for (int j=0; j<CUBE_FACE_DIM*CUBE_FACE_DIM; ++j) {
+               int x = j%(int)CUBE_FACE_DIM, y = j/(int)CUBE_FACE_DIM;
                glm::vec3 U(cameras[i].up.x, cameras[i].up.y, cameras[i].up.z);
                glm::vec3 D(cameras[i].dir.x, cameras[i].dir.y, cameras[i].dir.z);
                glm::vec3 R = -glm::cross(U, D);
                glm::vec3 M = loc + (near*D);
-               glm::vec3 pt = M + (-0.875f*near + 0.25f*(float)x*near)*R + (-0.875f*near + 0.25f*(float)y*near)*U;
+               float a = -((CUBE_FACE_DIM-1)/CUBE_FACE_DIM);
+               float b = 1.f/(0.5f*CUBE_FACE_DIM);
+               glm::vec3 pt = M + (a*near + b*(float)x*near)*R + (a*near + b*(float)y*near)*U;
                glm::vec3 v = glm::normalize(pt - intrs.p); 
                weight = glm::dot(intrs.n, v);
 //               if (j%8 == 0) printf("\n");
 //               printf("<%f %f %f, %f> ", pixelData[4*j]/255.f, pixelData[4*j+1]/255.f, pixelData[4*j+2]/255.f, weight);
 //               printf("%f ", weight);
-            indirectColor.r += pixelData[4*j+0]/255.f; //red
-            indirectColor.g += pixelData[4*j+1]/255.f; //green
-            indirectColor.b += pixelData[4*j+2]/255.f; //blue
-            //indirectColor += pixelData[4*j+3]; //alpha
-            indirectColor *= weight;
+//
+               glm::vec3 color255((int)pixelData[4*j+0],
+                                  (int)pixelData[4*j+1],
+                                  (int)pixelData[4*j+2]);
+               glm::vec3 color(pixelData[4*j+0]/255.f,
+                               pixelData[4*j+1]/255.f,
+                               pixelData[4*j+2]/255.f);
+//            indirectColor.r += pixelData[4*j+0]/255.f; //red
+//            indirectColor.g += pixelData[4*j+1]/255.f; //green
+//            indirectColor.b += pixelData[4*j+2]/255.f; //blue
+                  //Verify rastered color
+//                  Ray r(v, intrs.p, 0.01f);
+//                  glm::vec3 true_color = Tracer::TraceRay(r, scene, 0);
+//                  float maxColor = true_color.r;
+//                  if (true_color.g > maxColor) maxColor = true_color.g;
+//                  if (true_color.b > maxColor) maxColor = true_color.b;
+//                  if (maxColor > 1.f) true_color /= maxColor;
+//                  int trueR = (int)(255*true_color.r);
+//                  int trueG = (int)(255*true_color.g);
+//                  int trueB = (int)(255*true_color.b);
+//                  float errR = glm::abs(((float)(color255.r - trueR) / (float)trueR)*100.f);
+//                  float errG = glm::abs(((float)(color255.g - trueG) / (float)trueG)*100.f);
+//                  float errB = glm::abs(((float)(color255.b - trueB) / (float)trueB)*100.f);
+//                  printf("<%f, %f, %f> ", errR, errG, errB);
+//                  float distR = color255.r-trueR, distG = color255.g-trueG, distB = color255.b-trueB;
+//                  float distR = color.r-true_color.r, distG = color.g-true_color.g, distB = color.b-true_color.b;
+//                  if( distR > 255 ) printf("distR: %f\n",distR);
+//                  if( distG > 255 ) printf("distG: %f\n",distG);
+//                  if( distB > 255 ) printf("distB: %f\n",distB);
+//                  float dist = glm::sqrt(distR*distR + distG*distG + distB*distB) / 441.672956f;
+//                  static float maxDist = 0.f;
+//                  if (dist > maxDist) {
+//                     maxDist = dist;
+//                     printf("c<%f, %f, %f> tc<%f, %f, %f> <%f, %f, %f> %f\n", color.r, color.g, color.b, true_color.r, true_color.g, true_color.b, distR, distG, distB, maxDist*100.f);
+//                  }
+//                  if (glm::abs(true_color.r-color.r) + glm::abs(true_color.g-color.g) + glm::abs(true_color.b-color.b) > 100.f )
+//                     count++;
+//                     printf("<%f %f %f> ", glm::abs(true_color.r-color.r), glm::abs(true_color.g-color.g), glm::abs(true_color.b-color.b));
+//            indirectColor += pixelData[4*j+3]; //alpha
+            indirectColor += weight * color * glm::vec3(intrs.surf.color);
+//            indirectColor += glm::vec3(dist, dist, dist);
          }
 //         printf("\n");
       }
 //      printf("Point done!\n");
-      indirectColor /= 64.f * 5.f;
+      indirectColor /= 5.f * CUBE_FACE_DIM * CUBE_FACE_DIM;
 //      printf("final color: %f %f %f\n", indirectColor.r, indirectColor.g, indirectColor.b);
 
-      return 6.f*indirectColor;
+      return indirectColor;
    }
 }
