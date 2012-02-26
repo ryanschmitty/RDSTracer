@@ -33,6 +33,9 @@ namespace RDST
       static void GenerateSurfels(SceneDescription& scene) {
          boost::shared_ptr< std::vector<GeomObjectPtr> > surfels(new std::vector<GeomObjectPtr>());
          std::vector<GeomObjectPtr>::const_iterator cit = scene.objs().begin();
+         int i=0;
+         std::cout << "\nGenerating Surfels\n";
+         UpdateProgress(0);
          for (; cit != scene.objs().end(); ++cit) {
             Sphere* pSphere = dynamic_cast<Sphere*>(cit->get());
             Triangle* pTriangle = dynamic_cast<Triangle*>(cit->get());
@@ -46,7 +49,10 @@ namespace RDST
             else if (pBox != NULL) {
                RDST::GenerateSurfels(*surfels, scene, *pBox);
             }
+            UpdateProgress((float)++i/scene.objs().size()*100.f);
          }
+         UpdateProgress(100);
+         std::cout << "\n";
          scene.setSurfelCloud(surfels);
       }
    };

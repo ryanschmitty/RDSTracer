@@ -33,14 +33,13 @@ namespace RDST
       glm::vec3 color;
       float sumWeights;
       int subsamples = scene.opts().subsamples;
-      int progressUpdateNum = rays.size()/100;
-      printf("progNum: %i\n", progressUpdateNum);
+      int progressUpdateNum = rays->size()/100;
       bool first = true;
       //OpenMP Loop
       #pragma omp parallel for \
               shared(currentRay, rays) \
-              private(i, j, rayistart, rayi, color, sumWeights, progressUpdateNum) \
-              firstprivate(subsamples)  \
+              private(i, j, rayistart, rayi, color, sumWeights) \
+              firstprivate(subsamples, progressUpdateNum)  \
               schedule(dynamic,10000)
       for (i=0; i < image.getHeight()*image.getWidth(); ++i) {
          first = false;
@@ -244,19 +243,23 @@ namespace RDST
          int bounces = (int)recursionsLeft > scene.opts().bounces ? scene.opts().bounces : recursionsLeft;
 //         indirect = CalcIndirectIllumMonteCarlo(intrs, scene, bounces);
 //         indirect = CalcIndirectIllumPointBased(intrs, scene, bounces);
-         indirect = IndirectIllumMonteCarlo(intrs, scene, bounces);
-         indirectSurfs = IndirectIllumSurfelRaster(intrs, scene);
+//         indirect = IndirectIllumMonteCarlo(intrs, scene, bounces);
+//         indirectSurfs = IndirectIllumSurfelRaster(intrs, scene);
+         indirect= IndirectIllumSurfelRaster(intrs, scene);
       }
 
+      /*
       if (recursionsLeft > 0) { //first call
 //         return glm::length(indirectSurfs) > glm::length(indirect) ? glm::vec3(1.f) : glm::vec3(0.f);
          return glm::vec3(glm::length(indirectSurfs - indirect)/glm::length(glm::vec3(1.f)));
       }
       else //second call via IndirectIllumMonteCarlo
          return (direct + reflection + refraction) + (PI*indirect);
+      */
 
 //      return indirect;
-//      return (direct + reflection + refraction) + (PI*indirect);
+//      return 2.f*(direct + reflection + refraction);
+      return 2.f*((direct + reflection + refraction) + (PI*indirect));
 //      return (direct + reflection + refraction) + (indirect);
 //      return glm::vec3(glm::length(indirectSurfs - indirect)/glm::length(glm::vec3(1.f)));
 //      return glm::length(indirectSurfs) > glm::length(indirect) ? glm::vec3(1.f) : glm::vec3(0.f);
