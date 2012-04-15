@@ -54,8 +54,8 @@ namespace RDST
        glm::vec3 v02 = v2 - v0;
        for (int i=0; i<numU1s; ++i) {
           for (int j=0; j<numU2s; ++j) {
-             float u1 = (float)i/numU1s + RDST::unifRand()/numU1s;
-             float u2 = (float)j/numU2s + RDST::unifRand()/numU2s;
+             float u1 = (float)i/numU1s + unifRand()/numU1s;
+             float u2 = (float)j/numU2s + unifRand()/numU2s;
              glm::vec3 p;
              // Inside or outside the triangle?
              if (u1 + u2 < 1) //inside

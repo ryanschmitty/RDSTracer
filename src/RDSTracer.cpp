@@ -164,7 +164,7 @@ namespace RDST
    Intersection* Tracer::RaySceneIntersect(Ray& ray, const SceneDescription& scene)
    {
       Intersection* pIsect = scene.bvh().intersect(ray);
-//      Intersection* pIsect = scene.surfelCloud().intersect(ray);
+      //Intersection* pIsect = RayObjectsIntersect(ray, scene.surfels());
       Intersection* pIsectOther = RayObjectsIntersect(ray, scene.planes());
       if (!pIsect->hit) {
          delete pIsect;
