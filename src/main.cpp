@@ -124,16 +124,16 @@ RDST::Options parseParameters(int argc, char** argv)
 int main(int argc, char** argv)
 {
    boost::timer timer;
-   double start = timer.elapsed();
+   double surfelgen_start, render_start, fsecs_surfelgen, fsecs_render;
    RDST::seed();
 
    RDST::Options opts = parseParameters(argc, argv);
    RDST::Image img(opts.width, opts.height, opts.enableGammaCorrection, opts.gamma);
    RDST::SceneDescription desc = RDST::POVRayParser::ParseFile(opts.povRayFile);
    desc.setOpts(opts);
-   start = timer.elapsed();
+   surfelgen_start = timer.elapsed();
    RDST::SurfelGenerator::GenerateSurfels(desc);
-   double fsecs = timer.elapsed() - start;
+   fsecs_surfelgen = timer.elapsed() - surfelgen_start;
 
    if (!opts.realtime) {
 //      int argc2 = 0;
@@ -159,25 +159,52 @@ int main(int argc, char** argv)
 //      }
 //      printf("OpenGL 2.0 supported. Using OpenGL %s \n\n",(char*)glGetString( GL_VERSION ));
 
+      render_start = timer.elapsed();
       RDST::Tracer::RayTrace(desc, img);
+      fsecs_render = timer.elapsed() - render_start;
+
       img.writeToDisk(opts.imgname);
    }
    
-//   double fsecs = timer.elapsed() - start;
-   int secs = (int)fsecs;
-   int millis = int((fsecs - secs) * 1000);
-   int hours = secs/3600;
-   secs -= 3600*hours;
-   int mins = secs/60;
-   secs -= 60*mins;
-   std::cout << "\nRuntime: ";
-   if (hours > 0)
-      std::cout << hours << "h";
-   if (mins > 0)
-      std::cout << mins << "m";
-   if (secs > 0)
-      std::cout << secs << "s";
-   std::cout << millis << "ms\n";
+   std::cout << std::endl; // make a little room!
+
+   // Surfel Generation Time
+   {
+      int secs = (int)fsecs_surfelgen;
+      int millis = int((fsecs_surfelgen - secs) * 1000);
+      int hours = secs/3600;
+      secs -= 3600*hours;
+      int mins = secs/60;
+      secs -= 60*mins;
+      std::cout << "Surfel Generation Time: ";
+      if (hours > 0)
+         std::cout << hours << "h";
+      if (mins > 0)
+         std::cout << mins << "m";
+      if (secs > 0)
+         std::cout << secs << "s";
+      std::cout << millis << "ms\n";
+   }
+
+   // Render Time
+   {
+      int secs = (int)fsecs_render;
+      int millis = int((fsecs_render - secs) * 1000);
+      int hours = secs/3600;
+      secs -= 3600*hours;
+      int mins = secs/60;
+      secs -= 60*mins;
+      std::cout << "Render Time: ";
+      if (hours > 0)
+         std::cout << hours << "h";
+      if (mins > 0)
+         std::cout << mins << "m";
+      if (secs > 0)
+         std::cout << secs << "s";
+      std::cout << millis << "ms\n";
+   }
+
+   std::cout << std::endl; // make a little room!
 
    if (opts.realtime)
       RDST::RealtimeSurfels::Render(desc);
