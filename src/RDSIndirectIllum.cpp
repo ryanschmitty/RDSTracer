@@ -67,9 +67,9 @@ namespace RDST
 
    void Rasterizer::initGL()
    {
-      int argc = 0;
-      char** argv;
-      glutInit(&argc, argv);
+      int argc = 1;
+      char* argv = "needs something here";
+      glutInit(&argc, &argv);
       glutInitWindowSize(width, height); // 8x8 cube faces, not that this setting matters for the FBO
       glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
       glutCreateWindow("Surfel Rasterizing");
@@ -97,9 +97,9 @@ namespace RDST
    void Rasterizer::loadVBO(const SceneDescription& desc) {
       const std::vector<GeomObjectPtr>& tris = desc.surfels();
       //Allocate space on the stack since we won't need it later
-      GLfloat vertices [3*3*tris.size()];
-      GLfloat normals  [3*3*tris.size()];
-      GLfloat colors   [3*3*tris.size()];
+      GLfloat* vertices = new GLfloat[3*3*tris.size()];
+      GLfloat* normals  = new GLfloat[3*3*tris.size()];
+      GLfloat* colors   = new GLfloat[3*3*tris.size()];
 
       int i=0;
       for(std::vector<GeomObjectPtr>::const_iterator it = tris.begin(); it != tris.end(); ++it) {
@@ -165,6 +165,11 @@ namespace RDST
       glBufferSubData(GL_ARRAY_BUFFER, 0,              bytesPerList, vertices);
       glBufferSubData(GL_ARRAY_BUFFER, bytesPerList,   bytesPerList, normals);
       glBufferSubData(GL_ARRAY_BUFFER, 2*bytesPerList, bytesPerList, colors);
+
+     // clean up
+     delete [] vertices;
+     delete [] normals;
+     delete [] colors;
    }
 
    void Rasterizer::geometry(const SceneDescription& desc) {
@@ -325,11 +330,11 @@ namespace RDST
       //Rasterize cube faces (i.e. render 8x8 texture per camera)
       const float CUBE_FACE_DIM = 8.f;
       static Rasterizer rstr(CUBE_FACE_DIM, CUBE_FACE_DIM, scene); //TODO: static? or should I redesign?
-      unsigned char pixelData[4*(int)CUBE_FACE_DIM*(int)CUBE_FACE_DIM];
+     unsigned char* pixelData = new unsigned char[4*(int)CUBE_FACE_DIM*(int)CUBE_FACE_DIM];
 //      printf("\nPoint!\n");
       for (int i=0; i<5; ++i) {
          GLuint tex = rstr.rasterSurfels(cameras[i]);
-         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, &pixelData);
+         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixelData);
          float weight = 0.f;
          for (int j=0; j<CUBE_FACE_DIM*CUBE_FACE_DIM; ++j) {
                int x = j%(int)CUBE_FACE_DIM, y = j/(int)CUBE_FACE_DIM;
@@ -392,6 +397,9 @@ namespace RDST
 //      printf("Point done!\n");
       indirectColor /= 5.f * CUBE_FACE_DIM * CUBE_FACE_DIM;
 //      printf("final color: %f %f %f\n", indirectColor.r, indirectColor.g, indirectColor.b);
+
+     // clean up heap allocated memory
+     delete [] pixelData;
 
       return indirectColor;
    }

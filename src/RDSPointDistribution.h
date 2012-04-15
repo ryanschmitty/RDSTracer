@@ -38,7 +38,7 @@ namespace RDST
     {
        int minp1, minp2;
        float mind;
-       int n = 4*numPoints;
+       int n = 2*numPoints;
        int numU1s = (int)sqrtf((float)n);
        int numU2s = n / numU1s;
 
@@ -137,7 +137,7 @@ namespace RDST
     boost::shared_ptr< std::vector<glm::vec4> >
     GenerateDistributedPoints(int numPoints, const RDST::Box& b, float* minDist)
     {
-        int n = 3*numPoints;
+        int n = 2*numPoints;
         int minp1, minp2;
         float mind;
         int pointsPerSide = n / 6;
@@ -264,7 +264,7 @@ namespace RDST
     boost::shared_ptr< std::vector<glm::vec3> >
     GenerateDistributedPoints(int numPoints, const RDST::Sphere& sphere, int maxIterations, float* minDist)
     {
-        static const int MULTIPLIER = 4;
+        static const int MULTIPLIER = 2;
         int n;
         int minp1,minp2;
         float r,mind;

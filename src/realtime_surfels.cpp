@@ -7,8 +7,8 @@
  * Author: Ryan Schmitt
  */
 
-#include "realtime_surfels.h"
 #include <stdio.h>
+#include "realtime_surfels.h"
 
 namespace RDST
 {
@@ -36,8 +36,8 @@ void RealtimeSurfels::Render(const SceneDescription& scene) {
 
    //OpenGL setup
    int argc = 0;
-   char** argv;
-   glutInit(&argc, argv);
+   char* argv = "needs something here";
+   glutInit(&argc, &argv);
    glutInitWindowSize(RealtimeSurfels::width, RealtimeSurfels::height);
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
    glutCreateWindow("Surfel Cloud");
@@ -294,9 +294,10 @@ void RealtimeSurfels::loadVBO() {
 
    const std::vector<GeomObjectPtr>& tris = desc->surfels();
    //Allocate space on the stack since we won't need it later
-   GLfloat vertices [3*3*tris.size()];
-   GLfloat normals  [3*3*tris.size()];
-   GLfloat colors   [3*3*tris.size()];
+   const unsigned int dataSize = 3*3*tris.size();
+   GLfloat* vertices = new GLfloat[dataSize];
+   GLfloat* normals  = new GLfloat[dataSize];
+   GLfloat* colors   = new GLfloat[dataSize];
 
    int i=0;
    for(std::vector<GeomObjectPtr>::const_iterator it = tris.begin(); it != tris.end(); ++it) {
@@ -362,6 +363,11 @@ void RealtimeSurfels::loadVBO() {
    glBufferSubData(GL_ARRAY_BUFFER, 0,              bytesPerList, vertices);
    glBufferSubData(GL_ARRAY_BUFFER, bytesPerList,   bytesPerList, normals);
    glBufferSubData(GL_ARRAY_BUFFER, 2*bytesPerList, bytesPerList, colors);
+
+   //Clean up
+   delete [] vertices;
+   delete [] normals;
+   delete [] colors;
 }
 
 }

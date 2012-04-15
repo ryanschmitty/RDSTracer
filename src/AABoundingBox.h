@@ -10,6 +10,7 @@
 #ifndef __AA_BOUNDING_BOX_H__
 #define __AA_BOUNDING_BOX_H__
 
+#include <stdlib.h>
 #include <GLUT/glut.h>
 #include "vec3.h"
 

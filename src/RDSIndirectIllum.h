@@ -10,9 +10,10 @@
 
 #define GLM_FORCE_INLINE
 
+#include <stdlib.h>
 #include <glew.h>
 #include <GLUT/glut.h>
-#include <OpenGL/gl.h>
+#include <GL/gl.h>
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include <glm/glm.hpp>

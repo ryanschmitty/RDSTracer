@@ -1,3 +1,6 @@
+#pragma warning(disable:4996) //fuck da police
+
+#include <stdlib.h>
 #include <algorithm>
 #include <iostream>
 #include <fstream>
@@ -21,7 +24,8 @@
 
 #include <glew.h>
 #include <GLUT/glut.h>
-#include <OpenGL/gl.h>
+#include <GL/gl.h>
+
 
 //----------------------------------------
 // Prototypes

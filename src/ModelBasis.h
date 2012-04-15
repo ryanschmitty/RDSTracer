@@ -1,6 +1,8 @@
 #ifndef __MODEL_BASIS_H__
 #define __MODEL_BASIS_H__
 
+#pragma warning(disable:4996)
+
 #include <GLUT/glut.h>
 #include "vec3.h"
 

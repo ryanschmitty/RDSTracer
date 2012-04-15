@@ -12,6 +12,7 @@
 
 /* HEADERS */
 
+#include <stdlib.h>
 #include <glew.h>
 #include <GLUT/glut.h>
 #include "RDSSceneDesc.h"
