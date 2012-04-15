@@ -24,7 +24,11 @@
 
 #include <glew.h>
 #include <GLUT/glut.h>
+#ifdef _WIN32
 #include <GL/gl.h>
+#else
+#include <OpenGL/gl.h>
+#endif
 
 
 //----------------------------------------

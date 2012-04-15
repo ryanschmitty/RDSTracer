@@ -13,7 +13,11 @@
 #include <stdlib.h>
 #include <glew.h>
 #include <GLUT/glut.h>
+#ifdef _WIN32
 #include <GL/gl.h>
+#else
+#include <OpenGL/gl.h>
+#endif
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include <glm/glm.hpp>

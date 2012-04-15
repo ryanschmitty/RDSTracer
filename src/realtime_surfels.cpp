@@ -36,7 +36,7 @@ void RealtimeSurfels::Render(const SceneDescription& scene) {
 
    //OpenGL setup
    int argc = 0;
-   char* argv = "needs something here";
+   char* argv = const_cast<char*>("needs something here");
    glutInit(&argc, &argv);
    glutInitWindowSize(RealtimeSurfels::width, RealtimeSurfels::height);
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);

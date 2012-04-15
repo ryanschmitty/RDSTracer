@@ -68,7 +68,7 @@ namespace RDST
    void Rasterizer::initGL()
    {
       int argc = 1;
-      char* argv = "needs something here";
+      char* argv = const_cast<char*>("needs something here");
       glutInit(&argc, &argv);
       glutInitWindowSize(width, height); // 8x8 cube faces, not that this setting matters for the FBO
       glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
