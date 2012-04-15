@@ -164,7 +164,7 @@ namespace RDST
    Intersection* Tracer::RaySceneIntersect(Ray& ray, const SceneDescription& scene)
    {
       Intersection* pIsect = scene.bvh().intersect(ray);
-//      Intersection* pIsect = scene.surfelCloud().intersect(ray);
+      //Intersection* pIsect = RayObjectsIntersect(ray, scene.surfels());
       Intersection* pIsectOther = RayObjectsIntersect(ray, scene.planes());
       if (!pIsect->hit) {
          delete pIsect;
@@ -243,7 +243,7 @@ namespace RDST
          int bounces = (int)recursionsLeft > scene.opts().bounces ? scene.opts().bounces : recursionsLeft;
 //         indirect = CalcIndirectIllumMonteCarlo(intrs, scene, bounces);
 //         indirect = CalcIndirectIllumPointBased(intrs, scene, bounces);
-         indirect = IndirectIllumMonteCarlo(intrs, scene, bounces);
+//         indirect = IndirectIllumMonteCarlo(intrs, scene, bounces);
 //         indirectSurfs = IndirectIllumSurfelRaster(intrs, scene);
 //         indirect= IndirectIllumSurfelRaster(intrs, scene);
       }

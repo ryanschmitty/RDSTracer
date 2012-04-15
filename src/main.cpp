@@ -123,7 +123,9 @@ int main(int argc, char** argv)
    RDST::Image img(opts.width, opts.height, opts.enableGammaCorrection, opts.gamma);
    RDST::SceneDescription desc = RDST::POVRayParser::ParseFile(opts.povRayFile);
    desc.setOpts(opts);
+   start = timer.elapsed();
    RDST::SurfelGenerator::GenerateSurfels(desc);
+   double fsecs = timer.elapsed() - start;
 
    if (!opts.realtime) {
 //      int argc2 = 0;
@@ -153,7 +155,7 @@ int main(int argc, char** argv)
       img.writeToDisk(opts.imgname);
    }
    
-   double fsecs = timer.elapsed() - start;
+//   double fsecs = timer.elapsed() - start;
    int secs = (int)fsecs;
    int millis = int((fsecs - secs) * 1000);
    int hours = secs/3600;

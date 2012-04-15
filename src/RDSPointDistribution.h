@@ -38,7 +38,7 @@ namespace RDST
     {
        int minp1, minp2;
        float mind;
-       int n = 4*numPoints;
+       int n = 2*numPoints;
        int numU1s = (int)sqrtf((float)n);
        int numU2s = n / numU1s;
 
@@ -54,8 +54,8 @@ namespace RDST
        glm::vec3 v02 = v2 - v0;
        for (int i=0; i<numU1s; ++i) {
           for (int j=0; j<numU2s; ++j) {
-             float u1 = (float)i/numU1s + RDST::unifRand()/numU1s;
-             float u2 = (float)j/numU2s + RDST::unifRand()/numU2s;
+             float u1 = (float)i/numU1s + unifRand()/numU1s;
+             float u2 = (float)j/numU2s + unifRand()/numU2s;
              glm::vec3 p;
              // Inside or outside the triangle?
              if (u1 + u2 < 1) //inside
@@ -137,7 +137,7 @@ namespace RDST
     boost::shared_ptr< std::vector<glm::vec4> >
     GenerateDistributedPoints(int numPoints, const RDST::Box& b, float* minDist)
     {
-        int n = 3*numPoints;
+        int n = 2*numPoints;
         int minp1, minp2;
         float mind;
         int pointsPerSide = n / 6;
@@ -264,7 +264,7 @@ namespace RDST
     boost::shared_ptr< std::vector<glm::vec3> >
     GenerateDistributedPoints(int numPoints, const RDST::Sphere& sphere, int maxIterations, float* minDist)
     {
-        static const int MULTIPLIER = 4;
+        static const int MULTIPLIER = 2;
         int n;
         int minp1,minp2;
         float r,mind;
