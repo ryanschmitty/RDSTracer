@@ -245,7 +245,7 @@ namespace RDST
 //         indirect = CalcIndirectIllumPointBased(intrs, scene, bounces);
 //         indirect = IndirectIllumMonteCarlo(intrs, scene, bounces);
 //         indirectSurfs = IndirectIllumSurfelRaster(intrs, scene);
-         indirect= IndirectIllumSurfelRaster(intrs, scene);
+          indirect= IndirectIllumSurfelRaster(intrs, scene);
       }
 
       /*

@@ -48,21 +48,21 @@ namespace RDST
          exit(-1);
       }
 
-      glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0); //unbind fbo for now
+//      glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0); //unbind fbo for now
 //      printf("lol\n");
 
       loadVBO(desc);
 
-//      glMatrixMode(GL_PROJECTION);
-//      glLoadIdentity();
-//      gluPerspective(90,
-//                     1.f,
-//                     0.001f,
-//                     100.f);
-//      glMatrixMode(GL_MODELVIEW);
-//      glViewport(0, 0, 8, 8);
-//      
-//      lights(desc);
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      gluPerspective(90.f,
+                     float(width)/height,
+                     0.01f,
+                     15.f);
+      glMatrixMode(GL_MODELVIEW);
+      glViewport(0, 0, width, height);
+
+      lights(desc);
    }
 
    void Rasterizer::initGL()
@@ -174,7 +174,7 @@ namespace RDST
 
    void Rasterizer::geometry(const SceneDescription& desc) {
       /* DRAW GEOMETRY */
-      glBindBuffer(GL_ARRAY_BUFFER, vboId);
+//      glBindBuffer(GL_ARRAY_BUFFER, vboId);
 
       // enable vertex arrays
       glEnableClientState(GL_NORMAL_ARRAY);
@@ -196,7 +196,7 @@ namespace RDST
       glDisableClientState(GL_COLOR_ARRAY);
       glDisableClientState(GL_NORMAL_ARRAY);
 
-      glBindBuffer(GL_ARRAY_BUFFER, 0);
+//      glBindBuffer(GL_ARRAY_BUFFER, 0);
    }
 
    void Rasterizer::view(::Camera& camera) {
@@ -236,27 +236,26 @@ namespace RDST
 
    GLuint Rasterizer::rasterSurfels(::Camera& camera)
    {
-      glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fbo);
+//      glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fbo);
 
-      glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
-      gluPerspective(camera.fov,
-                     float(width)/height,
-                     camera.zNear,
-                     camera.zFar);
-      glMatrixMode(GL_MODELVIEW);
-      glViewport(0, 0, width, height);
+//      glMatrixMode(GL_PROJECTION);
+//      glLoadIdentity();
+//      gluPerspective(camera.fov,
+//                     float(width)/height,
+//                     camera.zNear,
+//                     camera.zFar);
+//      glMatrixMode(GL_MODELVIEW);
+//      glViewport(0, 0, width, height);
 
       //draw
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glMatrixMode(GL_MODELVIEW);
       glLoadIdentity();
       view(camera);
-      lights(desc);
       geometry(desc);
       glFlush();
 
-      glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+//      glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
       
       return colortexture;
    }
