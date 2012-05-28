@@ -243,9 +243,9 @@ namespace RDST
          int bounces = (int)recursionsLeft > scene.opts().bounces ? scene.opts().bounces : recursionsLeft;
 //         indirect = CalcIndirectIllumMonteCarlo(intrs, scene, bounces);
 //         indirect = CalcIndirectIllumPointBased(intrs, scene, bounces);
-//         indirect = IndirectIllumMonteCarlo(intrs, scene, bounces);
+         indirect = IndirectIllumMonteCarlo(intrs, scene, bounces);
 //         indirectSurfs = IndirectIllumSurfelRaster(intrs, scene);
-          indirect= IndirectIllumSurfelRaster(intrs, scene);
+//         indirect= IndirectIllumSurfelRaster(intrs, scene);
       }
 
       /*

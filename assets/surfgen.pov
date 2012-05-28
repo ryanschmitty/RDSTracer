@@ -61,5 +61,5 @@ triangle { <2,-2,0>, <0,2,0>, <-2,-2,0>
   pigment { color rgb <1.0, 0.0, 1.0>}
   finish {ambient 0.6 diffuse 1}
   translate <0, 0, 0>
-  scale <1, 2, 1>
+  scale <1, 1, 1>
 }
